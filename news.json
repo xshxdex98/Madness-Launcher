@@ -1,33 +1,36 @@
 {
   "version": 1,
-  "generated": "2026-08-10T17:49:01Z",
+  "generated": "2026-08-10T18:01:03Z",
   "announcements": [
     {
       "id": "1536066593161879572",
       "author": "xSHXDEx",
       "avatar": "https://cdn.discordapp.com/avatars/554912407575592960/9f8067923eb40b492c121836960c33d7.png?size=64",
       "posted": "2026-08-09T17:40:14.547000+00:00",
-      "body": "@role Some of you may know, but some behind the scenes stuff is going on to revamp the madness crew experience with the games, and midtown madness is also being reworked. I have started a launcher for all of the games, it manages your games, has command line options, AR file management and folder detection, a chat room, individual usernames, and will let you play the games directly from the launcher. This is to make quality of life easier for booting up your favorite madness game, and seeing who is online/using the launcher. Still WIP and there will be an announcement when it is finished and released. Here's a teaser #makemidtownmadnessgreatagain",
+      "body": "@Announcements Some of you may know, but some behind the scenes stuff is going on to revamp the madness crew experience with the games, and midtown madness is also being reworked. I have started a launcher for all of the games, it manages your games, has command line options, AR file management and folder detection, a chat room, individual usernames, and will let you play the games directly from the launcher. This is to make quality of life easier for booting up your favorite madness game, and seeing who is online/using the launcher. Still WIP and there will be an announcement when it is finished and released. Here's a teaser #makemidtownmadnessgreatagain",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1536066593161879572",
-      "image": ""
+      "image": "",
+      "emojis": {}
     },
     {
       "id": "1535235125816729650",
       "author": "xSHXDEx",
       "avatar": "https://cdn.discordapp.com/avatars/554912407575592960/9f8067923eb40b492c121836960c33d7.png?size=64",
       "posted": "2026-08-07T10:36:17.284000+00:00",
-      "body": "Free discount code for Skyrim on GOG.com I’m giving away! @role Discount code: 5K4HYURHRXLHUAVMM9",
+      "body": "Free discount code for Skyrim on GOG.com I’m giving away! @Announcements Discount code: 5K4HYURHRXLHUAVMM9",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1535235125816729650",
-      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1535235125321670656/IMG_0530.png?ex=6a7afb21&is=6a79a9a1&hm=9d21478b1383edfce713859dd07eb6d0cc6355481916cdb98b90e975f6e71d63&"
+      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1535235125321670656/IMG_0530.png?ex=6a7afb21&is=6a79a9a1&hm=9d21478b1383edfce713859dd07eb6d0cc6355481916cdb98b90e975f6e71d63&",
+      "emojis": {}
     },
     {
       "id": "1532168975411183636",
       "author": "⚚",
       "avatar": "https://cdn.discordapp.com/avatars/525728108922535949/7dd296e92904728730c47033cb15dd8d.png?size=64",
       "posted": "2026-07-29T23:32:30.061000+00:00",
-      "body": "Hello, @role \n@xSHXDEx has setup a [Radmin VPN](https://www.radmin-vpn.com/) network for all Madness Crew members to join with a password of \"madness98\" and a network name of \"madnesscrew\"\nThis will be required for online play for games in the Monster Truck Madness series and the Motocross Madness series and may also prove useful for both mm1 and mm2!\n\nRadmin VPN | Download Free VPN\nRadmin VPN allows you to securely connect computers, located behind firewalls. Download it Free.",
+      "body": "Hello, @Announcements \n@xSHXDEx has setup a [Radmin VPN](https://www.radmin-vpn.com/) network for all Madness Crew members to join with a password of \"madness98\" and a network name of \"madnesscrew\"\nThis will be required for online play for games in the Monster Truck Madness series and the Motocross Madness series and may also prove useful for both mm1 and mm2!\n\nRadmin VPN | Download Free VPN\nRadmin VPN allows you to securely connect computers, located behind firewalls. Download it Free.",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1532168975411183636",
-      "image": ""
+      "image": "",
+      "emojis": {}
     },
     {
       "id": "1528766553753915572",
@@ -36,7 +39,11 @@
       "posted": "2026-07-20T14:12:29.524000+00:00",
       "body": "# A LEGENDARY MEET UP!\n\n@salsa flew over to meet the legend @KcRobin!:MADNESSCREW: :mm1:",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1528766553753915572",
-      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1528766552378310757/IMG_9108.jpg?ex=6a7b2dcd&is=6a79dc4d&hm=4d20cc691d296efccb95c680958aac2bd3a3bffa3b271c04e388bd9e4f940c30&"
+      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1528766552378310757/IMG_9108.jpg?ex=6a7b2dcd&is=6a79dc4d&hm=4d20cc691d296efccb95c680958aac2bd3a3bffa3b271c04e388bd9e4f940c30&",
+      "emojis": {
+        "MADNESSCREW": "https://cdn.discordapp.com/emojis/949574838798929920.png",
+        "mm1": "https://cdn.discordapp.com/emojis/796328497344806922.png"
+      }
     },
     {
       "id": "1514653529594269928",
@@ -45,7 +52,8 @@
       "posted": "2026-06-11T15:32:22.357000+00:00",
       "body": "Make sure to wish the turklander @Jebediah Kerman a happy birthday! 🎂",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1514653529594269928",
-      "image": ""
+      "image": "",
+      "emojis": {}
     },
     {
       "id": "1508919953095397589",
@@ -54,7 +62,10 @@
       "posted": "2026-05-26T19:49:11.195000+00:00",
       "body": "HAPPY BIRTHDAY TO THE LEGEND @xSHXDEx! :crownmote: 🎂",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1508919953095397589",
-      "image": ""
+      "image": "",
+      "emojis": {
+        "crownmote": "https://cdn.discordapp.com/emojis/408901963175165953.png"
+      }
     },
     {
       "id": "1499508681795047455",
@@ -63,25 +74,34 @@
       "posted": "2026-04-30T20:32:09.264000+00:00",
       "body": "Thanks HH!",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1499508681795047455",
-      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1499508681442857182/dogshit.png?ex=6a7ade09&is=6a798c89&hm=4288ee0f9a3d079f375daf52563f1175d16174718aca11363ba2f0ff9996a585&"
+      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1499508681442857182/dogshit.png?ex=6a7ade09&is=6a798c89&hm=4288ee0f9a3d079f375daf52563f1175d16174718aca11363ba2f0ff9996a585&",
+      "emojis": {}
     },
     {
       "id": "1499401549145702520",
       "author": "𝐏𝐚𝐧𝐨𝐳",
       "avatar": "https://cdn.discordapp.com/avatars/197903435230740480/c7c8028761ad265a5234a0251086225c.png?size=64",
       "posted": "2026-04-30T13:26:26.850000+00:00",
-      "body": "# Just a friendly reminder! \n\n@role \n\nToday starts our multiplayer bash for MM1’s 27th Birthday! Please don't feel shy to throw up a lobby on GameRanger and post it in #channel \n\n:mm1: :mm1beetle: :mm1cover: :mm1logo: :mm1setup:",
+      "body": "# Just a friendly reminder! \n\n@Announcements \n\nToday starts our multiplayer bash for MM1’s 27th Birthday! Please don't feel shy to throw up a lobby on GameRanger and post it in #channel \n\n:mm1: :mm1beetle: :mm1cover: :mm1logo: :mm1setup:",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1499401549145702520",
-      "image": ""
+      "image": "",
+      "emojis": {
+        "mm1": "https://cdn.discordapp.com/emojis/796328497344806922.png",
+        "mm1beetle": "https://cdn.discordapp.com/emojis/799059128672714782.png",
+        "mm1cover": "https://cdn.discordapp.com/emojis/796332020800159745.png",
+        "mm1logo": "https://cdn.discordapp.com/emojis/799059063140253736.png",
+        "mm1setup": "https://cdn.discordapp.com/emojis/852456732483387403.png"
+      }
     },
     {
       "id": "1498729673084113026",
       "author": "𝐏𝐚𝐧𝐨𝐳",
       "avatar": "https://cdn.discordapp.com/avatars/197903435230740480/c7c8028761ad265a5234a0251086225c.png?size=64",
       "posted": "2026-04-28T16:56:39.114000+00:00",
-      "body": "@role Bash this weekend for the 27th anniversary of the game! @role \n\nhttps://discord.gg/AtnF5yNfV?event=1498729304664834098",
+      "body": "@MM1 Multiplayer Bash this weekend for the 27th anniversary of the game! @Announcements \n\nhttps://discord.gg/AtnF5yNfV?event=1498729304664834098",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1498729673084113026",
-      "image": ""
+      "image": "",
+      "emojis": {}
     },
     {
       "id": "1498318461141778515",
@@ -90,43 +110,52 @@
       "posted": "2026-04-27T13:42:38.547000+00:00",
       "body": "Happy Birthday to our favorite scammer, under the water Indian, and mm1 hacker @axelrod2704!:bruhshri: 🎂 🎉",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1498318461141778515",
-      "image": ""
+      "image": "",
+      "emojis": {
+        "bruhshri": "https://cdn.discordapp.com/emojis/932398903087730728.png"
+      }
     },
     {
       "id": "1498151373433208922",
       "author": "𝐏𝐚𝐧𝐨𝐳",
       "avatar": "https://cdn.discordapp.com/avatars/197903435230740480/c7c8028761ad265a5234a0251086225c.png?size=64",
       "posted": "2026-04-27T02:38:41.733000+00:00",
-      "body": "**THIS IS DIRECTED TOWARDS ALL MEMBERS OF MADNESS CREW**\n\nAlright, I can't believe I have to say this, but it has come to my attention that some members have been getting disrespected for no reason at all. Please if you guys have nothing nice to say keep your fingers off the keyboard and move on with your day. If you don't like someone's mod, please give constructive feedback so the modder can work on stuff instead of making them feel like their work is awful. \n\nMost of us here have crude humor and like to make jokes/poke fun at each other but the random attacking people with name-calling needs to stop if the person doesn’t like it. \n\nThank you for your attention to this matter and have a good rest of your weekend! ❤️\n\n@role",
+      "body": "**THIS IS DIRECTED TOWARDS ALL MEMBERS OF MADNESS CREW**\n\nAlright, I can't believe I have to say this, but it has come to my attention that some members have been getting disrespected for no reason at all. Please if you guys have nothing nice to say keep your fingers off the keyboard and move on with your day. If you don't like someone's mod, please give constructive feedback so the modder can work on stuff instead of making them feel like their work is awful. \n\nMost of us here have crude humor and like to make jokes/poke fun at each other but the random attacking people with name-calling needs to stop if the person doesn’t like it. \n\nThank you for your attention to this matter and have a good rest of your weekend! ❤️\n\n@Announcements",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1498151373433208922",
-      "image": ""
+      "image": "",
+      "emojis": {}
     },
     {
       "id": "1496973673150808285",
       "author": "VJ",
       "avatar": "https://cdn.discordapp.com/avatars/369872345692635156/9c4bd4d54ac900352cf7a8a1c648b440.png?size=64",
       "posted": "2026-04-23T20:38:56.105000+00:00",
-      "body": "By the way. Today is the birthday of @Goth Mommy Celebrate and stuff, or she'll cast a witches spell on you. 🪄  @role",
+      "body": "By the way. Today is the birthday of @Goth Mommy Celebrate and stuff, or she'll cast a witches spell on you. 🪄  @Announcements",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1496973673150808285",
-      "image": ""
+      "image": "",
+      "emojis": {}
     },
     {
       "id": "1493947429643485214",
       "author": "𝐏𝐚𝐧𝐨𝐳",
       "avatar": "https://cdn.discordapp.com/avatars/197903435230740480/c7c8028761ad265a5234a0251086225c.png?size=64",
       "posted": "2026-04-15T12:13:43.428000+00:00",
-      "body": "Happy Birthday to our newest mm1 map making god!🎂:GTROrange:  @GTR !!! @role",
+      "body": "Happy Birthday to our newest mm1 map making god!🎂:GTROrange:  @GTR !!! @Announcements",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1493947429643485214",
-      "image": ""
+      "image": "",
+      "emojis": {
+        "GTROrange": "https://cdn.discordapp.com/emojis/862906819042082817.png"
+      }
     },
     {
       "id": "1492594212833591447",
       "author": "𝐏𝐚𝐧𝐨𝐳",
       "avatar": "https://cdn.discordapp.com/avatars/197903435230740480/c7c8028761ad265a5234a0251086225c.png?size=64",
       "posted": "2026-04-11T18:36:31.399000+00:00",
-      "body": "@role",
+      "body": "@Announcements",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1492594212833591447",
-      "image": ""
+      "image": "",
+      "emojis": {}
     }
   ],
   "videos": []
