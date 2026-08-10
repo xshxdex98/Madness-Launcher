@@ -28,8 +28,9 @@ turns out to write something different):
     128     4     non-zero when the slot holds anything at all
 
 Records group in tens: slots 0-9 belong to the first race, 10-19 to the
-second, and so on. Which race that actually *is* has to be established by
-experiment rather than assumed — see RACE_NAMES.
+second, and so on, in the order the game lists them — Blitz, then Circuit,
+then Checkpoint. Those names come from the install's own archives rather than
+from a table here; see cityinfo.py.
 """
 
 from __future__ import annotations
@@ -37,6 +38,8 @@ from __future__ import annotations
 import struct
 from dataclasses import dataclass
 from pathlib import Path
+
+from . import cityinfo
 
 MAGIC = 1234
 HEADER = 8
@@ -63,11 +66,13 @@ PAR_SLOTS_ARE_ODD = True
 MIN_TIME = 0.5
 MAX_TIME = 3600.0
 
-# Which race each group of ten slots belongs to. Deliberately empty: the
-# mapping cannot be read out of the file, and guessing it would put real times
-# under the wrong race name, which is worse than showing no name at all.
-# tools/mm1_probe.py resolves it one race at a time by diffing.
+# Which race each group of ten slots belongs to. Filled from the install's own
+# archives by `apply_city`, because the game states it outright — see
+# cityinfo.py. Empty until then, and a race with no name shows as its number
+# rather than as a guess.
 RACE_NAMES: dict[int, str] = {}
+RACE_KINDS: dict[int, str] = {}
+
 
 # The game's internal car names are lowercase and prefixed; these are what a
 # person calls them. Unknown cars fall back to the raw name with the prefix
@@ -94,6 +99,26 @@ VANILLA_CARS = frozenset(CAR_NAMES)
 # Which board a run belongs on.
 BOARD_VANILLA = "vanilla"
 BOARD_MODDED = "modded"
+
+
+def apply_city(info: "cityinfo.CityInfo | None") -> None:
+    """Adopt the race and car tables read from an install."""
+    RACE_NAMES.clear()
+    RACE_KINDS.clear()
+    if info is None:
+        return
+    for race in info.races:
+        RACE_NAMES[race.index] = race.name
+        RACE_KINDS[race.index] = race.kind
+    # The game's own descriptions beat the hand-written table below.
+    CAR_NAMES.update(info.car_names())
+
+
+def load_city(install: "Path") -> "cityinfo.CityInfo | None":
+    """Read an install's tables and adopt them in one step."""
+    info = cityinfo.read(Path(install))
+    apply_city(info)
+    return info
 
 
 def is_vanilla_car(car: str) -> bool:
@@ -133,6 +158,12 @@ def pretty_car(raw: str) -> str:
 def race_label(index: int) -> str:
     """What to call race `index` — its name once known, its number until then."""
     return RACE_NAMES.get(index) or f"Race {index + 1}"
+
+
+def race_kind(index: int) -> str:
+    """Blitz, Circuit or Checkpoint. A 40s Blitz and a 4min Circuit are not
+    the same achievement, so the board says which is which."""
+    return RACE_KINDS.get(index, "")
 
 
 @dataclass(frozen=True)
