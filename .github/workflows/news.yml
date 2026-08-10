@@ -40,13 +40,18 @@ jobs:
 
       - name: Commit if the feed changed
         run: |
-          if git diff --quiet -- news.json; then
+          # Staged first, then compared against HEAD. Comparing the working
+          # tree instead (git diff -- news.json) silently does nothing on the
+          # very first run: the file is untracked at that point, and git diff
+          # does not look at untracked files, so it reports no change and the
+          # feed never gets committed at all.
+          git add news.json
+          if git diff --cached --quiet -- news.json; then
             echo "No change."
             exit 0
           fi
           git config user.name "news-bot"
           git config user.email "news-bot@users.noreply.github.com"
-          git add news.json
           git commit -m "news: refresh feed"
           # Another tick may have landed a commit while this one was building.
           git pull --rebase --autostash
