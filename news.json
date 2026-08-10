@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-10T18:01:03Z",
+  "generated": "2026-08-10T18:10:52Z",
   "announcements": [
     {
       "id": "1536066593161879572",
@@ -158,5 +158,186 @@
       "emojis": {}
     }
   ],
-  "videos": []
+  "videos": [
+    {
+      "id": "66OlgxGKERQ",
+      "title": "Midtown Madness: Crosstown Switchback - 1:38.74 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-08-09T13:07:42+00:00",
+      "url": "https://www.youtube.com/watch?v=66OlgxGKERQ",
+      "thumbnail": "https://i.ytimg.com/vi/66OlgxGKERQ/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "bDrANb3Wb5g",
+      "title": "Madness Crew Funny Clip #24 | Monster Truck Madness 2 Multiplayer Flying Glitch!",
+      "channel": "Panoz",
+      "published": "2026-08-07T21:29:25+00:00",
+      "url": "https://www.youtube.com/watch?v=bDrANb3Wb5g",
+      "thumbnail": "https://i.ytimg.com/vi/bDrANb3Wb5g/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "TpzeEp4qABw",
+      "title": "MTM1 Physics😂 #discord #multiplayer #monstertruckmadness  #monstertruck #retrogaming #funny #fyp",
+      "channel": "Panoz",
+      "published": "2026-08-06T15:00:44+00:00",
+      "url": "https://www.youtube.com/watch?v=TpzeEp4qABw",
+      "thumbnail": "https://i.ytimg.com/vi/TpzeEp4qABw/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "EaU3dhj6HXc",
+      "title": "Midtown Madness: Nocturnal Navigator - 1:18.20 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-08-02T23:52:46+00:00",
+      "url": "https://www.youtube.com/watch?v=EaU3dhj6HXc",
+      "thumbnail": "https://i.ytimg.com/vi/EaU3dhj6HXc/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "yHFXHWxmHts",
+      "title": "Monster Truck Madness: Yucatan Adventure with the Madness Crew! | Multiplayer",
+      "channel": "Panoz",
+      "published": "2026-08-01T17:46:34+00:00",
+      "url": "https://www.youtube.com/watch?v=yHFXHWxmHts",
+      "thumbnail": "https://i.ytimg.com/vi/yHFXHWxmHts/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "40puVC4GhL0",
+      "title": "Motocross Madness 2: Munchberry Farms - Crispy Crunchies with the Madness Crew! | MULTIPLAYER WORKS!",
+      "channel": "Panoz",
+      "published": "2026-07-30T13:23:13+00:00",
+      "url": "https://www.youtube.com/watch?v=40puVC4GhL0",
+      "thumbnail": "https://i.ytimg.com/vi/40puVC4GhL0/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "OABqZVUtn9I",
+      "title": "Midtown Madness - Angry Traffic (New Feature)",
+      "channel": "VJ",
+      "published": "2026-07-27T10:44:33+00:00",
+      "url": "https://www.youtube.com/watch?v=OABqZVUtn9I",
+      "thumbnail": "https://i.ytimg.com/vi/OABqZVUtn9I/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "uH1kT1UiGqg",
+      "title": "Midtown Madness: Beat The Bridges - 59.85 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-07-26T13:10:11+00:00",
+      "url": "https://www.youtube.com/watch?v=uH1kT1UiGqg",
+      "thumbnail": "https://i.ytimg.com/vi/uH1kT1UiGqg/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "VbEAohVkCwY",
+      "title": "Midtown Madness: Freeway Flyer - 1:35.45 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-07-19T04:48:23+00:00",
+      "url": "https://www.youtube.com/watch?v=VbEAohVkCwY",
+      "thumbnail": "https://i.ytimg.com/vi/VbEAohVkCwY/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "0krW-Rz-ARc",
+      "title": "Midtown Madness: Soldier Sneaker - 1:04.56 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-07-12T13:00:59+00:00",
+      "url": "https://www.youtube.com/watch?v=0krW-Rz-ARc",
+      "thumbnail": "https://i.ytimg.com/vi/0krW-Rz-ARc/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "j-CkeavE9b4",
+      "title": "Midtown Madness: Beginner's Luck - 28.92 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-07-05T12:01:21+00:00",
+      "url": "https://www.youtube.com/watch?v=j-CkeavE9b4",
+      "thumbnail": "https://i.ytimg.com/vi/j-CkeavE9b4/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "y3J8sxEzZnY",
+      "title": "Midtown Madness: North River Run - 50.36 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-07-05T12:01:10+00:00",
+      "url": "https://www.youtube.com/watch?v=y3J8sxEzZnY",
+      "thumbnail": "https://i.ytimg.com/vi/y3J8sxEzZnY/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "mErljUsgCC4",
+      "title": "Midtown Madness 2: Cops & Robbers #25 | Happy 4th Of July!",
+      "channel": "Panoz",
+      "published": "2026-07-04T19:50:19+00:00",
+      "url": "https://www.youtube.com/watch?v=mErljUsgCC4",
+      "thumbnail": "https://i.ytimg.com/vi/mErljUsgCC4/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "JKSHqULBC4s",
+      "title": "Midtown Madness: Cops & Robbers #53 | Giga saves Yoshi's Demise!",
+      "channel": "Panoz",
+      "published": "2026-07-03T19:13:39+00:00",
+      "url": "https://www.youtube.com/watch?v=JKSHqULBC4s",
+      "thumbnail": "https://i.ytimg.com/vi/JKSHqULBC4s/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "4CrQ1C_OhzQ",
+      "title": "Midtown Madness 1: Chinese Cruise with the Madness Crew! | OWNAGE CHOKES!",
+      "channel": "Panoz",
+      "published": "2026-06-30T16:54:41+00:00",
+      "url": "https://www.youtube.com/watch?v=4CrQ1C_OhzQ",
+      "thumbnail": "https://i.ytimg.com/vi/4CrQ1C_OhzQ/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "2xcsBa23l1I",
+      "title": "Giggity!😉🤣 #multiplayer #discord #midtownmadness #retrogaming #racing #funny #fyp #freightliner",
+      "channel": "Panoz",
+      "published": "2026-06-29T12:28:43+00:00",
+      "url": "https://www.youtube.com/watch?v=2xcsBa23l1I",
+      "thumbnail": "https://i.ytimg.com/vi/2xcsBa23l1I/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "0CE962eaHp4",
+      "title": "Midtown Madness: Tall Tower Blitz - 1:07.76 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-06-28T22:53:49+00:00",
+      "url": "https://www.youtube.com/watch?v=0CE962eaHp4",
+      "thumbnail": "https://i.ytimg.com/vi/0CE962eaHp4/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "P9qw2dkO-IE",
+      "title": "SHRI PING!😂 #discord #multiplayer #gaming #racing #retrogaming #midtownmadness #ping #shri #fyp",
+      "channel": "Panoz",
+      "published": "2026-06-27T15:37:24+00:00",
+      "url": "https://www.youtube.com/watch?v=P9qw2dkO-IE",
+      "thumbnail": "https://i.ytimg.com/vi/P9qw2dkO-IE/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "Kiew-JfwhXU",
+      "title": "WHAT JUST HAPPENED?!😂 #discord #gaming #multiplayer #midtownmadness #funny #racing #fyp #shorts",
+      "channel": "Panoz",
+      "published": "2026-06-23T16:32:04+00:00",
+      "url": "https://www.youtube.com/watch?v=Kiew-JfwhXU",
+      "thumbnail": "https://i.ytimg.com/vi/Kiew-JfwhXU/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "mH6q00LG_z0",
+      "title": "Midtown Madness 1: Aptitude Test with the Madness Crew! #6 | Anthon's World Famous \"Shortcut\"",
+      "channel": "Panoz",
+      "published": "2026-06-22T14:47:52+00:00",
+      "url": "https://www.youtube.com/watch?v=mH6q00LG_z0",
+      "thumbnail": "https://i.ytimg.com/vi/mH6q00LG_z0/mqdefault.jpg",
+      "source": "youtube"
+    }
+  ]
 }
