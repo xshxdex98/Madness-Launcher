@@ -144,13 +144,14 @@ class BoardView(QWidget):
         # community ones: every race already held a world record, so nobody
         # else's time could appear on it.
         #
-        # Source is not part of the key, so a person has one row on a race
-        # however their time arrived. Beating your own published run replaces
-        # it rather than sitting beside it.
+        # Keyed by car too, matching how the game records a time and how the
+        # relay groups them: a faster lap in the same car replaces the old one
+        # rather than sitting beside it. Source is not part of the key, so a
+        # time replaces your own earlier one however it arrived.
         best: dict[tuple, object] = {}
         for record in rows:
             who = (record.username or record.driver).lower()
-            key = (record.difficulty, record.race, who)
+            key = (record.difficulty, record.race, who, record.car.lower())
             current = best.get(key)
             if current is None or record.seconds < current.seconds:
                 best[key] = record

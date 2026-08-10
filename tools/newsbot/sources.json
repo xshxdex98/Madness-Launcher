@@ -35,6 +35,13 @@
       "limit": 100
     }
   ],
+  "_prune_note": [
+    "With this on, the relay deletes a board message once every record in it",
+    "has been beaten by a faster run on the same race, difficulty and car by",
+    "the same driver. It keeps the channel the same shape as the board.",
+    "Deleting cannot be undone, so it is opt-in."
+  ],
+  "records_prune": true,
   "records_webhook": "https://discord.com/api/webhooks/1536446666033471611/p0KiQd14wrCS7GaSe3Dko1YwGepf7gFXqq9SKVnuk2DdnWXHKh3zhRPklp6kdwtB6ZhO",
 
   "_speedrun_note": [

@@ -573,8 +573,61 @@ def _parse_record_line(line: str, message: dict[str, Any]) -> dict[str, Any] | N
     }
 
 
+def _record_key(record: dict[str, Any]) -> tuple:
+    """What counts as the same record, so a faster one replaces it.
+
+    Driver, race, difficulty and car. Driver, because keeping only the fastest
+    per race meant a second player's time never reached the board at all.
+    Car, because the game itself records a time against the car it was set in,
+    and beating your own Mustang lap should replace that lap rather than
+    landing beside it.
+    """
+    return (
+        record["game"],
+        record["board"],
+        record["difficulty"],
+        record["race"],
+        record["username"].lower(),
+        record.get("car", "").lower(),
+    )
+
+
+def prune_board(webhook: str, message_ids: list[str]) -> int:
+    """Delete board messages whose every record has been beaten.
+
+    The channel is the board's source of truth, so a superseded time sits
+    there forever and is re-read on every run. Removing it keeps the channel
+    the same shape as the board.
+
+    A message can carry several records, so one is only deleted when all of
+    them have been beaten — otherwise pruning a stale time would take a
+    current one down with it.
+    """
+    if not webhook or not message_ids:
+        return 0
+    removed = 0
+    for message_id in message_ids:
+        request = urllib.request.Request(
+            f"{webhook}/messages/{message_id}",
+            method="DELETE",
+            headers={"User-Agent": USER_AGENT},
+        )
+        try:
+            time.sleep(0.3)
+            with urllib.request.urlopen(request, timeout=30):
+                removed += 1
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                removed += 1          # already gone
+            else:
+                log(f"warning: could not prune message {message_id}: {exc.code}")
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            log(f"warning: could not prune message {message_id}: {exc}")
+    return removed
+
+
 def collect_records(config: dict[str, Any], token: str) -> tuple[list[dict], int]:
-    """Each driver's best claimed time, per race, board and difficulty.
+    """Each driver's best claimed time, per race, difficulty and car.
 
     One entry per person per race, so the channel can hold every attempt
     anyone ever posted and the board still reads as a leaderboard rather than
@@ -584,6 +637,9 @@ def collect_records(config: dict[str, Any], token: str) -> tuple[list[dict], int
     best: dict[tuple, dict] = {}
     failures = 0
     seen = 0
+    # message id -> how many of its records are still the best of their kind.
+    # A message is only safe to delete once none of them are.
+    live: dict[str, int] = {}
     for source in config.get("records") or []:
         channel_id = str(source.get("channel_id") or "").strip()
         if not channel_id:
@@ -597,22 +653,24 @@ def collect_records(config: dict[str, Any], token: str) -> tuple[list[dict], int
         for message in messages:
             for record in parse_records(message):
                 seen += 1
-                # Keyed by driver as well as by race. Keeping only the
-                # fastest per race meant a second player's time never
-                # reached the feed at all — they could race for months and
-                # the board would never show them once anyone was quicker.
-                key = (record["game"], record["board"],
-                       record["difficulty"], record["race"],
-                       record["username"].lower())
+                key = _record_key(record)
                 current = best.get(key)
+                live.setdefault(record["message_id"], 0)
                 if current is None or record["seconds"] < current["seconds"]:
+                    if current is not None:
+                        live[current["message_id"]] -= 1
                     best[key] = record
+                    live[record["message_id"]] += 1
         log(f"records {channel_id}: {len(messages)} messages, {seen} records")
 
     out = sorted(
-        best.values(), key=lambda r: (r["game"], r["board"], r["race"], r["difficulty"])
+        best.values(),
+        key=lambda r: (r["game"], r["board"], r["race"], r["difficulty"]),
     )
-    return out[:MAX_BOARD_RECORDS], failures
+    superseded = sorted(mid for mid, alive in live.items() if mid and alive <= 0)
+    if superseded:
+        log(f"records: {len(superseded)} message(s) fully superseded")
+    return out[:MAX_BOARD_RECORDS], failures, superseded
 
 
 # ----------------------------------------------------------------------
@@ -832,7 +890,14 @@ def balanced(videos: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
 def build(config: dict[str, Any], token: str) -> dict[str, Any]:
     announcements, ann_failures = collect_announcements(config, token)
     videos, vid_failures = collect_videos(config, token)
-    records, _ = collect_records(config, token)
+    records, _, superseded = collect_records(config, token)
+    # Beaten times are cleared out of the channel, so it stays the same shape
+    # as the board rather than accumulating every attempt ever posted. Off
+    # unless asked for: it deletes messages, and that cannot be undone.
+    if config.get("records_prune") is True:
+        pruned = prune_board(str(config.get("records_webhook") or ""), superseded)
+        if pruned:
+            log(f"records: pruned {pruned} superseded message(s)")
     external, _ = speedrun_records(config)
     # Appended rather than merged into the same slots: an external record
     # and a community one are different claims and the tab shows both.

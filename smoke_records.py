@@ -470,7 +470,7 @@ msgs = [
     {"id": "4", "content": 'game="mm1" board="modded"  race="5" diff="pro" time="60.0" by="D"'},
 ]
 build_news.discord_messages = lambda c, t, l: msgs
-collected, _ = build_news.collect_records(
+collected, _, _ = build_news.collect_records(
     {"records": [{"channel_id": "1", "guild_id": "2"}]}, "token"
 )
 check("every driver on the race is kept", len(collected) == 4, str(len(collected)))
@@ -795,7 +795,7 @@ msgs = [
                            'time="95.000" by="slow"'},
 ]
 build_news.discord_messages = lambda c, t, l: msgs
-kept, _ = build_news.collect_records({"records": [{"channel_id": "1"}]}, "tok")
+kept, _, _ = build_news.collect_records({"records": [{"channel_id": "1"}]}, "tok")
 check("a slower driver survives the relay", len(kept) == 2, str(len(kept)))
 check("and only their best attempt",
       sorted(r["seconds"] for r in kept) == [19.520, 95.0],
@@ -806,6 +806,68 @@ check("the store keeps them apart too",
 check("but still collapses one person's attempts",
       len(store.merge([], [entry(race=0, username="a", seconds=50.0),
                            entry(race=0, username="a", seconds=45.0)])) == 1)
+
+print("\na faster run on the same car and race retires the old one")
+
+
+def board_msg(mid, **kw):
+    fields = {"game": "mm1", "board": "vanilla", "race": "0", "diff": "pro"}
+    fields.update(kw)
+    line = " ".join(f'{k}="{v}"' for k, v in fields.items())
+    return {"id": mid, "content": line}
+
+
+def collect(messages):
+    build_news.discord_messages = lambda c, t, l: messages
+    return build_news.collect_records({"records": [{"channel_id": "1"}]}, "tok")
+
+
+kept, _, dead = collect([
+    board_msg("100", time="60.000", by="Robin", car="vppanozgt"),
+    board_msg("101", time="55.000", by="Robin", car="vppanozgt"),
+])
+check("only the faster time survives", len(kept) == 1, str(len(kept)))
+check("and it is the faster one", abs(kept[0]["seconds"] - 55.0) < 1e-3)
+check("the beaten message is marked for deletion", dead == ["100"], str(dead))
+
+kept, _, dead = collect([
+    board_msg("200", time="60.000", by="Robin", car="vppanozgt"),
+    board_msg("201", time="65.000", by="Robin", car="vpmustang99"),
+])
+check("a different car is a different record", len(kept) == 2, str(len(kept)))
+check("so nothing is deleted", dead == [], str(dead))
+
+kept, _, dead = collect([
+    board_msg("300", time="60.000", by="Robin", car="vppanozgt"),
+    board_msg("301", time="90.000", by="Newbie", car="vppanozgt"),
+])
+check("a slower driver is not retired by a faster one", len(kept) == 2)
+check("and nothing of theirs is deleted", dead == [], str(dead))
+
+print("\na message is only deleted once every record in it is beaten")
+batched = {"id": "400", "content":
+           'game="mm1" board="vanilla" race="0" diff="pro" time="60.0" '
+           'by="Robin" car="vppanozgt"\n'
+           'game="mm1" board="vanilla" race="1" diff="pro" time="70.0" '
+           'by="Robin" car="vppanozgt"'}
+kept, _, dead = collect([
+    batched, board_msg("401", time="55.0", by="Robin", car="vppanozgt")])
+check("a half-beaten message is left alone", dead == [], str(dead))
+check("but the beaten record is dropped from the board",
+      sorted(r["seconds"] for r in kept) == [55.0, 70.0],
+      str(sorted(r["seconds"] for r in kept)))
+kept, _, dead = collect([
+    batched,
+    board_msg("402", time="55.0", by="Robin", car="vppanozgt"),
+    board_msg("403", race="1", time="65.0", by="Robin", car="vppanozgt"),
+])
+check("once both are beaten the message goes", dead == ["400"], str(dead))
+
+print("\npruning is off unless it is asked for")
+check("the default is not to delete anything",
+      build_news.prune_board("", ["1"]) == 0)
+check("and nothing is deleted without message ids",
+      build_news.prune_board("https://discord.com/api/webhooks/1/x", []) == 0)
 
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])
