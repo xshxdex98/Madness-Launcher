@@ -77,6 +77,21 @@ class ThumbnailCache(QObject):
             return found
         return self._read_disk(url)
 
+    def local_path(self, url: str) -> str:
+        """The on-disk file backing a cached image, or empty if not there yet.
+
+        Rich text in a QLabel cannot fetch over the network, so an inline
+        `<img>` — a custom emoji in the middle of a sentence — has to point at
+        a file that already exists. Returned with forward slashes because the
+        path goes into an HTML attribute, where a Windows backslash is an
+        escape character rather than a separator.
+        """
+        url = safe_image_url(url)
+        if not url:
+            return ""
+        path = self._path_for(url)
+        return path.as_posix() if path.is_file() else ""
+
     def request(self, url: str) -> QPixmap | None:
         """The pixmap now, or None with `ready` to follow if it can be had."""
         url = safe_image_url(url)

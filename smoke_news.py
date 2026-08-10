@@ -265,6 +265,44 @@ check(
 )
 
 
+print("\ncustom emoji become images once their file is on disk")
+EMOJI = {"MADNESSCREW": "https://cdn.discordapp.com/emojis/123.png"}
+never = to_rich_text("nice :MADNESSCREW: run", EMOJI, lambda url: "")
+check("still readable while the image is downloading",
+      ":MADNESSCREW:" in never and "<img" not in never, never)
+landed = to_rich_text("nice :MADNESSCREW: run", EMOJI, lambda url: "C:/cache/abc")
+check("swapped for an img once it has landed", "<img src=\"C:/cache/abc\"" in landed,
+      landed)
+check("and sized so the line does not grow", 'width="18"' in landed, landed)
+check("an emoji the post never declared is left alone",
+      ":unknown:" in to_rich_text(":unknown:", EMOJI, lambda url: "C:/cache/abc"))
+check("no emoji map means no substitution",
+      ":MADNESSCREW:" in to_rich_text("nice :MADNESSCREW: run"))
+
+print("\nan emoji name is not a way to inject markup")
+from madness_launcher.news.model import emoji_map  # noqa: E402
+
+check("a name with markup is rejected",
+      emoji_map({'x" onerror="alert(1)': "https://cdn.discordapp.com/emojis/1.png"})
+      == {})
+check("a name with a space is rejected",
+      emoji_map({"two words": "https://cdn.discordapp.com/emojis/1.png"}) == {})
+check("an off-CDN emoji URL is rejected",
+      emoji_map({"evil": "https://evil.test/x.png"}) == {})
+check("a normal one is kept",
+      emoji_map({"mm1": "https://cdn.discordapp.com/emojis/1.png"}) != {})
+check("not a dict is survived", emoji_map("nope") == {})
+check("the count is capped",
+      len(emoji_map({f"e{i}": "https://cdn.discordapp.com/emojis/1.png"
+                     for i in range(80)})) <= 32)
+hostile_path = to_rich_text(
+    ":mm1:", {"mm1": "https://cdn.discordapp.com/emojis/1.png"},
+    lambda url: 'x" onerror="alert(1)',
+)
+check("a path with a quote in it cannot break out of the attribute",
+      '" onerror="' not in hostile_path and "&quot;" in hostile_path,
+      hostile_path)
+
 print("\nunread counting")
 seen_all = feed.newest
 check("nothing unread once everything is seen",
@@ -453,12 +491,35 @@ message = {
         {"id": "222", "username": "someone"},
     ],
 }
-readable = build_news.readable(message)
+emoji_out: dict[str, str] = {}
+readable = build_news.readable(
+    message, {"444": "Madness Crew"}, emoji_out
+)
 check("user mentions become names", "@Robin" in readable and "@someone" in readable,
       readable)
 check("no raw snowflakes survive", "<@" not in readable, readable)
 check("channels are readable", "#channel" in readable, readable)
 check("custom emoji become their name", ":madness:" in readable, readable)
+
+print("\nrole pings carry the role's real name")
+check("the role name is used", "@Madness Crew" in readable, readable)
+check("an unknown role falls back rather than breaking",
+      "@role" in build_news.readable(
+          {"content": "<@&999> hi", "mentions": []}, {"444": "Madness Crew"}, {}))
+check("no roles fetched at all still reads",
+      "@role" in build_news.readable({"content": "<@&444> hi", "mentions": []}))
+
+print("\nemoji image URLs are collected alongside the text")
+check("the emoji was collected", "madness" in emoji_out, str(emoji_out))
+check("it points at Discord's emoji CDN",
+      emoji_out.get("madness") == "https://cdn.discordapp.com/emojis/555.png",
+      str(emoji_out))
+animated: dict[str, str] = {}
+build_news.readable({"content": "<a:spin:777>", "mentions": []}, {}, animated)
+check("an animated emoji asks for the gif",
+      animated.get("spin", "").endswith("/777.gif"), str(animated))
+check("what the relay emits is what the launcher accepts",
+      emoji_map(emoji_out) == emoji_out, str(emoji_map(emoji_out)))
 
 print("\nan embed-only announcement is not read as empty")
 embed_only = {

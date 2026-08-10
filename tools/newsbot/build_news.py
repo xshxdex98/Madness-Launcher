@@ -56,7 +56,10 @@ _YT_PATTERNS = (
     re.compile(r"youtube\.com/live/([A-Za-z0-9_-]{11})"),
 )
 
-_CUSTOM_EMOJI = re.compile(r"<a?:(\w+):\d+>")
+_CUSTOM_EMOJI = re.compile(r"<a?:(\w+):(\d+)>")
+# Matches the launcher's own rule, so a name the relay emits is always one the
+# launcher will accept as a substitution key.
+_EMOJI_NAME = re.compile(r"\w{1,32}")
 _CHANNEL_MENTION = re.compile(r"<#(\d+)>")
 _ROLE_MENTION = re.compile(r"<@&(\d+)>")
 _USER_MENTION = re.compile(r"<@!?(\d+)>")
@@ -117,6 +120,33 @@ def discord_messages(channel_id: str, token: str, limit: int) -> list[dict[str, 
     return [item for item in data if isinstance(item, dict)]
 
 
+def guild_roles(guild_id: str, token: str, cache: dict[str, dict[str, str]]) -> dict[str, str]:
+    """`{role id: role name}` for a server, fetched at most once per run.
+
+    Messages carry the IDs of the roles they ping but not the names, so
+    without this every `@everyone`-style role mention in an announcement
+    reaches the launcher as a bare "@role".
+    """
+    if guild_id in cache:
+        return cache[guild_id]
+    roles: dict[str, str] = {}
+    if guild_id:
+        try:
+            data = get_json(
+                f"{DISCORD_API}/guilds/{guild_id}/roles",
+                {"Authorization": f"Bot {token}"},
+            )
+        except SourceError as exc:
+            # Not fatal: the posts are still worth publishing without it.
+            log(f"warning: could not read roles for guild {guild_id}: {exc}")
+            data = []
+        for role in data if isinstance(data, list) else []:
+            if isinstance(role, dict) and role.get("id"):
+                roles[str(role["id"])] = str(role.get("name") or "role")
+    cache[guild_id] = roles
+    return roles
+
+
 def author_of(message: dict[str, Any]) -> tuple[str, str]:
     """A display name and avatar URL for whoever posted."""
     author = message.get("author") or {}
@@ -139,14 +169,24 @@ def author_of(message: dict[str, Any]) -> tuple[str, str]:
     return str(name), url
 
 
-def readable(message: dict[str, Any]) -> str:
+def readable(
+    message: dict[str, Any],
+    roles: dict[str, str] | None = None,
+    emojis: dict[str, str] | None = None,
+) -> str:
     """Message content with Discord's markup turned into something readable.
 
     Mentions arrive as raw snowflakes (`<@1234>`), which would otherwise be
-    shown to the user verbatim. The names come from the message's own
-    `mentions` array, so no extra API calls are needed.
+    shown to the user verbatim. User names come from the message's own
+    `mentions` array; role names come from `roles`, which the caller fetches
+    once per server.
+
+    Custom emoji are left in the body as `:name:` and their image URLs
+    collected into `emojis` rather than being substituted inline. A launcher
+    that cannot draw them still reads correctly, and the feed stays plain text.
     """
     text = str(message.get("content") or "")
+    roles = roles or {}
 
     names = {
         str(user.get("id")): str(user.get("global_name") or user.get("username") or "someone")
@@ -154,9 +194,17 @@ def readable(message: dict[str, Any]) -> str:
         if isinstance(user, dict)
     }
     text = _USER_MENTION.sub(lambda m: "@" + names.get(m.group(1), "someone"), text)
-    text = _ROLE_MENTION.sub("@role", text)
+    text = _ROLE_MENTION.sub(lambda m: "@" + roles.get(m.group(1), "role"), text)
     text = _CHANNEL_MENTION.sub("#channel", text)
-    text = _CUSTOM_EMOJI.sub(lambda m: f":{m.group(1)}:", text)
+
+    def emoji(match: re.Match[str]) -> str:
+        name, emoji_id, animated = match.group(1), match.group(2), match.group(0)[1] == "a"
+        if emojis is not None and _EMOJI_NAME.fullmatch(name):
+            suffix = "gif" if animated else "png"
+            emojis[name] = f"https://cdn.discordapp.com/emojis/{emoji_id}.{suffix}"
+        return f":{name}:"
+
+    text = _CUSTOM_EMOJI.sub(emoji, text)
 
     # Announcement posts are very often an embed with an empty content field.
     for embed in message.get("embeds") or []:
@@ -206,6 +254,7 @@ def _is_discord_cdn(url: str) -> bool:
 def collect_announcements(config: dict[str, Any], token: str) -> tuple[list[dict], int]:
     out: list[dict[str, Any]] = []
     failures = 0
+    role_cache: dict[str, dict[str, str]] = {}
     for source in config.get("announcements") or []:
         channel_id = str(source.get("channel_id") or "").strip()
         guild_id = str(source.get("guild_id") or "").strip()
@@ -219,8 +268,10 @@ def collect_announcements(config: dict[str, Any], token: str) -> tuple[list[dict
             failures += 1
             continue
 
+        roles = guild_roles(guild_id, token, role_cache)
         for message in messages:
-            body = readable(message)
+            emojis: dict[str, str] = {}
+            body = readable(message, roles, emojis)
             image = image_of(message)
             if not body and not image:
                 continue
@@ -240,6 +291,7 @@ def collect_announcements(config: dict[str, Any], token: str) -> tuple[list[dict
                     "body": body,
                     "url": jump,
                     "image": image,
+                    "emojis": emojis,
                 }
             )
         log(f"announcements {channel_id}: {len(messages)} messages read")

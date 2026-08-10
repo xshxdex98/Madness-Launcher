@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import html
 import re
+from typing import Callable
 
 from PySide6.QtCore import Qt, QUrl, Signal
 from PySide6.QtGui import (
@@ -60,14 +61,29 @@ _HEADING_RE = re.compile(r"^(#{1,3}) (.+)$", re.MULTILINE)
 _HEADING_SIZES = {1: 17, 2: 15, 3: 14}
 # Trailing punctuation is almost never part of the link someone pasted.
 _TRAILING = ".,;:!?)]}'\""
+# `:name:` left in the body by the relay for each custom emoji it saw.
+_EMOJI_TOKEN = re.compile(r":(\w{1,32}):")
+# Roughly cap-height for 13px body text, so a line with emoji in it does not
+# stand taller than the lines around it.
+EMOJI_SIZE = 18
 
 
-def to_rich_text(text: str) -> str:
+def to_rich_text(
+    text: str,
+    emojis: dict[str, str] | None = None,
+    resolve: "Callable[[str], str] | None" = None,
+) -> str:
     """Escaped body text with links and a little Discord formatting restored.
 
-    Only the three markers that actually turn up in announcement posts are
-    handled. Everything else stays literal, which is the safe direction to be
-    wrong in: an unrendered asterisk is a blemish, an unescaped tag is a hole.
+    Only the markers that actually turn up in announcement posts are handled.
+    Everything else stays literal, which is the safe direction to be wrong in:
+    an unrendered asterisk is a blemish, an unescaped tag is a hole.
+
+    `emojis` maps a custom emoji's name to its image URL, and `resolve` turns
+    that URL into a local file path — empty while the image is still on its
+    way. Rich text in a QLabel cannot fetch anything itself, so an emoji whose
+    image has not landed yet stays as `:name:` and is swapped in on a later
+    pass, once the download completes.
     """
     escaped = html.escape(text)
 
@@ -96,6 +112,23 @@ def to_rich_text(text: str) -> str:
         f'font-weight: 700; color: {theme.TEXT};">{m.group(2)}</span>',
         body,
     )
+    if emojis and resolve is not None:
+        def emoji(match: "re.Match[str]") -> str:
+            # Only names the post itself declared. Any other `:word:` in the
+            # body is somebody typing a colon, not an emoji, and must not be
+            # put through the resolver at all.
+            url = emojis.get(match.group(1))
+            if not url:
+                return match.group(0)
+            path = resolve(url)
+            if not path:
+                return match.group(0)
+            return (
+                f'<img src="{html.escape(path, quote=True)}" '
+                f'width="{EMOJI_SIZE}" height="{EMOJI_SIZE}">'
+            )
+
+        body = _EMOJI_TOKEN.sub(emoji, body)
     return body.replace("\n", "<br>")
 
 
@@ -168,6 +201,9 @@ class AnnouncementCard(QFrame):
         self._thumbs = thumbs
         # url -> (label, shape, box) for images still downloading.
         self._pending: dict[str, tuple[QLabel, str, tuple[int, int]]] = {}
+        # Emoji images whose arrival means the body text has to be laid out
+        # again, rather than dropped into a label of their own.
+        self._emoji_urls: set[str] = set()
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(18, 15, 18, 15)
@@ -175,7 +211,7 @@ class AnnouncementCard(QFrame):
 
         outer.addLayout(self._build_head())
 
-        body = QLabel(to_rich_text(item.body))
+        body = QLabel()
         body.setObjectName("NewsBody")
         body.setTextFormat(Qt.RichText)
         body.setWordWrap(True)
@@ -185,6 +221,13 @@ class AnnouncementCard(QFrame):
         )
         body.linkActivated.connect(open_link)
         body.setMaximumWidth(CONTENT_MAX_WIDTH)
+        self.body_label = body
+        # Requested up front so they are on their way while the rest of the
+        # card is being built; the text is rendered again as each one lands.
+        for url in item.emojis.values():
+            self._thumbs.request(url)
+            self._emoji_urls.add(url)
+        self._render_body()
         outer.addWidget(body)
 
         self.image_label: QLabel | None = None
@@ -204,6 +247,13 @@ class AnnouncementCard(QFrame):
             row.addWidget(jump)
             row.addStretch(1)
             outer.addLayout(row)
+
+        # Connected last, once every image this card wants has been asked for.
+        # Bound to a method rather than a lambda so Qt drops the connection
+        # when the card is destroyed, instead of the slot outliving it and
+        # painting into a deleted widget on the next download.
+        if self._pending or self._emoji_urls:
+            self._thumbs.ready.connect(self._on_image_ready)
 
     def _build_head(self) -> QHBoxLayout:
         row = QHBoxLayout()
@@ -253,10 +303,19 @@ class AnnouncementCard(QFrame):
             label.setPixmap(self._shaped(pixmap, shape, box))
             return
         self._pending[url] = (label, shape, box)
-        if len(self._pending) == 1:
-            self._thumbs.ready.connect(self._on_image_ready)
+
+    def _render_body(self) -> None:
+        """Lay the body out with whatever emoji images are on disk right now."""
+        self.body_label.setText(
+            to_rich_text(self.item.body, self.item.emojis, self._thumbs.local_path)
+        )
 
     def _on_image_ready(self, url: str, pixmap: QPixmap) -> None:
+        if url in self._emoji_urls:
+            # Cheap: rebuilding the string is far less work than the download
+            # that just finished, and it is the only way an inline <img> can
+            # appear once its file exists.
+            self._render_body()
         waiting = self._pending.pop(url, None)
         if waiting is None:
             return

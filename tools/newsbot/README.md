@@ -122,9 +122,10 @@ not, and should bump `version`.
       "author": "Someone",
       "avatar": "https://cdn.discordapp.com/avatars/…",
       "posted": "2026-08-10T11:40:00Z",
-      "body": "Plain text. **Bold**, *italic* and `code` are rendered.",
+      "body": "Plain text. **Bold**, *italic*, `code` and # headings render.",
       "url": "https://discord.com/channels/…",
-      "image": "https://cdn.discordapp.com/attachments/…"
+      "image": "https://cdn.discordapp.com/attachments/…",
+      "emojis": { "MADNESSCREW": "https://cdn.discordapp.com/emojis/…png" }
     }
   ],
   "videos": [
@@ -143,6 +144,16 @@ not, and should bump `version`.
 
 `source` is `youtube` for a channel upload or `discord` for a link someone
 shared, which the launcher labels on the card.
+
+`emojis` maps each custom emoji the post used to its image. The body keeps the
+emoji as `:name:`, so a launcher that cannot draw them still reads correctly;
+one that can swaps in the picture once it has downloaded it. Names are held to
+`\w{1,32}` at both ends — they are substitution keys against the body, so a
+name carrying markup would be a way to inject it.
+
+Role pings are resolved to real names via one `GET /guilds/{id}/roles` per
+server per run. Without `guild_id` set, or if that call fails, they fall back
+to a plain `@role` and the post is published anyway.
 
 Images are only fetched from `i.ytimg.com`, `img.youtube.com`,
 `cdn.discordapp.com` and `media.discordapp.net`. A thumbnail pointing anywhere

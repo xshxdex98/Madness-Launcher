@@ -9,6 +9,7 @@ back empty, and the page says so.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -25,6 +26,13 @@ MAX_VIDEOS = 24
 MAX_BODY_CHARS = 2000
 MAX_TITLE_CHARS = 200
 MAX_NAME_CHARS = 80
+# One post referencing more custom emoji than this is doing something other
+# than talking, and each one costs a request and a cache entry.
+MAX_EMOJIS = 32
+# Discord's own rule for emoji names, which is what the `:name:` in a body
+# will be matched against. Anchored, so nothing with punctuation or markup in
+# it can become a substitution key.
+EMOJI_NAME = re.compile(r"\w{1,32}")
 
 # Where a thumbnail or avatar is allowed to come from. Anything else is dropped
 # rather than fetched: the feed is only as trustworthy as whoever can write to
@@ -84,6 +92,25 @@ def _text(value: Any, limit: int) -> str:
     if space > limit - 40:
         clipped = clipped[:space]
     return clipped.rstrip() + "…"
+
+
+def emoji_map(value: Any) -> dict[str, str]:
+    """`{name: image url}` for the custom emoji a post uses.
+
+    The names become substitution keys against the post's own body, so they
+    are held to Discord's own character rule rather than accepted as given —
+    a "name" containing markup would otherwise be a way to inject it.
+    """
+    if not isinstance(value, dict):
+        return {}
+    out: dict[str, str] = {}
+    for name, url in list(value.items())[:MAX_EMOJIS]:
+        if not isinstance(name, str) or not EMOJI_NAME.fullmatch(name):
+            continue
+        safe = safe_image_url(url)
+        if safe:
+            out[name] = safe
+    return out
 
 
 def parse_time(value: Any) -> datetime | None:
@@ -152,6 +179,9 @@ class Announcement:
     # relay was able to build one.
     url: str = ""
     image: str = ""
+    # Custom emoji used in `body`, as `{name: url}`. The body keeps them as
+    # `:name:` so a launcher that cannot draw them still reads sensibly.
+    emojis: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: Any) -> "Announcement | None":
@@ -170,6 +200,7 @@ class Announcement:
             body=body,
             url=safe_url(data.get("url")),
             image=image,
+            emojis=emoji_map(data.get("emojis")),
         )
 
 
