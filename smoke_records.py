@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT / "tools" / "newsbot"))
 SANDBOX = Path(tempfile.mkdtemp(prefix="madness-records-"))
 os.environ["MADNESS_LAUNCHER_HOME"] = str(SANDBOX)
 
+from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 import build_news  # noqa: E402

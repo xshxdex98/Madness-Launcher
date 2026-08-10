@@ -31,6 +31,20 @@
   "records": [],
   "records_webhook": "",
 
+  "_speedrun_note": [
+    "World records pulled from speedrun.com's own leaderboards, which are",
+    "moderator-verified against video. Published alongside community",
+    "submissions and labelled, never merged into them. Races are carried by",
+    "NAME: speedrun.com lists them Blitz/Checkpoint/Circuit and the game",
+    "orders them Blitz/Circuit/Checkpoint, so an index would misfile them."
+  ],
+  "speedrun": {
+    "enabled": true,
+    "game": "midtown1",
+    "board_game": "mm1",
+    "categories": ["Amateur", "Professional"]
+  },
+
   "youtube": [
     { "channel_id": "UCXcv42XHTloD5XSk9FIqPrQ", "name": "Panoz" },
     { "channel_id": "UCcndPF7UpwKvRBsWI1RxH7A", "name": "MadManMammoth" },

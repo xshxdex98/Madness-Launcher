@@ -17,6 +17,7 @@ import tempfile
 from pathlib import Path
 
 from .. import paths
+from ..news.model import safe_url
 from . import mm1
 from .session import Submission
 
@@ -46,6 +47,11 @@ def _from_dict(item: object) -> Submission | None:
         race = int(item.get("race", -1))
     except (TypeError, ValueError):
         return None
+    name = str(item.get("race_name", ""))
+    if race < 0:
+        # An external leaderboard knows the race by name only; the index is
+        # this install's own numbering and is resolved here.
+        race = mm1.race_index_by_name(name)
     if race < 0 or not (0 < seconds < 86400):
         return None
     car = str(item.get("car", ""))
@@ -55,8 +61,10 @@ def _from_dict(item: object) -> Submission | None:
         race=race,
         # A published record names its own race, but an older relay may not
         # have. Falling back to this install's table beats showing a blank.
-        race_name=(str(item.get("race_name", "")) or mm1.race_label(race))[:80],
-        race_kind=str(item.get("race_kind", ""))[:16],
+        race_name=(name or mm1.race_label(race))[:80],
+        # External leaderboards do not classify a race; once it has been
+        # placed by name, this install's own table knows what kind it is.
+        race_kind=(str(item.get("race_kind", "")) or mm1.race_kind(race))[:16],
         difficulty=str(item.get("difficulty", ""))[:16],
         car=car[:40],
         # Published records carry the raw car id only; the pretty name is
@@ -67,6 +75,8 @@ def _from_dict(item: object) -> Submission | None:
         username=str(item.get("username", ""))[:40],
         set_at=str(item.get("set_at", ""))[:32],
         mods=[str(m)[:64] for m in (item.get("mods") or [])][:64],
+        source=str(item.get("source", "launcher"))[:24],
+        url=safe_url(item.get("url")),
     )
 
 

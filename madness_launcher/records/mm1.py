@@ -160,6 +160,36 @@ def race_label(index: int) -> str:
     return RACE_NAMES.get(index) or f"Race {index + 1}"
 
 
+# speedrun.com spells one race differently from the game. Matching is done on
+# a normalised name, and the handful that still differ are listed here rather
+# than fuzzy-matched: a wrong match files a world record under another race.
+NAME_ALIASES = {
+    "solidersneaker": "soldiersneaker",
+}
+
+
+def _normalise(name: str) -> str:
+    squashed = "".join(ch for ch in name.lower() if ch.isalnum())
+    return NAME_ALIASES.get(squashed, squashed)
+
+
+def race_index_by_name(name: str) -> int:
+    """The race index for a name, or -1.
+
+    External leaderboards list the same races in a different order — the game
+    goes Blitz, Circuit, Checkpoint and speedrun.com goes Blitz, Checkpoint,
+    Circuit — so a record from elsewhere has to be placed by name. Position
+    would silently file every Circuit time under a Checkpoint race.
+    """
+    if not name:
+        return -1
+    wanted = _normalise(name)
+    for index, known in RACE_NAMES.items():
+        if _normalise(known) == wanted:
+            return index
+    return -1
+
+
 def race_kind(index: int) -> str:
     """Blitz, Circuit or Checkpoint. A 40s Blitz and a 4min Circuit are not
     the same achievement, so the board says which is which."""

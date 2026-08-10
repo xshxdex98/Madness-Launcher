@@ -73,6 +73,12 @@ class Submission:
     set_at: str = ""
     # Slugs of the mods enabled at launch. Empty is what makes a run vanilla.
     mods: list[str] = field(default_factory=list)
+    # Where the time came from: this launcher, or an external leaderboard.
+    # Shown in the table, because a moderator-verified speedrun.com run and a
+    # self-reported one are not the same claim.
+    source: str = "launcher"
+    # Proof, when the source has any — a link to the verified run.
+    url: str = ""
 
     @property
     def formatted(self) -> str:
@@ -94,6 +100,8 @@ class Submission:
             "username": self.username,
             "set_at": self.set_at,
             "mods": sorted(self.mods),
+            "source": self.source,
+            "url": self.url,
         }
 
 

@@ -13,7 +13,8 @@ says so rather than presenting it as fact.
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
@@ -41,7 +42,7 @@ BOARDS = (
     (mm1.BOARD_MODDED, "Modded", "Racepacks allowed. Stock cars only."),
 )
 
-COLUMNS = ("Race", "Time", "Car", "Driver", "Difficulty")
+COLUMNS = ("Race", "Time", "Car", "Driver", "Difficulty", "Source")
 
 
 class BoardView(QWidget):
@@ -69,6 +70,8 @@ class BoardView(QWidget):
         self.tree.setAlternatingRowColors(False)
         self.tree.setSelectionMode(QTreeWidget.NoSelection)
         self.tree.setFocusPolicy(Qt.NoFocus)
+        # A verified run links to its own video; double-click opens it.
+        self.tree.itemDoubleClicked.connect(self._open_proof)
         header = self.tree.header()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         for column in range(1, len(COLUMNS)):
@@ -82,6 +85,12 @@ class BoardView(QWidget):
         self.empty.setContentsMargins(0, 30, 0, 0)
         layout.addWidget(self.empty)
 
+    @staticmethod
+    def _open_proof(item, _column: int) -> None:
+        url = item.data(0, Qt.UserRole)
+        if url:
+            QDesktopServices.openUrl(QUrl(url))
+
     def show_records(self, records: list, own_names: set[str]) -> None:
         self.tree.clear()
         rows = [r for r in records if r.game == self.game_id and r.board == self.board]
@@ -90,7 +99,8 @@ class BoardView(QWidget):
         best: dict[tuple, object] = {}
         for record in rows:
             key = (record.difficulty, record.race)
-            if key not in best or record.seconds < best[key].seconds:
+            current = best.get(key)
+            if current is None or record.seconds < current.seconds:
                 best[key] = record
 
         ordered = sorted(best.values(), key=lambda r: (r.race, r.difficulty))
@@ -101,12 +111,21 @@ class BoardView(QWidget):
                     f"{record.race_name}"
                     + (f"  ·  {record.race_kind}" if record.race_kind else ""),
                     record.formatted,
-                    record.car_name,
+                    # speedrun.com does not report which car a run used, so
+                    # the column is dashed rather than left ambiguously blank.
+                    record.car_name or "—",
                     who,
                     record.difficulty.title(),
+                    "" if record.source == "launcher" else record.source,
                 ]
             )
             item.setTextAlignment(1, Qt.AlignRight | Qt.AlignVCenter)
+            if record.url:
+                item.setData(0, Qt.UserRole, record.url)
+                item.setToolTip(
+                    len(COLUMNS) - 1,
+                    f"Verified on {record.source}. Double-click to open the run.",
+                )
             if who in own_names:
                 # Your own row, so a board full of other people's times still
                 # shows you where you stand at a glance.
@@ -178,10 +197,11 @@ class RecordsPage(QWidget):
             "How these are collected",
             "The launcher reads the game's own best-time table before and "
             "after a session, so a record has to be set while the launcher is "
-            "running. Times are not verified beyond that — the game stores "
-            "them in a file on each player's own machine, and anyone can edit "
-            "it. Treat the board as a community scoreboard, not a "
-            "record book.",
+            "running. Community times are not verified beyond that — the game "
+            "stores them in a file on each player's own machine, and anyone "
+            "can edit it. Rows marked speedrun.com come from that site's "
+            "leaderboards instead and have been checked against video by its "
+            "moderators; double-click one to watch the run.",
         )
         root.addWidget(caution)
 

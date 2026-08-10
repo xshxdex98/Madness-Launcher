@@ -24,6 +24,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -586,6 +587,122 @@ def collect_records(config: dict[str, Any], token: str) -> tuple[list[dict], int
 
 
 # ----------------------------------------------------------------------
+# speedrun.com
+# ----------------------------------------------------------------------
+
+SPEEDRUN_API = "https://www.speedrun.com/api/v1"
+
+# The site asks for roughly one request a second and will start refusing
+# otherwise. Fetched here once per run rather than from every launcher, which
+# is both faster for users and the only polite way to do it.
+SPEEDRUN_DELAY = 0.7
+
+# Per-level categories worth publishing. These are the two the game itself
+# keeps tables for, so they line up with amateur.dat and pro.dat.
+SPEEDRUN_CATEGORIES = ("Amateur", "Professional")
+
+_DIFFICULTY_FROM_CATEGORY = {"amateur": "amateur", "professional": "pro"}
+
+
+def speedrun_records(config: dict[str, Any]) -> tuple[list[dict], int]:
+    """World records per race from speedrun.com's own leaderboards.
+
+    Published alongside community submissions rather than mixed into them.
+    A run there has been checked by that game's moderators against video, so
+    it is a stronger claim than anything this system can make on its own —
+    but it is somebody else's data, and it is labelled as such.
+
+    Races are carried by NAME, never by position. speedrun.com lists them
+    Blitz, Checkpoint, Circuit and the game orders them Blitz, Circuit,
+    Checkpoint, so publishing an index here would file every Circuit record
+    under a Checkpoint race.
+    """
+    block = config.get("speedrun")
+    block = block if isinstance(block, dict) else {}
+    if block.get("enabled") is not True:
+        return [], 0
+
+    abbreviation = str(block.get("game") or "midtown1")
+    wanted = [str(c) for c in (block.get("categories") or SPEEDRUN_CATEGORIES)]
+    game_key = str(block.get("board_game") or "mm1")
+
+    def api(path: str) -> Any:
+        time.sleep(SPEEDRUN_DELAY)
+        return get_json(f"{SPEEDRUN_API}/{path}")
+
+    try:
+        games = api(f"games?abbreviation={urllib.parse.quote(abbreviation)}")["data"]
+        if not games:
+            raise SourceError(f"no game called {abbreviation!r}")
+        game_id = games[0]["id"]
+        levels = api(f"games/{game_id}/levels")["data"]
+        categories = [
+            c for c in api(f"games/{game_id}/categories")["data"]
+            if c.get("type") == "per-level" and c.get("name") in wanted
+        ]
+    except (SourceError, KeyError, IndexError, TypeError) as exc:
+        log(f"warning: speedrun.com lookup failed: {exc}")
+        return [], 1
+
+    if not levels or not categories:
+        log("warning: speedrun.com returned no levels or no matching categories")
+        return [], 1
+
+    out: list[dict[str, Any]] = []
+    failures = 0
+    for level in levels:
+        for category in categories:
+            try:
+                board = api(
+                    f"leaderboards/{game_id}/level/{level['id']}/{category['id']}"
+                    "?top=1&embed=players"
+                )["data"]
+            except (SourceError, KeyError, TypeError) as exc:
+                log(f"warning: speedrun.com {level.get('name')}: {exc}")
+                failures += 1
+                continue
+
+            runs = board.get("runs") or []
+            if not runs:
+                continue
+            run = runs[0].get("run") or {}
+            seconds = (run.get("times") or {}).get("primary_t")
+            if not isinstance(seconds, (int, float)) or not (
+                MIN_RECORD_SECONDS <= seconds <= MAX_RECORD_SECONDS
+            ):
+                continue
+
+            named = {
+                p["id"]: (p.get("names") or {}).get("international") or p.get("name")
+                for p in (board.get("players") or {}).get("data", [])
+                if isinstance(p, dict) and p.get("id")
+            }
+            who = ", ".join(
+                str(named.get(p.get("id")) or p.get("name") or "Anonymous")
+                for p in (run.get("players") or [])
+            ) or "Anonymous"
+
+            out.append({
+                "game": game_key,
+                # A verified run on the stock game is a vanilla record.
+                "board": "vanilla",
+                "race": -1,
+                "race_name": str(level.get("name") or "")[:80],
+                "difficulty": _DIFFICULTY_FROM_CATEGORY.get(
+                    str(category.get("name", "")).lower(), ""
+                ),
+                "seconds": round(float(seconds), 3),
+                "username": who[:40],
+                "set_at": str(run.get("date") or ""),
+                "source": "speedrun.com",
+                "url": str(run.get("weblink") or "")[:200],
+            })
+
+    log(f"speedrun.com: {len(out)} records across {len(levels)} races")
+    return out, failures
+
+
+# ----------------------------------------------------------------------
 # Assembly
 # ----------------------------------------------------------------------
 
@@ -687,6 +804,10 @@ def build(config: dict[str, Any], token: str) -> dict[str, Any]:
     announcements, ann_failures = collect_announcements(config, token)
     videos, vid_failures = collect_videos(config, token)
     records, _ = collect_records(config, token)
+    external, _ = speedrun_records(config)
+    # Appended rather than merged into the same slots: an external record
+    # and a community one are different claims and the tab shows both.
+    records = records + external
 
     configured = len(config.get("announcements") or []) + len(
         config.get("youtube") or []
