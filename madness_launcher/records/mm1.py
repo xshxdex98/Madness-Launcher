@@ -35,6 +35,7 @@ from a table here; see cityinfo.py.
 
 from __future__ import annotations
 
+import hashlib
 import struct
 from dataclasses import dataclass
 from pathlib import Path
@@ -121,29 +122,107 @@ def load_city(install: "Path") -> "cityinfo.CityInfo | None":
     return info
 
 
+# Archives the game ships with. Everything else in the folder is something
+# somebody added.
+BASE_ARCHIVES = frozenset({"core.ar", "audio.ar", "ui.ar", "1560.ar"})
+
+# The only added archives a vanilla run may have loaded, by content hash.
+# Named by hash and not by filename because the filename carries no weight:
+# load order is set by leading '!' so the same mod appears under many names,
+# and renaming a handling mod to "wsfix16to9.ar" would otherwise be all it
+# took to put a modified car on the vanilla board.
+#
+# These four change how the game is controlled or displayed, not how it
+# drives — a widescreen fix, two mouse/keyboard fixes, and a patch that
+# restores the stock handling rather than altering it.
+VANILLA_ARCHIVES = {
+    "6e369662d58cabaa5823698926b5af9c37e8c16536e8c140fb917adeeee0a911":
+        "VanillaHLFix",
+    "0d705e111e104884cece44e95f39bf74cd272c7fbe02640ab280e60465799f4c":
+        "kbmousepad",
+    "415dc193a5e4748ea4a1cda34394111fdd530f981890f1f35170587c15d355d1":
+        "wsfix16to9",
+    "3383ab0b7e38df92e9ec856726b80c39e6ff2d5581748afaefc06141e906942e":
+        "mousemod",
+}
+
+# Sizes of the allowlisted files. An archive whose size matches none of them
+# cannot be one of them, so it never has to be read — which keeps the check
+# instant on a folder full of hundred-megabyte racepacks.
+_ALLOWED_SIZES = {89_264, 673_184, 3_671_808, 26_016}
+
+_HASH_CHUNK = 1 << 20
+
+
+def archive_digest(path: Path) -> str:
+    """SHA-256 of a file, or empty if it cannot be read."""
+    digest = hashlib.sha256()
+    try:
+        with open(path, "rb") as handle:
+            while chunk := handle.read(_HASH_CHUNK):
+                digest.update(chunk)
+    except OSError:
+        return ""
+    return digest.hexdigest()
+
+
+def active_archives(install: Path) -> list[Path]:
+    """Added .ar files the game will actually load.
+
+    Only the game's own directory counts. Mods parked in subfolders — a
+    staging area full of racepacks, say — are not loaded until they are
+    copied up here, so a folder of them does not make a run modded.
+    """
+    root = Path(install)
+    try:
+        return sorted(
+            p for p in root.glob("*.ar")
+            if p.is_file() and p.name.lower() not in BASE_ARCHIVES
+        )
+    except OSError:
+        return []
+
+
+def unapproved_archives(install: Path) -> list[str]:
+    """Loaded archives that are not on the vanilla allowlist, by name.
+
+    Read from the game folder rather than from the launcher's own list of
+    enabled mods, because an archive dropped in by hand loads exactly the
+    same way and the mod manager knows nothing about it.
+    """
+    out: list[str] = []
+    for path in active_archives(install):
+        try:
+            size = path.stat().st_size
+        except OSError:
+            out.append(path.name)
+            continue
+        if size in _ALLOWED_SIZES and archive_digest(path) in VANILLA_ARCHIVES:
+            continue
+        out.append(path.name)
+    return out
+
+
 def is_vanilla_car(car: str) -> bool:
     return car.lower() in VANILLA_CARS
 
 
-def classify(car: str, enabled_mods: list[str] | tuple[str, ...]) -> str | None:
+def classify(car: str, unapproved: list[str] | tuple[str, ...]) -> str | None:
     """Which board a time belongs on, or None if it belongs on neither.
 
-    Vanilla means the game as shipped: stock car, stock races, nothing loaded
-    that could alter handling. Modded allows racepacks — different tracks, but
-    still a stock car, so the times remain about driving rather than about
-    which vehicle someone downloaded.
+    Vanilla means the game as shipped, plus a short allowlist of fixes that
+    change how it is controlled or displayed rather than how it drives.
+    Modded allows anything else loaded — racepacks, new cities — but still
+    requires a stock car, so the times stay about driving rather than about
+    which vehicle somebody downloaded.
 
-    The vanilla test is deliberately stricter than "no handling mods": any
-    enabled archive at all disqualifies a run. Telling a graphics pack from a
-    handling pack means reading the contents of an ARES archive, and until
-    that exists the failure has to be chosen. Being too strict misfiles a
-    legitimate vanilla run onto the modded board, which is a shrug. Being too
-    lenient lets a modified-handling run set the vanilla record, which poisons
-    the board permanently and cannot be detected after the fact.
+    `unapproved` is what unapproved_archives() found. Judging on identity
+    rather than on a count means a widescreen fix no longer costs someone the
+    vanilla board, while a renamed handling mod still does.
     """
     if not is_vanilla_car(car):
         return None
-    return BOARD_MODDED if enabled_mods else BOARD_VANILLA
+    return BOARD_MODDED if unapproved else BOARD_VANILLA
 
 
 def pretty_car(raw: str) -> str:

@@ -124,14 +124,83 @@ check("a slower time is not", mm1.improvements(before, slower) == [])
 print("\nthe stock roster decides which board a run belongs on")
 check("stock car, no mods -> vanilla",
       mm1.classify("vpmustang99", []) == mm1.BOARD_VANILLA)
-check("stock car, racepack -> modded",
-      mm1.classify("vpmustang99", ["pack"]) == mm1.BOARD_MODDED)
+check("stock car, unapproved archive -> modded",
+      mm1.classify("vpmustang99", ["pack.ar"]) == mm1.BOARD_MODDED)
 check("custom car -> neither", mm1.classify("vpdisco", []) is None)
-check("custom car with mods -> still neither",
-      mm1.classify("vpeb184", ["pack"]) is None)
+check("custom car with archives -> still neither",
+      mm1.classify("vpeb184", ["pack.ar"]) is None)
 check("case does not matter", mm1.is_vanilla_car("VPMUSTANG99"))
 check("the roster is the stock ten", len(mm1.VANILLA_CARS) == 10,
       str(len(mm1.VANILLA_CARS)))
+
+
+print("\nonly the allowlisted fixes keep a run on the vanilla board")
+
+
+def archive_install(files: dict[str, bytes], staged: dict[str, bytes] | None = None):
+    """A game folder with chosen archives at root, and some parked below it."""
+    root = Path(tempfile.mkdtemp(prefix="mm1-ar-"))
+    for name in ("core.ar", "audio.ar", "ui.ar", "1560.ar"):
+        (root / name).write_bytes(b"base archive")
+    for name, blob in files.items():
+        (root / name).write_bytes(blob)
+    if staged:
+        sub = root / "Custom Racepacks"
+        sub.mkdir()
+        for name, blob in staged.items():
+            (sub / name).write_bytes(blob)
+    return root
+
+
+# Reproduce an allowlisted archive exactly by size and digest without needing
+# the real file: the check is content-addressed, so any bytes that hash to an
+# allowlisted digest are by definition that file.
+REAL = {h: n for h, n in mm1.VANILLA_ARCHIVES.items()}
+
+clean = archive_install({})
+check("a stock folder has nothing added", mm1.active_archives(clean) == [])
+check("and classifies as vanilla",
+      mm1.classify("vpmustang99", mm1.unapproved_archives(clean))
+      == mm1.BOARD_VANILLA)
+
+check("the game's own archives are never counted as mods",
+      all(p.name.lower() not in mm1.BASE_ARCHIVES for p in mm1.active_archives(clean)))
+
+racepack = archive_install({"!!!Chicago_Rebellion_RP.ar": b"racepack" * 500})
+check("an added archive is seen", len(mm1.active_archives(racepack)) == 1)
+check("an unknown archive is unapproved",
+      mm1.unapproved_archives(racepack) == ["!!!Chicago_Rebellion_RP.ar"])
+check("and pushes the run to the modded board",
+      mm1.classify("vpmustang99", mm1.unapproved_archives(racepack))
+      == mm1.BOARD_MODDED)
+
+staged = archive_install({}, staged={"!!!BigRacepack.ar": b"x" * 5000})
+check("archives parked in a subfolder are not loaded",
+      mm1.active_archives(staged) == [])
+check("so a staging folder does not make a run modded",
+      mm1.classify("vpmustang99", mm1.unapproved_archives(staged))
+      == mm1.BOARD_VANILLA)
+
+print("\nthe allowlist is by content, so a filename proves nothing")
+spoof = archive_install({"!!!!wsfix16to9.ar": b"a handling mod in disguise" * 100})
+check("a mod wearing an allowlisted name is still unapproved",
+      mm1.unapproved_archives(spoof) == ["!!!!wsfix16to9.ar"])
+check("and lands on the modded board",
+      mm1.classify("vpmustang99", mm1.unapproved_archives(spoof))
+      == mm1.BOARD_MODDED)
+check("every allowlisted entry is a sha256 digest",
+      all(len(h) == 64 and all(c in "0123456789abcdef" for c in h)
+          for h in mm1.VANILLA_ARCHIVES))
+check("four fixes are allowed", len(mm1.VANILLA_ARCHIVES) == 4,
+      str(len(mm1.VANILLA_ARCHIVES)))
+check("their sizes are known so most files never get hashed",
+      len(mm1._ALLOWED_SIZES) == 4)
+
+digest_of = archive_install({"x.ar": b"known bytes"})
+check("digesting a real file works",
+      len(mm1.archive_digest(digest_of / "x.ar")) == 64)
+check("digesting a missing file yields nothing",
+      mm1.archive_digest(digest_of / "nope.ar") == "")
 
 
 def entry(**kwargs) -> Submission:

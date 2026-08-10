@@ -153,7 +153,11 @@ class RecordWatcher(QObject):
         self.install = Path(install)
         self.process = process
         self.username = username
-        self.mods = list(mods or [])
+        # What the game will actually load, judged from the folder itself.
+        # Taken now rather than at the end, so archives added mid-session
+        # cannot retroactively qualify a run for the vanilla board.
+        self.unapproved = mm1.unapproved_archives(self.install)
+        self.mods = self.unapproved or list(mods or [])
         self._started = time.monotonic()
         self._before = mm1.snapshot(self.install)
         self._timer = QTimer(self)
@@ -198,7 +202,7 @@ class RecordWatcher(QObject):
         stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
         good: list[Submission] = []
         for record in improved:
-            board = mm1.classify(record.car, self.mods)
+            board = mm1.classify(record.car, self.unapproved)
             entry = Submission(
                 game=self.game_id,
                 board=board or "",
