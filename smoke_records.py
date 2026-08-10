@@ -869,6 +869,51 @@ check("the default is not to delete anything",
 check("and nothing is deleted without message ids",
       build_news.prune_board("https://discord.com/api/webhooks/1/x", []) == 0)
 
+print("\na removed record stays removed across a restart")
+# Deleting a row from the store alone achieves nothing: the game's own tables
+# are re-read at every launch, so the next start finds it again, treats it as
+# new, and publishes it. The removal has to be remembered.
+store.save([], set())
+history = write_install({
+    0: ("Pan", "vpmustang99", 41.228),
+    2: ("Pan", "vpcaddie", 43.286),
+    30: ("Pan", "vppanozgt", 74.811),
+})
+first_pass = existing_records(history, "mm1", "Tester")
+store.save(store.merge([], first_pass), set())
+check("three times are taken in", len(store.load()) == 3, str(len(store.load())))
+
+unwanted = [r for r in store.load() if r.car != "vppanozgt"]
+store.forget(unwanted)
+check("the unwanted ones are gone", len(store.load()) == 1, str(len(store.load())))
+check("the kept one is the right one",
+      store.load()[0].car == "vppanozgt", store.load()[0].car)
+check("and the removals are remembered", len(store.forgotten()) == 2,
+      str(len(store.forgotten())))
+
+# What a restart does: read the save again and take in anything new.
+gone = store.forgotten()
+returning = [r for r in existing_records(history, "mm1", "Tester")
+             if store.key_id(r) not in gone]
+check("a restart brings back nothing that was removed",
+      all(r.car == "vppanozgt" for r in returning), str([r.car for r in returning]))
+check("and adds nothing new at all",
+      all(store.key_id(r) in {store.key_id(x) for x in store.load()}
+          for r in returning))
+check("the forgotten list survives a save",
+      len(store.forgotten()) == 2, str(len(store.forgotten())))
+
+print("\nremoving one car's time does not remove another's")
+store.save([], set())
+store.save(store.merge([], existing_records(history, "mm1", "Tester")), set())
+one = [r for r in store.load() if r.car == "vpcaddie"]
+store.forget(one)
+cars = sorted(r.car for r in store.load())
+check("only that record went", cars == ["vpmustang99", "vppanozgt"], str(cars))
+check("a record can be forgotten twice without harm",
+      (store.forget(one), len(store.load()))[1] == 2, str(len(store.load())))
+store.save([], set())
+
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])
 blank_view = blank.views["mm1"].views["vanilla"]

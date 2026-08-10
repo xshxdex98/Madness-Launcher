@@ -804,6 +804,11 @@ class MainWindow(QMainWindow):
                 )
             except OSError:
                 continue
+        # Anything the user has deleted stays deleted. Without this the
+        # game's own tables put it straight back on the next launch, and
+        # publish it again.
+        gone = record_store.forgotten()
+        fresh = [r for r in fresh if record_store.key_id(r) not in gone]
         if not fresh:
             return
 

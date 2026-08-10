@@ -37,9 +37,13 @@ def _key(entry: Submission) -> tuple:
     own times keeps one row per race and everyone but the fastest disappears
     — which for a new player is every race they have ever driven.
 
-    Source is deliberately NOT part of it: one person has one best time on a
-    race however it reached us, so beating your own published run replaces
-    it rather than sitting beside it.
+    Includes the car, because the game records a time against the car it was
+    driven in. Beating your own Mustang lap replaces that lap; the same race
+    in a different car is a different record and stands on its own.
+
+    Source is deliberately NOT part of it: one person has one best time per
+    car on a race however it reached us, so beating your own published run
+    replaces it rather than sitting beside it.
     """
     return (
         entry.game,
@@ -47,6 +51,7 @@ def _key(entry: Submission) -> tuple:
         entry.difficulty,
         entry.race,
         (entry.username or entry.driver).lower(),
+        entry.car.lower(),
     )
 
 
@@ -98,6 +103,34 @@ def _from_dict(item: object) -> Submission | None:
     )
 
 
+def key_id(entry: Submission) -> str:
+    """A stable text form of a record's identity, for the forgotten list."""
+    return "|".join(str(part) for part in _key(entry))
+
+
+def forgotten() -> set[str]:
+    """Records the user has removed and does not want back.
+
+    The game's own tables are re-read at every launch, so deleting a row from
+    the store alone achieves nothing: the next start finds it on disk again,
+    treats it as new, and publishes it. Remembering the removal is the only
+    thing that makes it stick.
+    """
+    try:
+        raw = json.loads(store_file().read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    listed = raw.get("forgotten")
+    return {str(k) for k in listed} if isinstance(listed, list) else set()
+
+
+def forget(entries: list[Submission]) -> None:
+    """Remove records and stop them coming back."""
+    dropped = {key_id(e) for e in entries}
+    kept = [r for r in load() if key_id(r) not in dropped]
+    save(kept, forgotten() | dropped)
+
+
 def load() -> list[Submission]:
     try:
         raw = json.loads(store_file().read_text(encoding="utf-8"))
@@ -113,12 +146,18 @@ def from_feed(published: list) -> list[Submission]:
     return [r for r in parsed if r is not None]
 
 
-def save(records: list[Submission]) -> None:
+def save(records: list[Submission], forget_keys: set[str] | None = None) -> None:
     target = store_file()
+    if forget_keys is None:
+        forget_keys = forgotten()
     try:
         paths.ensure_dirs(target.parent)
         payload = json.dumps(
-            {"version": 1, "records": [r.as_dict() for r in records[:MAX_RECORDS]]},
+            {
+                "version": 1,
+                "records": [r.as_dict() for r in records[:MAX_RECORDS]],
+                "forgotten": sorted(forget_keys)[:MAX_RECORDS],
+            },
             indent=2,
         ).encode("utf-8")
         fd, tmp = tempfile.mkstemp(dir=str(target.parent), suffix=".tmp")
