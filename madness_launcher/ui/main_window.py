@@ -31,6 +31,7 @@ from ..config import Config
 from ..detect import identify_as
 from ..games.registry import GAMES, PLANNED, by_id
 from ..news import NewsService, ThumbnailCache, safe_url
+from ..records import mm1 as mm1_records
 from ..records import store as record_store
 from ..records.submit import RecordSubmitter
 from . import gameart, theme, wordmark
@@ -97,6 +98,7 @@ class MainWindow(QMainWindow):
         # because a page can be rebuilt or navigated away from while the
         # game it started is still running.
         self._watchers: list[object] = []
+        self._load_race_tables()
         self.records = record_store.load()
         self.submitter = RecordSubmitter(self)
         self.submitter.failed.connect(self._on_submit_failed)
@@ -758,6 +760,18 @@ class MainWindow(QMainWindow):
     # Lap records
     # ------------------------------------------------------------------
 
+    def _load_race_tables(self) -> None:
+        """Adopt Midtown Madness's race names, from the install if configured.
+
+        Without this every record that names its race rather than numbering
+        it — which is all of them from speedrun.com — fails to place and the
+        board shows nothing.
+        """
+        install = self.config.install("mm1")
+        mm1_records.load_city(
+            Path(install.path) if install and install.path else None
+        )
+
     def adopt_record_watcher(self, watcher) -> None:
         """Take ownership of a watcher for a session that has just started."""
         watcher.setParent(self)
@@ -997,6 +1011,9 @@ class MainWindow(QMainWindow):
         self.flash_status("Game folder saved")
 
     def _on_install_changed(self) -> None:
+        # A newly configured install may carry racepacks with their own race
+        # table, which is the authority over the built-in one.
+        self._load_race_tables()
         self._refresh_dots()
         self._refresh_entry_icons()
         if self._library is not None:

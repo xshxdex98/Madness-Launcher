@@ -115,6 +115,45 @@ def _archives(install: Path) -> list[Path]:
     return [p for p in found if p.is_file()]
 
 
+# The stock Chicago race list, in the order the game numbers it. Read out of
+# a retail ui.ar rather than typed from memory, and kept only as a fallback:
+# an install's own archives are always preferred, because a racepack replaces
+# this table and only that install knows what it replaced it with.
+#
+# Needed because the board has to work before anyone has configured the game.
+# Without it a launcher with no Midtown Madness install cannot place a record
+# that names its race, and silently shows an empty leaderboard.
+_STOCK = (
+    ("Blitz", (
+        "Dearborn Dash", "River Wild & Wacker", "Under the El",
+        "Double-Back Blitz", "Grant Park Parade", "Wild Blue Blitz",
+        "Navy Pier Peel-Out", "Bear Cub Blitz", "Race for a Space",
+        "Tall Tower Blitz",
+    )),
+    ("Circuit", (
+        "The Littler Loop", "Riverside Run", "Tunnel Turner",
+        "Downtown Driver", "Museum Marathon", "South End Circuit",
+        "City Central", "North End Navigator", "Old Town Twist",
+        "Loop-De-Loop",
+    )),
+    ("Checkpoint", (
+        "Beginner's Luck", "Tough Turns & a Tunnel", "North River Run",
+        "Soldier Sneaker", "Freeway Flyer", "Nocturnal Navigator",
+        "Beat the Bridges", "Crosstown Switchback", "Perimeter Perils",
+        "Aptitude Test", "Beetle Blast-a-Thon", "Frosty Finale",
+    )),
+)
+
+
+def stock() -> CityInfo:
+    """The retail Chicago tables, for when no install can be read."""
+    races: list[Race] = []
+    for kind, names in _STOCK:
+        for name in names:
+            races.append(Race(len(races), name, kind))
+    return CityInfo(city="Chicago", races=tuple(races), source="built-in")
+
+
 def read(install: Path) -> CityInfo | None:
     """The stock race and car tables for an install.
 

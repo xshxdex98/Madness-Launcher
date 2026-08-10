@@ -115,9 +115,17 @@ def apply_city(info: "cityinfo.CityInfo | None") -> None:
     CAR_NAMES.update(info.car_names())
 
 
-def load_city(install: "Path") -> "cityinfo.CityInfo | None":
-    """Read an install's tables and adopt them in one step."""
-    info = cityinfo.read(Path(install))
+def load_city(install: "Path | None" = None) -> "cityinfo.CityInfo":
+    """Adopt the race and car tables, from an install if there is one.
+
+    Falls back to the retail tables rather than to nothing. Records from the
+    community and from speedrun.com name their race instead of numbering it,
+    so with no table loaded every one of them fails to place and the board
+    goes quietly empty — which is exactly what happened before this existed.
+    """
+    info = cityinfo.read(Path(install)) if install else None
+    if info is None:
+        info = cityinfo.stock()
     apply_city(info)
     return info
 

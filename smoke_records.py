@@ -346,6 +346,77 @@ check("your own row is marked", first.toolTip(0) != "", first.toolTip(0))
 other = view.views["vanilla"].tree.topLevelItem(1)
 check("somebody else's row is not", other.toolTip(0) == "", other.toolTip(0))
 
+print("\nthe race table is always loaded, so named records can place")
+# The bug this guards: nothing in the launcher loaded the table, so every
+# record that names its race instead of numbering it — all of them from
+# speedrun.com — failed to place and the board went quietly empty.
+mm1.RACE_NAMES.clear()
+mm1.RACE_KINDS.clear()
+check("with no table loaded, a named record cannot place",
+      store.from_feed([{"game": "mm1", "race_name": "Museum Marathon",
+                        "seconds": 99.0}]) == [])
+fallback = mm1.load_city(None)
+check("a launcher with no install still gets a table",
+      len(mm1.RACE_NAMES) == 32, str(len(mm1.RACE_NAMES)))
+check("and says where it came from", fallback.source == "built-in",
+      fallback.source)
+check("named records now place",
+      len(store.from_feed([{"game": "mm1", "race_name": "Museum Marathon",
+                            "seconds": 99.0}])) == 1)
+check("the built-in table matches the game's own ordering",
+      mm1.race_label(0) == "Dearborn Dash"
+      and mm1.race_label(14) == "Museum Marathon"
+      and mm1.race_label(31) == "Frosty Finale",
+      f"{mm1.race_label(0)} / {mm1.race_label(14)} / {mm1.race_label(31)}")
+check("kinds come with it",
+      mm1.race_kind(0) == "Blitz" and mm1.race_kind(14) == "Circuit"
+      and mm1.race_kind(31) == "Checkpoint")
+
+print("\nexternal records are placed by name, never by position")
+check("a race name resolves", mm1.race_index_by_name("Museum Marathon") >= 0)
+check("the site's spelling of Soldier Sneaker still matches",
+      mm1.race_index_by_name("Solider Sneaker")
+      == mm1.race_index_by_name("Soldier Sneaker"),
+      "both spellings must land on one race")
+check("an unknown race lands nowhere",
+      mm1.race_index_by_name("Not A Real Race") == -1)
+check("a record with no index is placed by its name",
+      store.from_feed([{"game": "mm1", "board": "vanilla", "difficulty": "pro",
+                        "race_name": "Museum Marathon", "seconds": 99.0,
+                        "source": "speedrun.com"}])[0].race
+      == mm1.race_index_by_name("Museum Marathon"))
+check("a record with neither index nor known name is dropped",
+      store.from_feed([{"game": "mm1", "race_name": "Nope", "seconds": 99.0}]) == [])
+check("provenance survives",
+      store.from_feed([{"game": "mm1", "race": 1, "seconds": 99.0,
+                        "source": "speedrun.com"}])[0].source == "speedrun.com")
+check("the race kind is derived once the race is known",
+      store.from_feed([{"game": "mm1", "race_name": "Museum Marathon",
+                        "seconds": 99.0}])[0].race_kind == "Circuit")
+check("a hostile proof link is dropped",
+      store.from_feed([{"game": "mm1", "race": 1, "seconds": 99.0,
+                        "url": "javascript:alert(1)"}])[0].url == "")
+check("a real proof link is kept",
+      store.from_feed([{"game": "mm1", "race": 1, "seconds": 99.0,
+                        "url": "https://www.speedrun.com/midtown1/runs/abc"}])[0].url
+      != "")
+
+print("\nthe table shows where a time came from")
+sourced = RecordsPage(config, lambda: [
+    # speedrun.com does not report a car, so this is what one really looks
+    # like coming off the feed.
+    entry(board="vanilla", race=0, race_name="Dearborn Dash", seconds=19.52,
+          username="fatiyesman", source="speedrun.com", car="", car_name="",
+          url="https://www.speedrun.com/midtown1/runs/zp5n7ogy"),
+])
+srow = sourced.views["mm1"].views["vanilla"].tree.topLevelItem(0)
+check("the source column names it", srow.text(5) == "speedrun.com", srow.text(5))
+check("the proof link is attached", bool(srow.data(0, Qt.UserRole)))
+check("a run with no car is dashed, not blank", srow.text(2) == "—", srow.text(2))
+plain = RecordsPage(config, lambda: [entry(board="vanilla", race=0)])
+prow = plain.views["mm1"].views["vanilla"].tree.topLevelItem(0)
+check("a launcher record leaves the source blank", prow.text(5) == "", prow.text(5))
+
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])
 blank_view = blank.views["mm1"].views["vanilla"]
