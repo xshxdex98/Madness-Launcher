@@ -45,7 +45,11 @@ USER_AGENT = (
 )
 
 MAX_ANNOUNCEMENTS = 25
-MAX_VIDEOS = 20
+# Room for every configured channel to be properly represented. Four channels
+# publishing fifteen uploads each is sixty candidates, and a cap much below
+# this starts deciding which channels exist rather than merely how far back
+# the tab goes.
+MAX_VIDEOS = 40
 TIMEOUT = 30
 
 # Which YouTube URL shapes count as a video link when one turns up in chat.
@@ -551,6 +555,45 @@ def _sort_key(item: dict[str, Any], field: str) -> str:
     return str(item.get(field) or "")
 
 
+def balanced(videos: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
+    """Trim to `limit`, giving every channel a turn before any gets seconds.
+
+    A plain newest-first cut is not neutral between channels. A prolific one
+    fills the list and a quieter one vanishes from the tab altogether, which
+    reads as the launcher having forgotten that channel rather than as a cap
+    being reached — exactly what happened with four channels and a cap of
+    twenty: two of them disappeared.
+
+    Selection is round-robin by recency; the result is re-sorted by date, so
+    the tab still reads newest-first and only the choice of *which* uploads
+    survive is balanced.
+    """
+    if len(videos) <= limit:
+        return videos
+
+    by_channel: dict[str, list[dict[str, Any]]] = {}
+    for video in videos:
+        by_channel.setdefault(str(video.get("channel") or ""), []).append(video)
+    for group in by_channel.values():
+        group.sort(key=lambda item: _sort_key(item, "published"), reverse=True)
+
+    picked: list[dict[str, Any]] = []
+    queues = list(by_channel.values())
+    while len(picked) < limit and any(queues):
+        for queue in queues:
+            if queue:
+                picked.append(queue.pop(0))
+                if len(picked) >= limit:
+                    break
+
+    log(
+        f"videos: kept {len(picked)} of {len(videos)} across "
+        f"{len(by_channel)} channels (cap {limit})"
+    )
+    picked.sort(key=lambda item: _sort_key(item, "published"), reverse=True)
+    return picked
+
+
 def build(config: dict[str, Any], token: str) -> dict[str, Any]:
     announcements, ann_failures = collect_announcements(config, token)
     videos, vid_failures = collect_videos(config, token)
@@ -570,7 +613,7 @@ def build(config: dict[str, Any], token: str) -> dict[str, Any]:
         "version": FEED_VERSION,
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "announcements": announcements[:MAX_ANNOUNCEMENTS],
-        "videos": videos[:MAX_VIDEOS],
+        "videos": balanced(videos, MAX_VIDEOS),
     }
 
 

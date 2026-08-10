@@ -631,6 +631,45 @@ check("turning it off lets everything through",
 check("a malformed block falls back to the defaults rather than failing",
       build_news.VideoFilter({"video_filter": "nonsense"}).allows("Midtown Madness"))
 
+print("\ncapping the video list must not delete whole channels")
+# A prolific channel and a quiet one. Sorted purely by date, the busy one
+# fills every slot and the quiet one disappears from the tab entirely —
+# which is what actually happened with four real channels and a cap of 20.
+busy = [
+    {"id": f"b{i}", "channel": "Busy", "title": f"busy {i}",
+     "published": f"2026-08-{20 - i:02d}T00:00:00Z"}
+    for i in range(12)
+]
+quiet = [
+    {"id": f"q{i}", "channel": "Quiet", "title": f"quiet {i}",
+     "published": f"2026-05-{20 - i:02d}T00:00:00Z"}
+    for i in range(4)
+]
+capped = build_news.balanced(busy + quiet, 8)
+channels = {v["channel"] for v in capped}
+check("the cap is respected", len(capped) == 8, str(len(capped)))
+check("both channels survive it", channels == {"Busy", "Quiet"}, str(channels))
+check("the quiet channel gets a fair share",
+      sum(1 for v in capped if v["channel"] == "Quiet") == 4,
+      str([v["channel"] for v in capped]))
+check("still newest first afterwards",
+      all(capped[i]["published"] >= capped[i + 1]["published"]
+          for i in range(len(capped) - 1)))
+check("under the cap nothing is touched",
+      build_news.balanced(quiet, 40) == quiet)
+check("a single channel is unharmed",
+      len(build_news.balanced(busy, 5)) == 5)
+check("the newest from each channel is always in",
+      "b0" in {v["id"] for v in capped} and "q0" in {v["id"] for v in capped},
+      str([v["id"] for v in capped]))
+
+print("\nthe relay's cap sits below the launcher's, so the relay decides")
+from madness_launcher.news.model import MAX_VIDEOS as UI_MAX_VIDEOS  # noqa: E402
+
+check("launcher allows at least what the relay sends",
+      UI_MAX_VIDEOS >= build_news.MAX_VIDEOS,
+      f"launcher {UI_MAX_VIDEOS} vs relay {build_news.MAX_VIDEOS}")
+
 print("\nthe YouTube feed parser reads a real Atom document")
 ATOM = """<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015"

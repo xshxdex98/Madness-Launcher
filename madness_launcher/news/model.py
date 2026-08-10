@@ -22,7 +22,10 @@ FEED_VERSION = 1
 # Caps, applied on the way in. The page is a news tab, not an archive, and an
 # oversized feed should degrade to "the newest N" rather than to a stalled UI.
 MAX_ANNOUNCEMENTS = 30
-MAX_VIDEOS = 24
+# Comfortably above the relay's own cap, so it is the relay that decides which
+# uploads make the tab. If this were the tighter of the two, it would trim the
+# relay's carefully balanced selection back down by date and undo it.
+MAX_VIDEOS = 48
 MAX_BODY_CHARS = 2000
 MAX_TITLE_CHARS = 200
 MAX_NAME_CHARS = 80
