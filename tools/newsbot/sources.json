@@ -28,8 +28,14 @@
     "Deleting a bogus message removes it from the board on the next run and",
     "the next-fastest time takes the slot back."
   ],
-  "records": [],
-  "records_webhook": "",
+  "records": [
+    {
+      "guild_id": "796156308545601558",
+      "channel_id": "994084533857177741",
+      "limit": 100
+    }
+  ],
+  "records_webhook": "https://discord.com/api/webhooks/1536446666033471611/p0KiQd14wrCS7GaSe3Dko1YwGepf7gFXqq9SKVnuk2DdnWXHKh3zhRPklp6kdwtB6ZhO",
 
   "_speedrun_note": [
     "World records pulled from speedrun.com's own leaderboards, which are",
