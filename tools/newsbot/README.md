@@ -92,6 +92,28 @@ default for everyone, set `DEFAULT_NEWS_URL` in `madness_launcher/config.py`
 instead — the Settings field then only exists for people who want to override
 it.
 
+## Filtering the Videos tab
+
+The configured channels post about other things too, so only uploads whose
+**title** matches `video_filter.match` are published. Matching is
+case-insensitive with word boundaries, and the words of a phrase may run
+together — `midtown madness` also matches `#midtownmadness`, which matters
+because on Shorts the hashtag is frequently the only mention of the game
+anywhere in the title. `exclude` is checked first and rejects outright, which
+is what keeps Madness Combat and March Madness out.
+
+Only the title is considered. Matching the channel name too would mean any
+channel with "Madness" in its name published everything it ever posted; a
+channel you *do* trust wholesale gets `"filter": false` on its own entry.
+
+**Every rejected title is printed in the run log.** That is the tuning
+mechanism — read it now and again and add anything that should have been
+kept. Titles get misspelled (`Midtown Madnes` is a real one, and is in the
+match list for exactly that reason), and no keyword list predicts that.
+
+Because the filter lives here rather than in the launcher, changing it is a
+commit, not a rebuild and a 53MB re-download for every user.
+
 ## Timing
 
 Two caches sit between a Discord post and a user seeing it:

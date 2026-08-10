@@ -56,6 +56,36 @@ _YT_PATTERNS = (
     re.compile(r"youtube\.com/live/([A-Za-z0-9_-]{11})"),
 )
 
+# Which uploads count as being about the six games the launcher supports.
+# Matched against the video's title with word boundaries, case-insensitively.
+# Overridable per-deployment in sources.json — keep them here as the fallback
+# so a config that omits the block still filters rather than letting the tab
+# fill with whatever else a channel happens to post.
+DEFAULT_VIDEO_MATCH = [
+    "midtown madness",
+    "monster truck madness",
+    "motocross madness",
+    "mm1", "mm2",
+    "mtm", "mtm1", "mtm2",
+    "mcm", "mcm1", "mcm2",
+    # The Midtown Madness 2 source port the launcher builds its support on,
+    # and the community that gathers around it.
+    "open1560",
+    "midtown club",
+    "madness crew",
+]
+
+# Checked first, and a hit rejects outright. "Madness" is a common word in
+# game titles that have nothing to do with these six, and Madness Combat in
+# particular is popular enough to swamp the tab on its own.
+DEFAULT_VIDEO_EXCLUDE = [
+    "madness combat",
+    "madness project nexus",
+    "march madness",
+    "madness returns",
+    "bloody roar",
+]
+
 _CUSTOM_EMOJI = re.compile(r"<a?:(\w+):(\d+)>")
 # Matches the launcher's own rule, so a name the relay emits is always one the
 # launcher will accept as a substitution key.
@@ -373,6 +403,7 @@ def collect_videos(
     videos: list[dict[str, Any]] = []
     seen: set[str] = set()
     failures = 0
+    vfilter = VideoFilter(config)
 
     for source in config.get("youtube") or []:
         channel_id = str(source.get("channel_id") or "").strip()
@@ -384,12 +415,22 @@ def collect_videos(
             log(f"warning: youtube {channel_id}: {exc}")
             failures += 1
             continue
+        # A channel that only ever posts about these games can opt out, rather
+        # than having every title second-guessed by a keyword list.
+        screen = source.get("filter", True) is not False
+        kept = 0
         for video in found:
             if video["id"] in seen:
                 continue
+            if screen and not vfilter.allows(video["title"]):
+                # Named, not just counted: a filter nobody can see the effect
+                # of is a filter nobody can tune.
+                log(f"  filtered out: {video['title'][:70]}")
+                continue
             seen.add(video["id"])
             videos.append(video)
-        log(f"youtube {channel_id}: {len(found)} uploads read")
+            kept += 1
+        log(f"youtube {channel_id}: {len(found)} uploads read, {kept} kept")
 
     # Links people posted in Discord. Anything already known from a channel
     # feed above is skipped, so the common case of "our own video, shared in
@@ -405,6 +446,7 @@ def collect_videos(
             failures += 1
             continue
 
+        screen = source.get("filter", True) is not False
         added = 0
         for message in messages:
             content = str(message.get("content") or "")
@@ -416,6 +458,11 @@ def collect_videos(
                     title, author = youtube_details(video_id)
                 except SourceError as exc:
                     log(f"warning: could not look up {video_id}: {exc}")
+                    continue
+                # The title is only known after the lookup, so a shared link
+                # costs one request even when it is then filtered out.
+                if screen and not vfilter.allows(title):
+                    log(f"  filtered out (shared): {title[:70]}")
                     continue
                 videos.append(
                     {
@@ -450,6 +497,55 @@ def _video_ids(text: str) -> list[str]:
 # ----------------------------------------------------------------------
 
 
+def _compile(patterns: Any, fallback: list[str]) -> list[re.Pattern[str]]:
+    """Turn plain phrases into title matchers.
+
+    The words of a phrase are allowed to run together, because a title is as
+    likely to say "#midtownmadness" as "Midtown Madness" — hashtags carry no
+    spaces, and on Shorts the hashtag is often the only mention of the game
+    anywhere in the title. Written as a separator class rather than a second
+    keyword so the config stays readable and nobody has to remember to add
+    both spellings of every term.
+
+    Word boundaries at the edges keep "mm2" out of "mm2020" while still
+    matching "MM2: Revisited" and "#mm2".
+    """
+    out: list[re.Pattern[str]] = []
+    for raw in patterns or fallback:
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        words = [re.escape(w) for w in re.split(r"[\s\-_]+", raw.strip()) if w]
+        if not words:
+            continue
+        out.append(re.compile(r"\b" + r"[\W_]*".join(words) + r"\b", re.IGNORECASE))
+    return out
+
+
+class VideoFilter:
+    """Decides whether an upload is about one of the launcher's six games.
+
+    Judged on the title alone. Matching the channel name too would mean a
+    channel called anything with "Madness" in it passed everything it ever
+    posted, which is the opposite of what a filter is for — a channel that
+    should be trusted wholesale says so explicitly with "filter": false on
+    its own entry instead.
+    """
+
+    def __init__(self, config: dict[str, Any]):
+        block = config.get("video_filter")
+        block = block if isinstance(block, dict) else {}
+        self.enabled = block.get("enabled", True) is not False
+        self.match = _compile(block.get("match"), DEFAULT_VIDEO_MATCH)
+        self.exclude = _compile(block.get("exclude"), DEFAULT_VIDEO_EXCLUDE)
+
+    def allows(self, title: str) -> bool:
+        if not self.enabled:
+            return True
+        if any(p.search(title) for p in self.exclude):
+            return False
+        return any(p.search(title) for p in self.match)
+
+
 def _sort_key(item: dict[str, Any], field: str) -> str:
     """Sort on the raw RFC 3339 string: it sorts correctly as text."""
     return str(item.get(field) or "")
@@ -478,6 +574,15 @@ def build(config: dict[str, Any], token: str) -> dict[str, Any]:
     }
 
 
+# The page's own identity. Both of these name the channel being viewed;
+# "channelId" on its own does NOT — a channel page carries a dozen of them for
+# recommended channels and video owners, and the first is somebody else's.
+_CANONICAL_ID = re.compile(
+    r'rel="canonical"\s+href="https://www\.youtube\.com/channel/(UC[A-Za-z0-9_-]{22})"'
+)
+_EXTERNAL_ID = re.compile(r'"externalId":"(UC[A-Za-z0-9_-]{22})"')
+
+
 def resolve_channel(url: str) -> str:
     """Find the UC… ID behind a @handle or /c/ vanity URL.
 
@@ -485,10 +590,11 @@ def resolve_channel(url: str) -> str:
     feed will only take the canonical ID.
     """
     payload = get(url).decode("utf-8", "replace")
-    match = re.search(r'"(?:channelId|externalId)":"(UC[A-Za-z0-9_-]{22})"', payload)
-    if not match:
-        raise SourceError(f"no channel ID found on {url}")
-    return match.group(1)
+    for pattern in (_CANONICAL_ID, _EXTERNAL_ID):
+        match = pattern.search(payload)
+        if match:
+            return match.group(1)
+    raise SourceError(f"no channel ID found on {url}")
 
 
 def main(argv: list[str] | None = None) -> int:

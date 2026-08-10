@@ -21,5 +21,46 @@
 
   "video_channels": [],
 
-  "youtube": []
+  "youtube": [
+    { "channel_id": "UCXcv42XHTloD5XSk9FIqPrQ", "name": "Panoz" },
+    { "channel_id": "UCcndPF7UpwKvRBsWI1RxH7A", "name": "MadManMammoth" },
+    { "channel_id": "UCWbuhJxbcrs4Nr-I_OIF1iA", "name": "MidtownMadness1" },
+    { "channel_id": "UCw72ZKWx9lFMNFhLd593YMw", "name": "VJ" }
+  ],
+
+  "video_filter": {
+    "enabled": true,
+    "_comment": [
+      "Only uploads whose TITLE matches one of these reaches the Videos tab.",
+      "Word-boundary, case-insensitive: 'mm2' matches 'MM2: Revisited' but",
+      "not 'mm2020'. Exclusions are checked first and reject outright.",
+      "Add a term here and the next run picks it up — no launcher rebuild.",
+      "A channel that only ever posts about these games can skip the check",
+      "entirely with \"filter\": false on its own entry above."
+    ],
+    "match": [
+      "midtown madness",
+      "monster truck madness",
+      "motocross madness",
+      "mm1", "mm2",
+      "mtm", "mtm1", "mtm2",
+      "mcm", "mcm1", "mcm2",
+      "open1560",
+      "midtown club",
+      "madness crew",
+      "midtown madnes"
+    ],
+    "_typos": [
+      "'midtown madnes' catches a real upload whose title is misspelled.",
+      "Typos cannot be predicted, only noticed: every rejected title is",
+      "printed in the workflow log, so scan it occasionally and add any",
+      "that should have been kept."
+    ],
+    "exclude": [
+      "madness combat",
+      "madness project nexus",
+      "march madness",
+      "madness returns"
+    ]
+  }
 }

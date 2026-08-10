@@ -575,6 +575,62 @@ check("no duplicates from one message",
 check("a bare link to the site is not a video",
       build_news._video_ids("https://www.youtube.com/") == [])
 
+print("\nthe video filter keeps the six games and nothing else")
+vfilter = build_news.VideoFilter({})
+for title in (
+    "Midtown Madness 2: Cops & Robbers #25",
+    "Monster Truck Madness: Yucatan Adventure",
+    "Motocross Madness 2: Munchberry Farms",
+    "MM2: Revisited",
+    "MTM1 Physics",
+    "open1560 build notes",
+):
+    check(f"kept: {title[:38]}", vfilter.allows(title))
+
+for title in (
+    "Madness Combat 11",
+    "March Madness bracket 2026",
+    "Alice: Madness Returns ending",
+    "Tomodachi Life - Love Yourself",
+    "HireVue Numerosity Test Cognitive Assessment",
+    "Happy Birth Dading",
+):
+    check(f"dropped: {title[:38]}", not vfilter.allows(title))
+
+print("\nhashtags run the words together, and still have to match")
+# Every one of these is a real title shape from the configured channels; the
+# game is named only in a hashtag, which carries no spaces.
+for title in (
+    "Giggity! #multiplayer #discord #midtownmadness #retrogaming",
+    "MTM1 Physics #discord #monstertruckmadness",
+    "Saint Noctalus takes off #gaming #midtownmadness",
+):
+    check(f"hashtag form kept: {title[:34]}", vfilter.allows(title))
+check("hyphenated is kept too", vfilter.allows("Monster-Truck-Madness 2 review"))
+check("underscores too", vfilter.allows("midtown_madness lap"))
+
+print("\nword boundaries stop the short forms over-matching")
+check("mm2 does not match inside a longer number",
+      not vfilter.allows("mm2020 tax return"))
+check("but does match with punctuation either side",
+      vfilter.allows("#mm2 lap record"))
+check("an unrelated title with no keyword is dropped",
+      not vfilter.allows("Just chatting for an hour"))
+
+print("\nthe filter is configurable without touching the launcher")
+custom = build_news.VideoFilter(
+    {"video_filter": {"match": ["banger racing"], "exclude": ["reupload"]}}
+)
+check("a custom term is honoured", custom.allows("Banger Racing highlights"))
+check("the defaults are replaced, not merged",
+      not custom.allows("Midtown Madness 2 lap"))
+check("a custom exclusion wins over a match",
+      not custom.allows("Banger Racing highlights (reupload)"))
+check("turning it off lets everything through",
+      build_news.VideoFilter({"video_filter": {"enabled": False}}).allows("anything"))
+check("a malformed block falls back to the defaults rather than failing",
+      build_news.VideoFilter({"video_filter": "nonsense"}).allows("Midtown Madness"))
+
 print("\nthe YouTube feed parser reads a real Atom document")
 ATOM = """<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015"

@@ -27,7 +27,25 @@
   "youtube": [
     {
       "channel_id": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
-      "name": ""
+      "name": "",
+      "_filter_note": "Add \"filter\": false to take everything this channel posts.",
+      "filter": true
     }
-  ]
+  ],
+
+  "video_filter": {
+    "_comment": [
+      "Only uploads whose TITLE matches reach the Videos tab. Matching is",
+      "case-insensitive with word boundaries, and the words of a phrase may",
+      "run together, so 'midtown madness' also matches '#midtownmadness'.",
+      "Exclusions are checked first and reject outright.",
+      "Omit this block entirely to use the built-in Madness defaults;",
+      "supplying 'match' REPLACES those defaults rather than adding to them.",
+      "Every rejected title is printed in the run log, so the filter can be",
+      "tuned by reading what it threw away."
+    ],
+    "enabled": true,
+    "match": ["midtown madness", "monster truck madness", "motocross madness"],
+    "exclude": ["madness combat", "march madness"]
+  }
 }
