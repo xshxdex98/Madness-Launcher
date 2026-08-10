@@ -37,7 +37,7 @@ from madness_launcher.records.session import (  # noqa: E402
 )
 from madness_launcher.records.submit import describe, usable_webhook  # noqa: E402
 from madness_launcher.ui import theme  # noqa: E402
-from madness_launcher.ui.records_page import RecordsPage  # noqa: E402
+from madness_launcher.ui.records_page import SORTS, RecordsPage  # noqa: E402
 
 failures: list[str] = []
 
@@ -416,6 +416,62 @@ check("a run with no car is dashed, not blank", srow.text(2) == "—", srow.text
 plain = RecordsPage(config, lambda: [entry(board="vanilla", race=0)])
 prow = plain.views["mm1"].views["vanilla"].tree.topLevelItem(0)
 check("a launcher record leaves the source blank", prow.text(5) == "", prow.text(5))
+
+print("\ntimes sort by value, not by how they are written")
+# The case that makes this necessary: as text, "1:41.234" sorts before
+# "41.228" because it starts with a 1.
+spread = [
+    entry(race=0, race_name="Dearborn Dash", seconds=41.228),
+    entry(race=14, race_name="Museum Marathon", seconds=101.234),
+    entry(race=5, race_name="Wild Blue Blitz", seconds=19.520),
+    entry(race=9, race_name="Tall Tower Blitz", seconds=291.120),
+]
+sorted_page = RecordsPage(config, lambda: spread)
+board = sorted_page.views["mm1"].views["vanilla"]
+
+
+def shown_seconds() -> list:
+    return [board.tree.topLevelItem(i)._keys[1]
+            for i in range(board.tree.topLevelItemCount())]
+
+
+def shown_races() -> list:
+    return [board.tree.topLevelItem(i)._keys[0]
+            for i in range(board.tree.topLevelItemCount())]
+
+
+check("there is a sort control", sorted_page.sort_box.count() == len(SORTS),
+      str(sorted_page.sort_box.count()))
+check("it defaults to race order", sorted_page.sort_box.currentIndex() == 0)
+check("race order really is race order", shown_races() == sorted(shown_races()))
+
+sorted_page.sort_box.setCurrentIndex(1)
+check("fastest first is ascending by value",
+      shown_seconds() == sorted(shown_seconds()), str(shown_seconds()))
+check("the fastest lap is on top", abs(shown_seconds()[0] - 19.520) < 1e-3,
+      str(shown_seconds()[0]))
+check("a sub-minute time outranks a longer one written with a colon",
+      shown_seconds().index(41.228) < shown_seconds().index(101.234),
+      "41.228 must beat 1:41.234")
+
+sorted_page.sort_box.setCurrentIndex(2)
+check("slowest first is descending by value",
+      shown_seconds() == sorted(shown_seconds(), reverse=True))
+check("the slowest lap is on top", abs(shown_seconds()[0] - 291.120) < 1e-3)
+
+sorted_page.sort_box.setCurrentIndex(0)
+check("switching back restores race order",
+      shown_races() == sorted(shown_races()))
+
+print("\nclicking a column header sorts on the same real values")
+board.tree.sortItems(1, Qt.AscendingOrder)
+check("the Time header sorts numerically",
+      shown_seconds() == sorted(shown_seconds()))
+board.tree.sortItems(3, Qt.AscendingOrder)
+drivers = [board.tree.topLevelItem(i).text(3)
+           for i in range(board.tree.topLevelItemCount())]
+check("the Driver header sorts alphabetically",
+      drivers == sorted(drivers, key=str.lower), str(drivers))
 
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])

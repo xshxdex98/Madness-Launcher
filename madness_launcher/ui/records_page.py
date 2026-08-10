@@ -16,6 +16,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
+    QComboBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -43,6 +44,36 @@ BOARDS = (
 )
 
 COLUMNS = ("Race", "Time", "Car", "Driver", "Difficulty", "Source")
+
+# label, column, order. Race order is the default because a board is normally
+# read race by race; the other two answer "what are the fastest times here".
+SORTS = (
+    ("Race order", 0, Qt.AscendingOrder),
+    ("Fastest first", 1, Qt.AscendingOrder),
+    ("Slowest first", 1, Qt.DescendingOrder),
+)
+
+
+class RecordItem(QTreeWidgetItem):
+    """A row that sorts on its real values rather than on what it displays.
+
+    Times are shown as "1:41.234" and "41.228", and sorted as text the longer
+    lap comes first — the string starts with a 1. Every column therefore
+    carries a sort key alongside the label it shows.
+    """
+
+    def __init__(self, columns: list[str], keys: dict[int, object]):
+        super().__init__(columns)
+        self._keys = keys
+
+    def __lt__(self, other: "QTreeWidgetItem") -> bool:
+        tree = self.treeWidget()
+        column = tree.sortColumn() if tree is not None else 0
+        mine = self._keys.get(column)
+        theirs = getattr(other, "_keys", {}).get(column)
+        if mine is None or theirs is None:
+            return super().__lt__(other)
+        return mine < theirs
 
 
 class BoardView(QWidget):
@@ -72,6 +103,10 @@ class BoardView(QWidget):
         self.tree.setFocusPolicy(Qt.NoFocus)
         # A verified run links to its own video; double-click opens it.
         self.tree.itemDoubleClicked.connect(self._open_proof)
+        # Clicking a header sorts too, on the same real values the selector
+        # uses rather than on the displayed text.
+        self.tree.setSortingEnabled(True)
+        self.tree.header().setSortIndicatorShown(True)
         header = self.tree.header()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         for column in range(1, len(COLUMNS)):
@@ -91,7 +126,8 @@ class BoardView(QWidget):
         if url:
             QDesktopServices.openUrl(QUrl(url))
 
-    def show_records(self, records: list, own_names: set[str]) -> None:
+    def show_records(self, records: list, own_names: set[str],
+                     sort: int = 0) -> None:
         self.tree.clear()
         rows = [r for r in records if r.game == self.game_id and r.board == self.board]
         # Best time per race first, then by race order, so the table reads as
@@ -104,9 +140,13 @@ class BoardView(QWidget):
                 best[key] = record
 
         ordered = sorted(best.values(), key=lambda r: (r.race, r.difficulty))
+        # Sorting is switched off while rows are added, then switched back on
+        # with the wanted order. Leaving it on makes every insert re-sort the
+        # whole table, which on a full board is sixty-four needless passes.
+        self.tree.setSortingEnabled(False)
         for record in ordered:
             who = record.username or record.driver
-            item = QTreeWidgetItem(
+            item = RecordItem(
                 [
                     f"{record.race_name}"
                     + (f"  ·  {record.race_kind}" if record.race_kind else ""),
@@ -117,7 +157,17 @@ class BoardView(QWidget):
                     who,
                     record.difficulty.title(),
                     "" if record.source == "launcher" else record.source,
-                ]
+                ],
+                {
+                    # Race sorts by its position in the game, not its name, so
+                    # "race order" means the order they appear in the game.
+                    0: (record.race, record.difficulty),
+                    1: record.seconds,
+                    2: record.car_name.lower(),
+                    3: who.lower(),
+                    4: record.difficulty.lower(),
+                    5: record.source.lower(),
+                },
             )
             item.setTextAlignment(1, Qt.AlignRight | Qt.AlignVCenter)
             if record.url:
@@ -133,6 +183,10 @@ class BoardView(QWidget):
                     item.setForeground(column, theme.accent_brush())
                 item.setToolTip(0, "Set on this machine")
             self.tree.addTopLevelItem(item)
+
+        label, column, order = SORTS[sort if 0 <= sort < len(SORTS) else 0]
+        self.tree.sortItems(column, order)
+        self.tree.setSortingEnabled(True)
 
         has_rows = bool(ordered)
         self.tree.setVisible(has_rows)
@@ -164,9 +218,10 @@ class GameRecords(QWidget):
             self.tabs.addTab(view, label)
         layout.addWidget(self.tabs)
 
-    def show_records(self, records: list, own_names: set[str]) -> None:
+    def show_records(self, records: list, own_names: set[str],
+                     sort: int = 0) -> None:
         for board, view in self.views.items():
-            view.show_records(records, own_names)
+            view.show_records(records, own_names, sort)
             index = list(self.views).index(board)
             count = sum(
                 1 for r in records if r.board == board and r.game == view.game_id
@@ -205,6 +260,24 @@ class RecordsPage(QWidget):
         )
         root.addWidget(caution)
 
+        controls = QHBoxLayout()
+        controls.setSpacing(9)
+        sort_label = QLabel("Sort by")
+        sort_label.setObjectName("Faint")
+        controls.addWidget(sort_label)
+        self.sort_box = QComboBox()
+        for label, _, _ in SORTS:
+            self.sort_box.addItem(label)
+        self.sort_box.setToolTip(
+            "Fastest first compares every race against every other, so a short "
+            "Blitz will outrank a long Circuit. Clicking a column header sorts "
+            "by that column instead."
+        )
+        self.sort_box.currentIndexChanged.connect(lambda _: self.refresh())
+        controls.addWidget(self.sort_box)
+        controls.addStretch(1)
+        root.addLayout(controls)
+
         self.games = QTabWidget()
         self.views: dict[str, GameRecords] = {}
         for game in GAMES:
@@ -239,5 +312,6 @@ class RecordsPage(QWidget):
     def refresh(self) -> None:
         records = list(self._records_source() or [])
         own = {self.config.settings.username} - {""}
+        sort = self.sort_box.currentIndex()
         for view in self.views.values():
-            view.show_records(records, own)
+            view.show_records(records, own, sort)
