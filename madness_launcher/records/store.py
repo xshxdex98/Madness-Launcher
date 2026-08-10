@@ -43,7 +43,9 @@ def _from_dict(item: object) -> Submission | None:
     if not isinstance(item, dict):
         return None
     try:
-        seconds = float(item.get("seconds", 0.0))
+        # Same three decimals the rest of the system uses, so a value that
+        # has been through JSON compares equal to one straight off disk.
+        seconds = round(float(item.get("seconds", 0.0)), 3)
         race = int(item.get("race", -1))
     except (TypeError, ValueError):
         return None
@@ -121,7 +123,7 @@ def merge(existing: list[Submission], fresh: list[Submission]) -> list[Submissio
     best: dict[tuple, Submission] = {_key(r): r for r in existing}
     for entry in fresh:
         current = best.get(_key(entry))
-        if current is None or entry.seconds < current.seconds:
+        if current is None or entry.seconds < current.seconds - 5e-4:
             best[_key(entry)] = entry
     return sorted(
         best.values(), key=lambda r: (r.game, r.board, r.difficulty, r.race)

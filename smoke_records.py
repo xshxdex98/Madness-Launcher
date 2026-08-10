@@ -35,6 +35,7 @@ from madness_launcher.records.session import (  # noqa: E402
     Submission,
     plausible,
 )
+from madness_launcher.records.session import existing_records  # noqa: E402
 from madness_launcher.records.submit import describe, usable_webhook  # noqa: E402
 from madness_launcher.ui import theme  # noqa: E402
 from madness_launcher.ui.records_page import SORTS, RecordsPage  # noqa: E402
@@ -250,8 +251,29 @@ check("a lap identical but for its driver counts as new",
           2: ("Someone", "vpcaddie", 43.286),
       })))) == 1)
 
+print("\na time survives a round trip without appearing to get faster")
+# The .dat holds a float32. Writing three decimals and reading them back used
+# to yield a value LARGER than the original, so on every startup the same lap
+# looked freshly beaten by a fraction of a millisecond — a duplicate record
+# published on every launch, forever.
+drifty = write_install({0: ("Pan", "vpmustang99", 120.0417709350586)})
+parsed_once = mm1.snapshot(drifty)
+round_tripped = store.from_feed(
+    [r.as_dict() for r in store.merge([], existing_records(drifty, "mm1", "T"))]
+)
+check("the parsed time is quantised",
+      abs(list(parsed_once.values())[0].seconds - 120.042) < 1e-9,
+      repr(list(parsed_once.values())[0].seconds))
+check("and matches after a trip through JSON",
+      round_tripped and abs(round_tripped[0].seconds - 120.042) < 1e-9,
+      repr(round_tripped[0].seconds if round_tripped else None))
+check("so re-reading the same save finds nothing new",
+      mm1.improvements(mm1.snapshot(drifty), mm1.snapshot(drifty)) == [])
+stored_again = store.merge(round_tripped, existing_records(drifty, "mm1", "T"))
+check("and re-importing it does not add a duplicate",
+      len(stored_again) == len(round_tripped), str(len(stored_again)))
+
 print("\na player's existing times are taken in, not ignored")
-from madness_launcher.records.session import existing_records  # noqa: E402
 
 history = write_install({
     0: ("Pan", "vpmustang99", 41.228),

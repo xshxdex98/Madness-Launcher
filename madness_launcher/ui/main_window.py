@@ -98,11 +98,18 @@ class MainWindow(QMainWindow):
         # because a page can be rebuilt or navigated away from while the
         # game it started is still running.
         self._watchers: list[object] = []
+        self.submitter = RecordSubmitter(self)
+        self.submitter.failed.connect(self._on_submit_failed)
+        # Records worth sending before a webhook was known. The import runs
+        # during startup and the webhook arrives with the news feed a moment
+        # later, so without this a first run imports a whole history and
+        # posts none of it.
+        self._unsent: list = []
+        # Last, because it can submit, and everything submitting depends on
+        # has to exist by the time it runs.
         self._load_race_tables()
         self.records = record_store.load()
         self._import_existing_records()
-        self.submitter = RecordSubmitter(self)
-        self.submitter.failed.connect(self._on_submit_failed)
 
         self.setWindowTitle(APP_NAME)
         self.resize(1120, 740)
@@ -877,6 +884,13 @@ class MainWindow(QMainWindow):
             or self.news.feed.records_webhook
         )
         if not webhook:
+            # Held until the feed arrives with one, rather than dropped.
+            self._unsent.extend(entries)
+            return
+        if self._unsent:
+            entries = self._unsent + list(entries)
+            self._unsent = []
+        if not webhook:
             return
         sent = self.submitter.submit(webhook, entries)
         if sent:
@@ -905,6 +919,11 @@ class MainWindow(QMainWindow):
 
     def _on_news_updated(self, _feed: object) -> None:
         self._refresh_news_entry()
+        # The feed carries the webhook, so anything held back at startup can
+        # go now.
+        if self._unsent and self.config.settings.records_submit:
+            waiting, self._unsent = self._unsent, []
+            self._maybe_submit(waiting)
 
     def _on_news_state(self, _state: str) -> None:
         self._refresh_news_entry()

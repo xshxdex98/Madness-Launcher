@@ -252,11 +252,11 @@ class RecordsPage(QWidget):
             "How these are collected",
             "The launcher reads the game's own best-time table before and "
             "after a session, so a record has to be set while the launcher is "
-            "running. Community times are not verified beyond that — the game "
-            "stores them in a file on each player's own machine, and anyone "
-            "can edit it. Rows marked speedrun.com come from that site's "
-            "leaderboards instead and have been checked against video by its "
-            "moderators; double-click one to watch the run.",
+            "running. Community times are submitted by players and are "
+            "moderated rather than independently verified. Rows marked "
+            "speedrun.com come from that site's leaderboards instead and have "
+            "been checked against video by its moderators; double-click one "
+            "to watch the run.",
         )
         root.addWidget(caution)
 

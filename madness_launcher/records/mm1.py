@@ -324,7 +324,7 @@ class LapRecord:
         A race's entries are kept in time order, so the same lap moves slots
         as faster ones arrive above it. Identity has to come from the lap.
         """
-        return (round(self.seconds, 3), self.car.lower(), self.driver.lower())
+        return (self.seconds, self.car.lower(), self.driver.lower())
 
 
 def _string(raw: bytes) -> str:
@@ -358,7 +358,13 @@ def parse(path: Path, city: str = "", difficulty: str = "") -> list[LapRecord]:
         # The game's par time for the entry before it, not a lap anyone drove.
         if PAR_SLOTS_ARE_ODD and slot % 2:
             continue
-        seconds = struct.unpack("<f", chunk[_TIME])[0]
+        # Quantised on the way in. The file holds a float32, and every other
+        # place a time is written — the store, the feed, a Discord message —
+        # writes three decimals. Without rounding here the two disagree by up
+        # to half a millisecond, the stored copy comes out *larger* than the
+        # original, and every startup decides the same lap has just been
+        # beaten: a duplicate record published on every launch, forever.
+        seconds = round(struct.unpack("<f", chunk[_TIME])[0], 3)
         car = _string(chunk[_CAR])
         # An entry with no car never had anyone drive it, whatever the flag says.
         if not car or not (MIN_TIME <= seconds <= MAX_TIME):
