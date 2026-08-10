@@ -574,12 +574,12 @@ def _parse_record_line(line: str, message: dict[str, Any]) -> dict[str, Any] | N
 
 
 def collect_records(config: dict[str, Any], token: str) -> tuple[list[dict], int]:
-    """The best claimed time per race, per board, per difficulty.
+    """Each driver's best claimed time, per race, board and difficulty.
 
-    Only the fastest survives each slot, so the channel can hold every
-    attempt anyone ever posted and the board stays a board. Deleting the
-    message behind a bogus entry is what removes it: the next run simply does
-    not see it, and the next-best time takes the slot back.
+    One entry per person per race, so the channel can hold every attempt
+    anyone ever posted and the board still reads as a leaderboard rather than
+    a log. Deleting the message behind a bogus entry is what removes it: the
+    next run simply does not see it.
     """
     best: dict[tuple, dict] = {}
     failures = 0
@@ -597,8 +597,13 @@ def collect_records(config: dict[str, Any], token: str) -> tuple[list[dict], int
         for message in messages:
             for record in parse_records(message):
                 seen += 1
+                # Keyed by driver as well as by race. Keeping only the
+                # fastest per race meant a second player's time never
+                # reached the feed at all — they could race for months and
+                # the board would never show them once anyone was quicker.
                 key = (record["game"], record["board"],
-                       record["difficulty"], record["race"])
+                       record["difficulty"], record["race"],
+                       record["username"].lower())
                 current = best.get(key)
                 if current is None or record["seconds"] < current["seconds"]:
                     best[key] = record

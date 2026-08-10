@@ -16,6 +16,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QHBoxLayout,
     QHeaderView,
@@ -43,14 +44,20 @@ BOARDS = (
     (mm1.BOARD_MODDED, "Modded", "Racepacks allowed. Stock cars only."),
 )
 
-COLUMNS = ("Race", "Time", "Car", "Driver", "Difficulty", "Source")
+COLUMNS = ("#", "Race", "Time", "Car", "Driver", "Difficulty", "Source")
+
+# Named once rather than counted at every use.
+COL_RANK, COL_RACE, COL_TIME, COL_CAR, COL_DRIVER, COL_DIFF, COL_SOURCE = range(7)
+
+# Records that came from an external leaderboard rather than from a launcher.
+EXTERNAL = "speedrun.com"
 
 # label, column, order. Race order is the default because a board is normally
 # read race by race; the other two answer "what are the fastest times here".
 SORTS = (
-    ("Race order", 0, Qt.AscendingOrder),
-    ("Fastest first", 1, Qt.AscendingOrder),
-    ("Slowest first", 1, Qt.DescendingOrder),
+    ("Race order", COL_RANK, Qt.AscendingOrder),
+    ("Fastest first", COL_TIME, Qt.AscendingOrder),
+    ("Slowest first", COL_TIME, Qt.DescendingOrder),
 )
 
 
@@ -108,9 +115,10 @@ class BoardView(QWidget):
         self.tree.setSortingEnabled(True)
         self.tree.header().setSortIndicatorShown(True)
         header = self.tree.header()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-        for column in range(1, len(COLUMNS)):
-            header.setSectionResizeMode(column, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(COL_RACE, QHeaderView.Stretch)
+        for column in range(len(COLUMNS)):
+            if column != COL_RACE:
+                header.setSectionResizeMode(column, QHeaderView.ResizeToContents)
         layout.addWidget(self.tree, 1)
 
         self.empty = QLabel()
@@ -127,34 +135,52 @@ class BoardView(QWidget):
             QDesktopServices.openUrl(QUrl(url))
 
     def show_records(self, records: list, own_names: set[str],
-                     sort: int = 0) -> None:
+                     sort: int = 0, show_external: bool = True) -> None:
         self.tree.clear()
         rows = [r for r in records if r.game == self.game_id and r.board == self.board]
-        # One row per driver per race, not one row per race. Collapsing to a
-        # single best time made the board useless the moment verified world
-        # records were added beside community ones: every race already held a
-        # world record, so nobody else's time could ever appear on it. Keeping
-        # each driver's best turns it back into a leaderboard, where a slower
-        # time still has somewhere to sit.
+
+        # One row per driver per race. Collapsing to a single best time made
+        # the board useless the moment verified world records sat beside
+        # community ones: every race already held a world record, so nobody
+        # else's time could appear on it.
+        #
+        # Source is not part of the key, so a person has one row on a race
+        # however their time arrived. Beating your own published run replaces
+        # it rather than sitting beside it.
         best: dict[tuple, object] = {}
         for record in rows:
             who = (record.username or record.driver).lower()
-            key = (record.difficulty, record.race, who, record.source)
+            key = (record.difficulty, record.race, who)
             current = best.get(key)
             if current is None or record.seconds < current.seconds:
                 best[key] = record
 
-        ordered = sorted(
-            best.values(), key=lambda r: (r.race, r.difficulty, r.seconds)
-        )
-        # Sorting is switched off while rows are added, then switched back on
-        # with the wanted order. Leaving it on makes every insert re-sort the
-        # whole table, which on a full board is sixty-four needless passes.
+        kept = list(best.values())
+        if not show_external:
+            kept = [r for r in kept if r.source != EXTERNAL]
+
+        # Position within its own race, over what is actually on screen.
+        # Whoever is quickest is first, whether that is a verified world
+        # record or somebody who has just beaten one.
+        ranks: dict[int, int] = {}
+        grouped: dict[tuple, list] = {}
+        for record in kept:
+            grouped.setdefault((record.difficulty, record.race), []).append(record)
+        for group in grouped.values():
+            group.sort(key=lambda r: r.seconds)
+            for position, record in enumerate(group, 1):
+                ranks[id(record)] = position
+
+        ordered = sorted(kept, key=lambda r: (r.race, r.difficulty, r.seconds))
+        # Sorting is switched off while rows are added and back on afterwards.
+        # Leaving it on re-sorts the whole table on every insert.
         self.tree.setSortingEnabled(False)
         for record in ordered:
             who = record.username or record.driver
+            rank = ranks[id(record)]
             item = RecordItem(
                 [
+                    str(rank),
                     f"{record.race_name}"
                     + (f"  ·  {record.race_kind}" if record.race_kind else ""),
                     record.formatted,
@@ -166,21 +192,23 @@ class BoardView(QWidget):
                     "" if record.source == "launcher" else record.source,
                 ],
                 {
-                    # Race sorts by its position in the game, not its name, so
-                    # "race order" means the order they appear in the game.
-                    0: (record.race, record.difficulty, record.seconds),
-                    1: record.seconds,
-                    2: record.car_name.lower(),
-                    3: who.lower(),
-                    4: record.difficulty.lower(),
-                    5: record.source.lower(),
+                    COL_RANK: (record.race, record.difficulty, record.seconds),
+                    COL_RACE: (record.race, record.difficulty, record.seconds),
+                    COL_TIME: record.seconds,
+                    COL_CAR: record.car_name.lower(),
+                    COL_DRIVER: who.lower(),
+                    COL_DIFF: record.difficulty.lower(),
+                    COL_SOURCE: record.source.lower(),
                 },
             )
-            item.setTextAlignment(1, Qt.AlignRight | Qt.AlignVCenter)
+            item.setTextAlignment(COL_RANK, Qt.AlignRight | Qt.AlignVCenter)
+            item.setTextAlignment(COL_TIME, Qt.AlignRight | Qt.AlignVCenter)
+            if rank == 1:
+                item.setToolTip(COL_RANK, "Fastest on this race")
             if record.url:
                 item.setData(0, Qt.UserRole, record.url)
                 item.setToolTip(
-                    len(COLUMNS) - 1,
+                    COL_SOURCE,
                     f"Verified on {record.source}. Double-click to open the run.",
                 )
             if who in own_names:
@@ -188,7 +216,7 @@ class BoardView(QWidget):
                 # shows you where you stand at a glance.
                 for column in range(len(COLUMNS)):
                     item.setForeground(column, theme.accent_brush())
-                item.setToolTip(0, "Set on this machine")
+                item.setToolTip(COL_RACE, "Set on this machine")
             self.tree.addTopLevelItem(item)
 
         label, column, order = SORTS[sort if 0 <= sort < len(SORTS) else 0]
@@ -226,9 +254,9 @@ class GameRecords(QWidget):
         layout.addWidget(self.tabs)
 
     def show_records(self, records: list, own_names: set[str],
-                     sort: int = 0) -> None:
+                     sort: int = 0, show_external: bool = True) -> None:
         for board, view in self.views.items():
-            view.show_records(records, own_names, sort)
+            view.show_records(records, own_names, sort, show_external)
             index = list(self.views).index(board)
             count = sum(
                 1 for r in records if r.board == board and r.game == view.game_id
@@ -282,6 +310,16 @@ class RecordsPage(QWidget):
         )
         self.sort_box.currentIndexChanged.connect(lambda _: self.refresh())
         controls.addWidget(self.sort_box)
+        self.show_wr = QCheckBox("Include speedrun.com world records")
+        self.show_wr.setChecked(True)
+        self.show_wr.setToolTip(
+            "Verified runs from speedrun.com, shown alongside community "
+            "times. Turn this off to read the community board on its own. "
+            "Either way the fastest time on a race is ranked first, so beating "
+            "a world record takes the top spot from it."
+        )
+        self.show_wr.toggled.connect(lambda _: self.refresh())
+        controls.addWidget(self.show_wr)
         controls.addStretch(1)
         root.addLayout(controls)
 
@@ -320,5 +358,6 @@ class RecordsPage(QWidget):
         records = list(self._records_source() or [])
         own = {self.config.settings.username} - {""}
         sort = self.sort_box.currentIndex()
+        external = self.show_wr.isChecked()
         for view in self.views.values():
-            view.show_records(records, own, sort)
+            view.show_records(records, own, sort, external)

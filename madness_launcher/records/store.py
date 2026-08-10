@@ -31,7 +31,23 @@ def store_file() -> Path:
 
 
 def _key(entry: Submission) -> tuple:
-    return (entry.game, entry.board, entry.difficulty, entry.race)
+    """What counts as the same record.
+
+    Includes who set it. Without that, merging the community feed with your
+    own times keeps one row per race and everyone but the fastest disappears
+    — which for a new player is every race they have ever driven.
+
+    Source is deliberately NOT part of it: one person has one best time on a
+    race however it reached us, so beating your own published run replaces
+    it rather than sitting beside it.
+    """
+    return (
+        entry.game,
+        entry.board,
+        entry.difficulty,
+        entry.race,
+        (entry.username or entry.driver).lower(),
+    )
 
 
 def _from_dict(item: object) -> Submission | None:

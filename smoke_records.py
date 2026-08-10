@@ -38,7 +38,16 @@ from madness_launcher.records.session import (  # noqa: E402
 from madness_launcher.records.session import existing_records  # noqa: E402
 from madness_launcher.records.submit import describe, usable_webhook  # noqa: E402
 from madness_launcher.ui import theme  # noqa: E402
-from madness_launcher.ui.records_page import SORTS, RecordsPage  # noqa: E402
+from madness_launcher.ui.records_page import (  # noqa: E402
+    COL_CAR,
+    COL_DRIVER,
+    COL_RANK,
+    COL_RACE,
+    COL_SOURCE,
+    COL_TIME,
+    SORTS,
+    RecordsPage,
+)
 
 failures: list[str] = []
 
@@ -464,11 +473,17 @@ build_news.discord_messages = lambda c, t, l: msgs
 collected, _ = build_news.collect_records(
     {"records": [{"channel_id": "1", "guild_id": "2"}]}, "token"
 )
-check("one row per board", len(collected) == 2, str(len(collected)))
-vanilla = [r for r in collected if r["board"] == "vanilla"][0]
-check("the fastest vanilla claim wins", abs(vanilla["seconds"] - 75.5) < 1e-3,
-      str(vanilla["seconds"]))
-check("and keeps its author", vanilla["username"] == "B", vanilla["username"])
+check("every driver on the race is kept", len(collected) == 4, str(len(collected)))
+vanilla = sorted(
+    (r for r in collected if r["board"] == "vanilla"), key=lambda r: r["seconds"]
+)
+check("all three vanilla claims survive", len(vanilla) == 3, str(len(vanilla)))
+check("the fastest is first", abs(vanilla[0]["seconds"] - 75.5) < 1e-3,
+      str(vanilla[0]["seconds"]))
+check("and keeps its author", vanilla[0]["username"] == "B",
+      vanilla[0]["username"])
+check("the slowest is not discarded",
+      any(r["username"] == "A" for r in vanilla), str(vanilla))
 check("the modded board is separate",
       any(r["board"] == "modded" for r in collected))
 
@@ -524,13 +539,18 @@ check("modded holds one",
 check("counts appear on the board tabs", "2" in view.tabs.tabText(0),
       view.tabs.tabText(0))
 first = view.views["vanilla"].tree.topLevelItem(0)
-check("the race is named", "Dearborn Dash" in first.text(0), first.text(0))
-check("the kind is shown", "Circuit" in first.text(0) or "Blitz" in first.text(0),
-      first.text(0))
-check("the time is shown", first.text(1) == "41.200", first.text(1))
-check("your own row is marked", first.toolTip(0) != "", first.toolTip(0))
+check("the race is named", "Dearborn Dash" in first.text(COL_RACE),
+      first.text(COL_RACE))
+check("the kind is shown",
+      "Circuit" in first.text(COL_RACE) or "Blitz" in first.text(COL_RACE),
+      first.text(COL_RACE))
+check("the time is shown", first.text(COL_TIME) == "41.200", first.text(COL_TIME))
+check("the rank is shown", first.text(COL_RANK) == "1", first.text(COL_RANK))
+check("your own row is marked", first.toolTip(COL_RACE) != "",
+      first.toolTip(COL_RACE))
 other = view.views["vanilla"].tree.topLevelItem(1)
-check("somebody else's row is not", other.toolTip(0) == "", other.toolTip(0))
+check("somebody else's row is not", other.toolTip(COL_RACE) == "",
+      other.toolTip(COL_RACE))
 
 print("\nthe race table is always loaded, so named records can place")
 # The bug this guards: nothing in the launcher loaded the table, so every
@@ -596,12 +616,15 @@ sourced = RecordsPage(config, lambda: [
           url="https://www.speedrun.com/midtown1/runs/zp5n7ogy"),
 ])
 srow = sourced.views["mm1"].views["vanilla"].tree.topLevelItem(0)
-check("the source column names it", srow.text(5) == "speedrun.com", srow.text(5))
+check("the source column names it",
+      srow.text(COL_SOURCE) == "speedrun.com", srow.text(COL_SOURCE))
 check("the proof link is attached", bool(srow.data(0, Qt.UserRole)))
-check("a run with no car is dashed, not blank", srow.text(2) == "—", srow.text(2))
+check("a run with no car is dashed, not blank",
+      srow.text(COL_CAR) == "—", srow.text(COL_CAR))
 plain = RecordsPage(config, lambda: [entry(board="vanilla", race=0)])
 prow = plain.views["mm1"].views["vanilla"].tree.topLevelItem(0)
-check("a launcher record leaves the source blank", prow.text(5) == "", prow.text(5))
+check("a launcher record leaves the source blank",
+      prow.text(COL_SOURCE) == "", prow.text(COL_SOURCE))
 
 print("\ntimes sort by value, not by how they are written")
 # The case that makes this necessary: as text, "1:41.234" sorts before
@@ -617,12 +640,12 @@ board = sorted_page.views["mm1"].views["vanilla"]
 
 
 def shown_seconds() -> list:
-    return [board.tree.topLevelItem(i)._keys[1]
+    return [board.tree.topLevelItem(i)._keys[COL_TIME]
             for i in range(board.tree.topLevelItemCount())]
 
 
 def shown_races() -> list:
-    return [board.tree.topLevelItem(i)._keys[0]
+    return [board.tree.topLevelItem(i)._keys[COL_RANK]
             for i in range(board.tree.topLevelItemCount())]
 
 
@@ -650,11 +673,11 @@ check("switching back restores race order",
       shown_races() == sorted(shown_races()))
 
 print("\nclicking a column header sorts on the same real values")
-board.tree.sortItems(1, Qt.AscendingOrder)
+board.tree.sortItems(COL_TIME, Qt.AscendingOrder)
 check("the Time header sorts numerically",
       shown_seconds() == sorted(shown_seconds()))
-board.tree.sortItems(3, Qt.AscendingOrder)
-drivers = [board.tree.topLevelItem(i).text(3)
+board.tree.sortItems(COL_DRIVER, Qt.AscendingOrder)
+drivers = [board.tree.topLevelItem(i).text(COL_DRIVER)
            for i in range(board.tree.topLevelItemCount())]
 check("the Driver header sorts alphabetically",
       drivers == sorted(drivers, key=str.lower), str(drivers))
@@ -673,13 +696,13 @@ contested = [
 ]
 contest = RecordsPage(config, lambda: contested)
 cboard = contest.views["mm1"].views["vanilla"]
-names = [cboard.tree.topLevelItem(i).text(3)
+names = [cboard.tree.topLevelItem(i).text(COL_DRIVER)
          for i in range(cboard.tree.topLevelItemCount())]
 check("every driver keeps a row on the same race", len(names) == 3, str(names))
 check("the world record is still there", "fatiyesman" in names)
 check("and so is the slowest entrant", "Tester" in names, str(names))
 check("the fastest sits at the top of the race",
-      cboard.tree.topLevelItem(0).text(3) == "fatiyesman", str(names))
+      cboard.tree.topLevelItem(0).text(COL_DRIVER) == "fatiyesman", str(names))
 check("a driver's own slower attempt is still collapsed",
       len(RecordsPage(config, lambda: [
           entry(race=0, seconds=50.0, username="Tester"),
@@ -694,10 +717,95 @@ check("and it is their best that survives",
       RecordsPage(config, lambda: [
           entry(race=0, seconds=50.0, username="Tester"),
           entry(race=0, seconds=45.0, username="Tester"),
-      ]).views["mm1"].views["vanilla"].tree.topLevelItem(0).text(1) == "45.000")
+      ]).views["mm1"].views["vanilla"].tree.topLevelItem(0)
+      .text(COL_TIME) == "45.000")
 check("nothing handed to the page goes missing",
       RecordsPage(config, lambda: contested).views["mm1"].views["vanilla"]
       .tree.topLevelItemCount() == len(contested))
+
+print("\neveryone gets a row, and the fastest holds the race")
+
+field = [
+    entry(race=0, race_name="Dearborn Dash", seconds=19.520,
+          username="worldrecordholder", source="speedrun.com",
+          car="", car_name=""),
+    entry(race=0, race_name="Dearborn Dash", seconds=49.128, username="Tester"),
+    entry(race=0, race_name="Dearborn Dash", seconds=180.0, username="Newbie"),
+]
+grid = RecordsPage(config, lambda: field)
+gboard = grid.views["mm1"].views["vanilla"]
+
+
+def dearborn(view) -> list:
+    out = []
+    for i in range(view.tree.topLevelItemCount()):
+        it = view.tree.topLevelItem(i)
+        out.append((it.text(COL_RANK), it.text(COL_TIME),
+                    it.text(COL_DRIVER), it.text(COL_SOURCE)))
+    return out
+
+
+table = dearborn(gboard)
+check("a newcomer with one slow time still gets a row",
+      any(r[2] == "Newbie" for r in table), str(table))
+check("everyone on the race is listed", len(table) == 3, str(len(table)))
+check("the fastest is ranked first", table[0][0] == "1" and
+      table[0][2] == "worldrecordholder", str(table[0]))
+check("and the slowest is ranked last", table[-1][0] == "3", str(table[-1]))
+
+print("\nbeating a world record takes the top spot from it")
+beaten = field + [entry(race=0, race_name="Dearborn Dash", seconds=18.900,
+                        username="Speedy")]
+btable = dearborn(RecordsPage(config, lambda: beaten)
+                  .views["mm1"].views["vanilla"])
+check("the new best is ranked first", btable[0][2] == "Speedy", str(btable[0]))
+check("it displaces the verified run rather than hiding it",
+      btable[1][3] == "speedrun.com" and btable[1][0] == "2", str(btable[1]))
+check("the world record is still on the board", len(btable) == 4, str(len(btable)))
+
+print("\nthe world records can be set aside")
+page_wr = RecordsPage(config, lambda: beaten)
+page_wr.show_wr.setChecked(False)
+wtable = dearborn(page_wr.views["mm1"].views["vanilla"])
+check("external runs are hidden", all(r[3] != "speedrun.com" for r in wtable),
+      str(wtable))
+check("community times all remain", len(wtable) == 3, str(len(wtable)))
+check("and are re-ranked among themselves",
+      [r[0] for r in wtable] == ["1", "2", "3"], str([r[0] for r in wtable]))
+page_wr.show_wr.setChecked(True)
+check("turning them back on restores the full board",
+      len(dearborn(page_wr.views["mm1"].views["vanilla"])) == 4)
+
+print("\none person has one row per race however their time arrived")
+same = [
+    entry(race=0, seconds=30.0, username="Both", source="speedrun.com"),
+    entry(race=0, seconds=28.0, username="Both", source="launcher"),
+]
+stable = dearborn(RecordsPage(config, lambda: same).views["mm1"].views["vanilla"])
+check("their two entries collapse to one", len(stable) == 1, str(stable))
+check("keeping their better time", stable[0][1] == "28.000", str(stable[0]))
+
+print("\nthe relay keeps every driver, not just the leader")
+msgs = [
+    {"id": "1", "content": 'game="mm1" board="vanilla" race="0" diff="pro" '
+                           'time="19.520" by="fast"'},
+    {"id": "2", "content": 'game="mm1" board="vanilla" race="0" diff="pro" '
+                           'time="99.000" by="slow"'},
+    {"id": "3", "content": 'game="mm1" board="vanilla" race="0" diff="pro" '
+                           'time="95.000" by="slow"'},
+]
+build_news.discord_messages = lambda c, t, l: msgs
+kept, _ = build_news.collect_records({"records": [{"channel_id": "1"}]}, "tok")
+check("a slower driver survives the relay", len(kept) == 2, str(len(kept)))
+check("and only their best attempt",
+      sorted(r["seconds"] for r in kept) == [19.520, 95.0],
+      str(sorted(r["seconds"] for r in kept)))
+check("the store keeps them apart too",
+      len(store.merge([], [entry(race=0, username="a", seconds=50.0),
+                           entry(race=0, username="b", seconds=60.0)])) == 2)
+check("but still collapses one person's attempts",
+      len(store.merge([], [entry(race=0, username="a", seconds=50.0),
+                           entry(race=0, username="a", seconds=45.0)])) == 1)
 
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])
