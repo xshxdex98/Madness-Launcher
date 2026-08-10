@@ -22,3 +22,7 @@ powershell.exe
 *.token
 .env
 secrets.json
+
+# Probe working state: a snapshot of one machine's save files, taken to
+# diff against after a race. Local scratch, not a project artefact.
+tools/mm*_probe_snapshot.json
