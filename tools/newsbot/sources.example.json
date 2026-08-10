@@ -1,0 +1,33 @@
+{
+  "_comment": [
+    "Copy this to sources.json and fill in your own IDs.",
+    "Channel and guild IDs come from Discord with Developer Mode turned on",
+    "(User Settings -> Advanced -> Developer Mode), then right-click a channel",
+    "or the server icon and choose Copy ID.",
+    "YouTube channel IDs start with UC. To find one from a @handle, run:",
+    "  python build_news.py --resolve https://www.youtube.com/@somechannel"
+  ],
+
+  "announcements": [
+    {
+      "guild_id": "000000000000000000",
+      "channel_id": "000000000000000000",
+      "limit": 15
+    }
+  ],
+
+  "video_channels": [
+    {
+      "guild_id": "000000000000000000",
+      "channel_id": "000000000000000000",
+      "limit": 50
+    }
+  ],
+
+  "youtube": [
+    {
+      "channel_id": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+      "name": ""
+    }
+  ]
+}

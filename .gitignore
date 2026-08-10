@@ -1,0 +1,24 @@
+# Build output. MadnessLauncher.exe is ~53MB, which GitHub warns about at 50MB
+# and refuses outright at 100MB. Ship it as a release asset instead of tracking
+# a fresh copy of it in history on every build.
+dist/
+build/
+*.spec.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# A stray copy of the Windows shell that ended up in the project root. Not part
+# of the launcher and not something to publish.
+powershell.exe
+
+# Anything holding a credential. sources.json is deliberately NOT here: it
+# contains only channel IDs, which are not secrets. The Discord bot token lives
+# in the repository's Actions secrets and must never reach a file in the tree.
+*.token
+.env
+secrets.json

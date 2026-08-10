@@ -1,0 +1,8 @@
+# Qt bindings. PySide6-Essentials is the trimmed distribution and is all the
+# launcher needs to run.
+PySide6-Essentials>=6.6
+
+# Only for the Overview tab's background video: QtMultimedia is not part of
+# PySide6-Essentials. Without it everything else works and the Overview simply
+# shows its gradient backdrop instead, with a note saying why.
+PySide6-Addons>=6.6

@@ -1,0 +1,25 @@
+{
+  "_comment": [
+    "Live relay config for the Madness Crew Discord.",
+    "Safe to commit: guild, channel and application IDs are not secrets.",
+    "The bot token is NOT here — it comes from the DISCORD_BOT_TOKEN",
+    "environment variable, set as a repository secret in GitHub Actions.",
+    "",
+    "Bot application ID 1536421123133022318, recorded here only so the",
+    "invite URL can be rebuilt if the bot ever needs re-adding:",
+    "https://discord.com/oauth2/authorize?client_id=1536421123133022318",
+    "&scope=bot&permissions=66560   (View Channels + Read Message History)"
+  ],
+
+  "announcements": [
+    {
+      "guild_id": "796156308545601558",
+      "channel_id": "796165218635743254",
+      "limit": 15
+    }
+  ],
+
+  "video_channels": [],
+
+  "youtube": []
+}
