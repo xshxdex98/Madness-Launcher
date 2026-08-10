@@ -497,6 +497,95 @@ def _video_ids(text: str) -> list[str]:
 
 
 # ----------------------------------------------------------------------
+# Lap records
+# ----------------------------------------------------------------------
+
+# The launcher posts one line of key="value" pairs under a human-readable
+# headline. Parsed back out here rather than from the headline, which exists
+# for people scrolling the channel.
+_RECORD_FIELD = re.compile(r'(\w{1,12})="([^"]{0,120})"')
+_RECORD_REQUIRED = ("game", "board", "race", "time")
+
+MAX_BOARD_RECORDS = 600
+BOARDS = ("vanilla", "modded")
+
+# The same bounds the launcher applies before sending. Re-checked here because
+# the webhook URL is extractable from the executable, so a message in the
+# channel is not proof that the launcher wrote it.
+MIN_RECORD_SECONDS = 8.0
+MAX_RECORD_SECONDS = 3600.0
+
+
+def parse_record(message: dict[str, Any]) -> dict[str, Any] | None:
+    """One lap record out of a channel message, or None if it is not one."""
+    content = str(message.get("content") or "")
+    fields = dict(_RECORD_FIELD.findall(content))
+    if not all(k in fields for k in _RECORD_REQUIRED):
+        return None
+    try:
+        seconds = float(fields["time"])
+        race = int(fields["race"])
+    except (TypeError, ValueError):
+        return None
+    if not (MIN_RECORD_SECONDS <= seconds <= MAX_RECORD_SECONDS):
+        return None
+    if fields["board"] not in BOARDS or race < 0 or race > 999:
+        return None
+    return {
+        "game": fields["game"][:16],
+        "board": fields["board"],
+        "race": race,
+        "race_name": fields.get("name", "")[:80],
+        "race_kind": fields.get("kind", "")[:16],
+        "difficulty": fields.get("diff", "")[:16],
+        "car": fields.get("car", "")[:40],
+        "seconds": round(seconds, 3),
+        "username": fields.get("by", "")[:40],
+        "set_at": fields.get("at", "")[:32],
+        # Kept so a disputed entry can be found and deleted in Discord.
+        "message_id": str(message.get("id") or ""),
+    }
+
+
+def collect_records(config: dict[str, Any], token: str) -> tuple[list[dict], int]:
+    """The best claimed time per race, per board, per difficulty.
+
+    Only the fastest survives each slot, so the channel can hold every
+    attempt anyone ever posted and the board stays a board. Deleting the
+    message behind a bogus entry is what removes it: the next run simply does
+    not see it, and the next-best time takes the slot back.
+    """
+    best: dict[tuple, dict] = {}
+    failures = 0
+    seen = 0
+    for source in config.get("records") or []:
+        channel_id = str(source.get("channel_id") or "").strip()
+        if not channel_id:
+            continue
+        try:
+            messages = discord_messages(channel_id, token, int(source.get("limit") or 100))
+        except SourceError as exc:
+            log(f"warning: records {channel_id}: {exc}")
+            failures += 1
+            continue
+        for message in messages:
+            record = parse_record(message)
+            if record is None:
+                continue
+            seen += 1
+            key = (record["game"], record["board"], record["difficulty"], record["race"])
+            current = best.get(key)
+            if current is None or record["seconds"] < current["seconds"]:
+                best[key] = record
+        log(f"records {channel_id}: {len(messages)} messages, {seen} records")
+
+    out = sorted(
+        best.values(), key=lambda r: (r["game"], r["board"], r["race"], r["difficulty"])
+    )
+    return out[:MAX_BOARD_RECORDS], failures
+
+
+# ----------------------------------------------------------------------
 # Assembly
 # ----------------------------------------------------------------------
 
@@ -597,6 +686,7 @@ def balanced(videos: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
 def build(config: dict[str, Any], token: str) -> dict[str, Any]:
     announcements, ann_failures = collect_announcements(config, token)
     videos, vid_failures = collect_videos(config, token)
+    records, _ = collect_records(config, token)
 
     configured = len(config.get("announcements") or []) + len(
         config.get("youtube") or []
@@ -614,6 +704,10 @@ def build(config: dict[str, Any], token: str) -> dict[str, Any]:
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "announcements": announcements[:MAX_ANNOUNCEMENTS],
         "videos": balanced(videos, MAX_VIDEOS),
+        "records": records,
+        # Where launchers post a new record. Published here so it can be
+        # rotated after abuse without shipping a new build.
+        "records_webhook": str(config.get("records_webhook") or ""),
     }
 
 
@@ -694,7 +788,7 @@ def main(argv: list[str] | None = None) -> int:
     Path(args.out).write_text(rendered, encoding="utf-8")
     log(
         f"wrote {args.out}: {len(feed['announcements'])} announcements, "
-        f"{len(feed['videos'])} videos"
+        f"{len(feed['videos'])} videos, {len(feed['records'])} records"
     )
     return 0
 

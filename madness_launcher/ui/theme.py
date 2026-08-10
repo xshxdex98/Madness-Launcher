@@ -71,6 +71,17 @@ def _image(name: str) -> str:
     return f'image: url("{path}");' if path else ""
 
 
+def accent_brush():
+    """The accent as a QBrush, for painting a row of a widget directly.
+
+    Item views are not reachable from the stylesheet per-row, so the one
+    place that needs to tint a single line does it in code.
+    """
+    from PySide6.QtGui import QBrush, QColor
+
+    return QBrush(QColor(DEFAULT_ACCENT))
+
+
 def accent_rules(accent: str) -> str:
     """Just the rules that depend on the accent colour.
 
@@ -377,6 +388,41 @@ QLabel#Mono {{
     font-family: "Cascadia Mono", "Consolas", monospace;
     font-size: 12px;
     color: {MUTED};
+}}
+
+QTabBar::scroller {{ width: 26px; }}
+
+QTabBar QToolButton {{
+    background: {ELEVATED};
+    border: 1px solid {BORDER};
+    border-radius: 4px;
+    color: {MUTED};
+    margin: 2px;
+}}
+
+QTabBar QToolButton:hover {{ background: {HOVER}; color: {TEXT}; }}
+
+QTreeWidget#RecordTable {{
+    background: {SURFACE};
+    border: 1px solid {BORDER};
+    border-radius: 8px;
+    font-size: 13px;
+}}
+
+QTreeWidget#RecordTable::item {{
+    padding: 6px 8px;
+    border-bottom: 1px solid {BORDER};
+}}
+
+QHeaderView::section {{
+    background: {ELEVATED};
+    color: {MUTED};
+    border: none;
+    border-bottom: 1px solid {BORDER_STRONG};
+    padding: 7px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
 }}
 
 /* ---------- News ---------- */

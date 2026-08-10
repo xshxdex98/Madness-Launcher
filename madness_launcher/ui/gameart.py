@@ -268,6 +268,21 @@ def nav_glyph(name: str, size: int = 18, colour: str | None = None) -> QPixmap:
             0.6 * unit,
         )
         painter.drawPath(sheet.subtracted(right))
+    elif name == "records":
+        # A podium: three blocks, the middle one tallest.
+        for column, (height, top) in enumerate(
+            ((7.5, 6.5), (11.0, 3.0), (5.5, 8.5))
+        ):
+            painter.drawRoundedRect(
+                QRectF(
+                    (1.8 + column * 5.4) * unit,
+                    top * unit,
+                    4.6 * unit,
+                    height * unit,
+                ),
+                0.9 * unit,
+                0.9 * unit,
+            )
     elif name == "settings":
         # A cog: a ring with teeth, hollowed out.
         cog = QPainterPath()

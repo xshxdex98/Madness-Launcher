@@ -21,6 +21,16 @@
 
   "video_channels": [],
 
+  "_records_note": [
+    "The channel launchers post lap records to. Create a dedicated one, make",
+    "a webhook on it, and put that webhook URL in records_webhook below.",
+    "The bot needs to read the channel; the launcher only ever writes to it.",
+    "Deleting a bogus message removes it from the board on the next run and",
+    "the next-fastest time takes the slot back."
+  ],
+  "records": [],
+  "records_webhook": "",
+
   "youtube": [
     { "channel_id": "UCXcv42XHTloD5XSk9FIqPrQ", "name": "Panoz" },
     { "channel_id": "UCcndPF7UpwKvRBsWI1RxH7A", "name": "MadManMammoth" },

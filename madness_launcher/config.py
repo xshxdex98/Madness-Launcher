@@ -81,6 +81,13 @@ class Settings:
     # can mark unread posts. ISO 8601; empty on a fresh install, which counts
     # as "nothing is unread" rather than "everything is".
     news_last_seen: str = ""
+    # Sending lap records to the community board is opt-in. It publishes
+    # the username under a time in a public channel, which is not
+    # something to start doing on somebody's behalf.
+    records_submit: bool = False
+    # Normally delivered in the news feed so it can be rotated without a
+    # rebuild; set here only to point one machine somewhere else.
+    records_webhook: str = ""
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Settings":
@@ -97,6 +104,8 @@ class Settings:
             chat_tls=bool(data.get("chat_tls", True)),
             news_url=str(data.get("news_url", DEFAULT_NEWS_URL)),
             news_last_seen=str(data.get("news_last_seen", "")),
+            records_submit=bool(data.get("records_submit", False)),
+            records_webhook=str(data.get("records_webhook", "")),
         )
 
 

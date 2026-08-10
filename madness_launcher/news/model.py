@@ -32,6 +32,9 @@ MAX_NAME_CHARS = 80
 # One post referencing more custom emoji than this is doing something other
 # than talking, and each one costs a request and a cache entry.
 MAX_EMOJIS = 32
+# 32 races x 2 difficulties x 2 boards is 128 for one city; the cap is a
+# guard against a runaway board file, not a real limit.
+MAX_BOARD_RECORDS = 600
 # Discord's own rule for emoji names, which is what the `:name:` in a body
 # will be matched against. Anchored, so nothing with punctuation or markup in
 # it can become a substitution key.
@@ -248,6 +251,14 @@ class NewsFeed:
     generated: datetime | None = None
     announcements: list[Announcement] = field(default_factory=list)
     videos: list[Video] = field(default_factory=list)
+    # Where the launcher posts a lap record. Carried in the feed rather
+    # than compiled in, so abuse is answered by rotating one JSON field
+    # instead of shipping a build to everybody.
+    records_webhook: str = ""
+    # Lap records the relay collected from the board channel. Carried in
+    # the same feed rather than a file of their own: the launcher already
+    # fetches this one on a throttle, and a full board is a few kilobytes.
+    records: list = field(default_factory=list)
 
     @property
     def is_empty(self) -> bool:
@@ -310,6 +321,12 @@ class NewsFeed:
         videos.sort(key=_sort_key_video, reverse=True)
 
         return cls(
+            records_webhook=safe_url(data.get("records_webhook")),
+            records=[
+                item
+                for item in _sequence(data.get("records"))[:MAX_BOARD_RECORDS]
+                if isinstance(item, dict)
+            ],
             generated=parse_time(data.get("generated")),
             announcements=announcements[:MAX_ANNOUNCEMENTS],
             videos=videos[:MAX_VIDEOS],

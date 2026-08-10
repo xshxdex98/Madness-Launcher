@@ -31,11 +31,14 @@ from ..config import Config
 from ..detect import identify_as
 from ..games.registry import GAMES, PLANNED, by_id
 from ..news import NewsService, ThumbnailCache, safe_url
+from ..records import store as record_store
+from ..records.submit import RecordSubmitter
 from . import gameart, theme, wordmark
 from .chat_page import ChatPage
 from .game_page import GamePage
 from .library_page import LibraryPage
 from .news_page import NewsPage
+from .records_page import RecordsPage
 from .presence import Presence
 from .setup_page import SetupPage
 from .username_dialog import UsernameDialog
@@ -49,6 +52,7 @@ SIDEBAR_ICON = 18
 ENTRY_TEXT_WIDTH = SIDEBAR_WIDTH - 28 - 22 - SIDEBAR_ICON - 6 - 22
 LIBRARY_KEY = "__library__"
 NEWS_KEY = "__news__"
+RECORDS_KEY = "__records__"
 CHAT_KEY = "__chat__"
 SETTINGS_KEY = "__settings__"
 
@@ -71,6 +75,7 @@ class MainWindow(QMainWindow):
         self._chat: ChatPage | None = None
         self._library: LibraryPage | None = None
         self._news: NewsPage | None = None
+        self._lap_records: RecordsPage | None = None
         self._saving_news_url = False
 
         # Owns the shared chat connection so the head count is live whether or
@@ -87,6 +92,14 @@ class MainWindow(QMainWindow):
         self.news.updated.connect(self._on_news_updated)
         self.news.state_changed.connect(self._on_news_state)
         self.thumbs = ThumbnailCache(self)
+
+        # Lap records. Watchers are held here rather than on the game page
+        # because a page can be rebuilt or navigated away from while the
+        # game it started is still running.
+        self._watchers: list[object] = []
+        self.records = record_store.load()
+        self.submitter = RecordSubmitter(self)
+        self.submitter.failed.connect(self._on_submit_failed)
 
         self.setWindowTitle(APP_NAME)
         self.resize(1120, 740)
@@ -196,6 +209,18 @@ class MainWindow(QMainWindow):
         self.nav_group.addButton(self.news_entry)
         self._entries[NEWS_KEY] = self.news_entry
         layout.addWidget(self.news_entry)
+
+        self.records_entry = QPushButton(" Lap Records")
+        self.records_entry.setObjectName("GameEntry")
+        self.records_entry.setCheckable(True)
+        self.records_entry.setCursor(Qt.PointingHandCursor)
+        self.records_entry.setToolTip("Fastest times, by game and by board")
+        self.records_entry.setIcon(QIcon(gameart.nav_glyph("records", SIDEBAR_ICON)))
+        self.records_entry.setIconSize(QSize(SIDEBAR_ICON, SIDEBAR_ICON))
+        self.records_entry.clicked.connect(lambda: self._show(RECORDS_KEY))
+        self.nav_group.addButton(self.records_entry)
+        self._entries[RECORDS_KEY] = self.records_entry
+        layout.addWidget(self.records_entry)
 
         self.chat_entry = QPushButton(" Chat Room")
         self.chat_entry.setObjectName("GameEntry")
@@ -578,6 +603,22 @@ class MainWindow(QMainWindow):
         count_box.toggled.connect(self._set_online_count_enabled)
         behaviour.body.addWidget(count_box)
 
+        records_box = QCheckBox("Publish my lap records to the community board")
+        records_box.setChecked(self.config.settings.records_submit)
+        records_box.toggled.connect(self._set_records_submit)
+        behaviour.body.addWidget(records_box)
+
+        records_note = QLabel(
+            "Off by default. When on, a time you set while the launcher is "
+            "running is posted to the community board along with your "
+            "username, the race and the car. Records are not verified — the "
+            "game keeps them in a file on your own machine — so the board is "
+            "a scoreboard rather than a record book."
+        )
+        records_note.setObjectName("Faint")
+        records_note.setWordWrap(True)
+        behaviour.body.addWidget(records_note)
+
         count_note = QLabel(
             "Counting means joining the chat room, so your username is visible "
             f"to anyone on {DEFAULT_HOST} while the launcher is open. Turn this "
@@ -713,6 +754,74 @@ class MainWindow(QMainWindow):
         if isinstance(page, GamePage):
             page.start()
 
+    # ------------------------------------------------------------------
+    # Lap records
+    # ------------------------------------------------------------------
+
+    def adopt_record_watcher(self, watcher) -> None:
+        """Take ownership of a watcher for a session that has just started."""
+        watcher.setParent(self)
+        watcher.found.connect(self._on_records_found)
+        watcher.rejected.connect(self._on_record_rejected)
+        self._watchers.append(watcher)
+
+    def all_records(self) -> list:
+        """Everything to show: this machine's times and the community board.
+
+        Merged rather than shown separately, so a race has one row with the
+        fastest time on it whoever set it. A local record always wins a tie,
+        because it is the one the launcher actually watched being set.
+        """
+        merged = record_store.merge(
+            record_store.from_feed(self.news.feed.records), self.records
+        )
+        return merged
+
+    def _on_records_found(self, entries: list) -> None:
+        self.records = record_store.merge(self.records, entries)
+        record_store.save(self.records)
+
+        count = len(entries)
+        best = min(entries, key=lambda e: e.seconds)
+        self.flash_status(
+            f"{count} new record{'s' if count != 1 else ''} — "
+            f"{best.race_name} in {best.formatted}"
+        )
+        if self._lap_records is not None:
+            self._lap_records.refresh()
+        self._maybe_submit(entries)
+
+    def _on_record_rejected(self, what: str, why: str) -> None:
+        # Said out loud rather than swallowed: a personal best that quietly
+        # fails to count is worse than one that says why.
+        self.flash_status(f"Record not counted — {what}: {why}")
+
+    def _maybe_submit(self, entries: list) -> None:
+        """Send records to the community board, if the user asked us to."""
+        if not self.config.settings.records_submit:
+            return
+        webhook = (
+            self.config.settings.records_webhook
+            or self.news.feed.records_webhook
+        )
+        if not webhook:
+            return
+        sent = self.submitter.submit(webhook, entries)
+        if sent:
+            self.flash_status(
+                f"Sent {sent} record{'s' if sent != 1 else ''} to the board"
+            )
+
+    def _on_submit_failed(self, entry, reason: str) -> None:
+        self.flash_status(f"Could not send {entry.race_name}: {reason}")
+
+    def _records_page(self) -> "RecordsPage":
+        if self._lap_records is None:
+            self._lap_records = RecordsPage(self.config, self.all_records)
+            self._pages[RECORDS_KEY] = self._lap_records
+            self.stack.addWidget(self._lap_records)
+        return self._lap_records
+
     def _news_page(self) -> "NewsPage":
         """Built on first use. The feed itself is already loaded by then."""
         if self._news is None:
@@ -800,6 +909,14 @@ class MainWindow(QMainWindow):
             # when it decides whether the arriving feed counts as read.
             page.set_visible_to_user(True)
             self._refresh_news_entry()
+            self._apply_accent(theme.DEFAULT_ACCENT)
+            return
+
+        if key == RECORDS_KEY:
+            page = self._records_page()
+            page.refresh()
+            self.stack.setCurrentWidget(page)
+            self.records_entry.setChecked(True)
             self._apply_accent(theme.DEFAULT_ACCENT)
             return
 
@@ -931,6 +1048,18 @@ class MainWindow(QMainWindow):
         self.news.refresh(force=True)
         self.flash_status(
             "Checking for news…" if self.news.url else "No news source set"
+        )
+
+    def _set_records_submit(self, value: bool) -> None:
+        self.config.settings.records_submit = value
+        try:
+            self.config.save()
+        except OSError as exc:
+            QMessageBox.warning(self, "Could not save settings", str(exc))
+            return
+        self.flash_status(
+            "Lap records will be published" if value
+            else "Lap records stay on this machine"
         )
 
     def _set_close_on_launch(self, value: bool) -> None:

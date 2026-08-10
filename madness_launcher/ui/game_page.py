@@ -946,6 +946,31 @@ class GamePage(QWidget):
         self._on_play()
         return True
 
+    def _start_record_watch(self):
+        """Begin watching this session for lap records, if the game has any.
+
+        The watcher is handed to the window rather than kept here: the game
+        page can be rebuilt or navigated away from while the game is still
+        running, and a watcher that dies with the page would lose the session
+        it was watching.
+        """
+        from ..records.session import RecordWatcher
+
+        if not RecordWatcher.supported(self.game.id):
+            return None
+        window = self.window()
+        if not hasattr(window, "adopt_record_watcher"):
+            return None
+        watcher = RecordWatcher(
+            self.game.id,
+            Path(self.install.path),
+            process=None,
+            username=self.config.settings.username,
+            mods=list(self.install.enabled_mods),
+        )
+        window.adopt_record_watcher(watcher)
+        return watcher
+
     def _on_play(self) -> None:
         try:
             plan = launch.build_plan(
@@ -956,12 +981,19 @@ class GamePage(QWidget):
                 self.extra_field.text(),
                 self.install.custom_exe,
             )
+            # Taken before the process starts, so anything that improves
+            # afterwards was driven under the launcher's own eyes.
+            watcher = self._start_record_watch()
             process = launch.launch(plan)
             if self.game.needs_single_core:
                 launch.pin_to_single_core(process)
         except launch.LaunchError as exc:
             QMessageBox.critical(self, "Could not launch", str(exc))
             return
+
+        if watcher is not None:
+            watcher.process = process
+            watcher.start()
 
         window = self.window()
         if self.config.settings.close_on_launch:
