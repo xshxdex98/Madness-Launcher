@@ -30,9 +30,10 @@ from .session import Submission
 
 TIMEOUT_MS = 15_000
 
-# Discord's own limit is 2000 characters; a record is nowhere near it, but a
-# malformed one should fail here rather than at their end.
-MAX_CONTENT = 1800
+# Discord's own hard limit. A last-resort clamp only: pack() already keeps a
+# message under SAFE_CONTENT, and this being the *lower* of the two is what
+# re-truncated a message that had just been carefully packed to fit.
+MAX_CONTENT = 2000
 
 # Only Discord's webhook endpoint. A "webhook" pointing anywhere else is a way
 # to make every launcher post its user's name and play data to a third party,
@@ -86,10 +87,38 @@ def describe(entry: Submission) -> str:
     return f"{headline}\n`{encoded}`"[:MAX_CONTENT]
 
 
-# Discord rate-limits a webhook to a handful of posts a few seconds apart, and
-# a player importing years of history has dozens of records at once. Several
-# to a message keeps a first run to a few posts instead of a flood.
-BATCH = 10
+# Discord's hard limit is 2000 characters. Staying under it by packing a
+# message to fit — rather than by counting records — is the difference between
+# a readable post and one cut off mid-word: ten records do not fit, and
+# truncating the string left an unterminated code span and a record with no
+# time in it.
+SAFE_CONTENT = 1900
+
+
+def _record_line(entry: Submission) -> str:
+    """One record: a line for people, and a line for the relay."""
+    fields = {
+        "game": entry.game,
+        "board": entry.board,
+        "race": entry.race,
+        "name": entry.race_name,
+        "diff": entry.difficulty,
+        "car": entry.car,
+        "time": f"{entry.seconds:.3f}",
+        "by": entry.username or entry.driver,
+        "at": entry.set_at,
+        "src": entry.source,
+    }
+    # Empty values are dropped rather than sent as ="" — with a dozen records
+    # in one message the wasted characters are the difference between fitting
+    # and being cut in half.
+    encoded = " ".join(
+        f"{k}={json.dumps(str(v))}" for k, v in fields.items() if str(v)
+    )
+    return (
+        f"{entry.formatted} — {entry.race_name} ({entry.difficulty})"
+        f"\n`{encoded}`"
+    )
 
 
 def describe_batch(entries: list[Submission]) -> str:
@@ -97,21 +126,28 @@ def describe_batch(entries: list[Submission]) -> str:
     if len(entries) == 1:
         return describe(entries[0])
     lines = [f"**{len(entries)} lap records**"]
+    lines += [_record_line(e) for e in entries]
+    return "\n".join(lines)
+
+
+def pack(entries: list[Submission]) -> list[list[Submission]]:
+    """Group records into messages that each fit inside one post.
+
+    Split on the record, never inside one. A half-written record is worse
+    than an extra message: the relay cannot read it and nobody can either.
+    """
+    out: list[list[Submission]] = []
+    current: list[Submission] = []
     for entry in entries:
-        fields = {
-            "game": entry.game, "board": entry.board, "race": entry.race,
-            "name": entry.race_name, "kind": entry.race_kind,
-            "diff": entry.difficulty, "car": entry.car,
-            "time": f"{entry.seconds:.3f}",
-            "by": entry.username or entry.driver, "at": entry.set_at,
-            "src": entry.source,
-        }
-        encoded = " ".join(f"{k}={json.dumps(str(v))}" for k, v in fields.items())
-        lines.append(
-            f"{entry.formatted} — {entry.race_name} ({entry.difficulty})"
-            f"\n`{encoded}`"
-        )
-    return "\n".join(lines)[:MAX_CONTENT]
+        candidate = current + [entry]
+        if current and len(describe_batch(candidate)) > SAFE_CONTENT:
+            out.append(current)
+            current = [entry]
+        else:
+            current = candidate
+    if current:
+        out.append(current)
+    return out
 
 
 class RecordSubmitter(QObject):
@@ -134,8 +170,8 @@ class RecordSubmitter(QObject):
             return 0
         # Grouped so that one message can carry several records; the relay
         # reads every record line in a message, not just the first.
-        for start in range(0, len(entries), BATCH):
-            self._queue.append((target, entries[start : start + BATCH]))
+        for batch in pack(entries):
+            self._queue.append((target, batch))
         self._pump()
         return len(entries)
 
@@ -151,7 +187,7 @@ class RecordSubmitter(QObject):
         request.setTransferTimeout(TIMEOUT_MS)
         payload = json.dumps(
             {
-                "content": describe_batch(batch),
+                "content": describe_batch(batch)[:MAX_CONTENT] or "(empty)",
                 # The webhook must never be able to ping the whole server,
                 # whatever ends up in a race or car name.
                 "allowed_mentions": {"parse": []},

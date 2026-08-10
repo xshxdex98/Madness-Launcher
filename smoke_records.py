@@ -307,8 +307,46 @@ best = [r for r in after_pb if r.race == 0 and r.difficulty == "pro"][0]
 check("a later personal best replaces the imported one",
       abs(best.seconds - 39.000) < 1e-3, best.formatted)
 
+print("\na message is never cut through the middle of a record")
+# A fixed count per message overflowed Discord's limit and the string was
+# truncated to fit, which chopped the last record in half and left its code
+# span unterminated. The post arrived carrying nothing readable.
+from madness_launcher.records.submit import (  # noqa: E402
+    MAX_CONTENT,
+    SAFE_CONTENT,
+    describe_batch,
+    pack,
+)
+
+crowd = [
+    entry(race=i % 32, race_name=f"A Race With A Fairly Long Name {i}",
+          seconds=40.0 + i, username="somebodywithalongname")
+    for i in range(40)
+]
+groups = pack(crowd)
+check("a big pile is split across messages", len(groups) > 1, str(len(groups)))
+check("every record is carried exactly once",
+      sum(len(g) for g in groups) == len(crowd),
+      str(sum(len(g) for g in groups)))
+check("no message exceeds the safe size",
+      all(len(describe_batch(g)) <= SAFE_CONTENT for g in groups),
+      str([len(describe_batch(g)) for g in groups]))
+check("no message would be clipped when sent",
+      all(len(describe_batch(g)) <= MAX_CONTENT for g in groups))
+check("every code span is closed",
+      all(describe_batch(g).count("`") % 2 == 0 for g in groups))
+check("the relay reads back every record",
+      sum(len(build_news.parse_records({"id": "1", "content": describe_batch(g)}))
+          for g in groups) == len(crowd))
+check("the hard cap is not below the packing cap, or packing is undone",
+      MAX_CONTENT >= SAFE_CONTENT, f"{MAX_CONTENT} vs {SAFE_CONTENT}")
+check("one record still makes one message", len(pack([entry()])) == 1)
+check("an empty list makes no messages", pack([]) == [])
+check("a record with empty fields does not emit them",
+      'at=""' not in describe_batch([entry(set_at=""), entry(race=1, set_at="")]),
+      describe_batch([entry(set_at=""), entry(race=1, set_at="")])[:120])
+
 print("\nmany records go out in few messages")
-from madness_launcher.records.submit import BATCH, describe_batch  # noqa: E402
 
 many = [entry(race=i, race_name=f"Race {i}", seconds=40.0 + i) for i in range(3)]
 one_message = describe_batch(many)
@@ -321,8 +359,6 @@ check("times survive the batch",
       str([r["seconds"] for r in reparsed]))
 check("a single record is still sent the readable way",
       describe_batch([many[0]]) == describe(many[0]))
-check("the batch size keeps a long history to a few posts",
-      BATCH >= 5, str(BATCH))
 check("provenance survives a batch",
       build_news.parse_records({"id": "1", "content": describe_batch(
           [entry(race=0, source="imported"), entry(race=1)])})[0]["source"]
