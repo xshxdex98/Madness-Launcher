@@ -40,7 +40,7 @@ import struct
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import cityinfo
+from . import cityinfo, profiles
 
 MAGIC = 1234
 HEADER = 8
@@ -174,48 +174,56 @@ def archive_digest(path: Path) -> str:
     return digest.hexdigest()
 
 
-def active_archives(install: Path) -> list[Path]:
+def active_archives(install: Path, game: str = "mm1") -> list[Path]:
     """Added .ar files the game will actually load.
 
     Only the game's own directory counts. Mods parked in subfolders — a
     staging area full of racepacks, say — are not loaded until they are
     copied up here, so a folder of them does not make a run modded.
     """
+    spec = profiles.profile(game)
     root = Path(install)
     try:
-        return sorted(
-            p for p in root.glob("*.ar")
-            if p.is_file() and p.name.lower() not in BASE_ARCHIVES
-        )
+        found = [p for p in root.glob("*.ar") if p.is_file()]
     except OSError:
         return []
+    return sorted(
+        p for p in found
+        if p.name.lower() not in spec.base_archives
+        and not (spec.stock_prefix
+                 and p.name.lower().startswith(spec.stock_prefix))
+    )
 
 
-def unapproved_archives(install: Path) -> list[str]:
+def unapproved_archives(install: Path, game: str = "mm1") -> list[str]:
     """Loaded archives that are not on the vanilla allowlist, by name.
 
     Read from the game folder rather than from the launcher's own list of
     enabled mods, because an archive dropped in by hand loads exactly the
     same way and the mod manager knows nothing about it.
     """
+    spec = profiles.profile(game)
     out: list[str] = []
-    for path in active_archives(install):
+    for path in active_archives(install, game):
         try:
             size = path.stat().st_size
         except OSError:
             out.append(path.name)
             continue
-        if size in _ALLOWED_SIZES and archive_digest(path) in VANILLA_ARCHIVES:
+        if (spec.vanilla_archives
+                and size in _ALLOWED_SIZES
+                and archive_digest(path) in spec.vanilla_archives):
             continue
         out.append(path.name)
     return out
 
 
-def is_vanilla_car(car: str) -> bool:
-    return car.lower() in VANILLA_CARS
+def is_vanilla_car(car: str, game: str = "mm1") -> bool:
+    return car.lower() in profiles.profile(game).vanilla_cars
 
 
-def classify(car: str, unapproved: list[str] | tuple[str, ...]) -> str | None:
+def classify(car: str, unapproved: list[str] | tuple[str, ...],
+             game: str = "mm1") -> str | None:
     """Which board a time belongs on, or None if it belongs on neither.
 
     Vanilla means the game as shipped, plus a short allowlist of fixes that
@@ -228,7 +236,7 @@ def classify(car: str, unapproved: list[str] | tuple[str, ...]) -> str | None:
     rather than on a count means a widescreen fix no longer costs someone the
     vanilla board, while a renamed handling mod still does.
     """
-    if not is_vanilla_car(car):
+    if not is_vanilla_car(car, game):
         return None
     return BOARD_MODDED if unapproved else BOARD_VANILLA
 
@@ -242,8 +250,26 @@ def pretty_car(raw: str) -> str:
     return trimmed.replace("_", " ").strip().title() or raw
 
 
-def race_label(index: int) -> str:
+def _table(game: str, city: str) -> tuple[tuple[str, str], ...]:
+    """A game's race list for a city, when it ships one here.
+
+    MM1 reads its table out of whichever install is configured, so it
+    has none here and falls through to RACE_NAMES. MM2 keeps its order
+    in a compressed archive that could not be read, so its table was
+    established by probing and lives in mm2tables.
+    """
+    spec = profiles.profile(game)
+    if not spec.races:
+        return ()
+    wanted = (city or (spec.cities[0] if spec.cities else "")).lower()
+    return spec.race_table(wanted)
+
+
+def race_label(index: int, game: str = "mm1", city: str = "") -> str:
     """What to call race `index` — its name once known, its number until then."""
+    table = _table(game, city)
+    if 0 <= index < len(table):
+        return table[index][1]
     return RACE_NAMES.get(index) or f"Race {index + 1}"
 
 
@@ -260,7 +286,7 @@ def _normalise(name: str) -> str:
     return NAME_ALIASES.get(squashed, squashed)
 
 
-def race_index_by_name(name: str) -> int:
+def race_index_by_name(name: str, game: str = "mm1", city: str = "") -> int:
     """The race index for a name, or -1.
 
     External leaderboards list the same races in a different order — the game
@@ -271,15 +297,21 @@ def race_index_by_name(name: str) -> int:
     if not name:
         return -1
     wanted = _normalise(name)
+    for index, (_, known) in enumerate(_table(game, city)):
+        if _normalise(known) == wanted:
+            return index
     for index, known in RACE_NAMES.items():
         if _normalise(known) == wanted:
             return index
     return -1
 
 
-def race_kind(index: int) -> str:
+def race_kind(index: int, game: str = "mm1", city: str = "") -> str:
     """Blitz, Circuit or Checkpoint. A 40s Blitz and a 4min Circuit are not
     the same achievement, so the board says which is which."""
+    table = _table(game, city)
+    if 0 <= index < len(table):
+        return table[index][0]
     return RACE_KINDS.get(index, "")
 
 
@@ -331,7 +363,8 @@ def _string(raw: bytes) -> str:
     return raw.split(b"\x00")[0].decode("latin-1", "replace").strip()
 
 
-def parse(path: Path, city: str = "", difficulty: str = "") -> list[LapRecord]:
+def parse(path: Path, city: str = "", difficulty: str = "",
+          game: str = "mm1") -> list[LapRecord]:
     """Every usable record in one .dat file.
 
     Never raises on a bad file: a profile the launcher cannot read is a
@@ -341,17 +374,18 @@ def parse(path: Path, city: str = "", difficulty: str = "") -> list[LapRecord]:
         blob = path.read_bytes()
     except OSError:
         return []
-    if len(blob) < HEADER + RECORD:
+    spec = profiles.profile(game)
+    if len(blob) < spec.header + RECORD:
         return []
     magic, _ = struct.unpack_from("<II", blob, 0)
-    if magic != MAGIC:
+    if magic != spec.magic:
         return []
 
     city = city or path.parent.name
     difficulty = difficulty or path.stem
     out: list[LapRecord] = []
-    for slot in range((len(blob) - HEADER) // RECORD):
-        start = HEADER + slot * RECORD
+    for slot in range((len(blob) - spec.header) // RECORD):
+        start = spec.header + slot * RECORD
         chunk = blob[start : start + RECORD]
         if not struct.unpack("<I", chunk[_VALID])[0]:
             continue
@@ -394,11 +428,11 @@ def record_files(install: Path) -> list[Path]:
     return sorted(p for p in root.glob("*/*.dat") if p.is_file())
 
 
-def snapshot(install: Path) -> dict[tuple[str, str, int], LapRecord]:
+def snapshot(install: Path, game: str = "mm1") -> dict[tuple[str, str, int], LapRecord]:
     """Every record in an install, keyed by the slot it sits in."""
     found: dict[tuple[str, str, int], LapRecord] = {}
     for path in record_files(install):
-        for record in parse(path):
+        for record in parse(path, game=game):
             found[record.key()] = record
     return found
 
