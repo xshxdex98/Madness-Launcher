@@ -94,7 +94,8 @@ CAR_NAMES = {
 # The stock roster, read out of the game's own ui.ar rather than recalled from
 # a 1999 manual: exactly these ten car ids appear there, and none of the
 # add-on vehicles that ship beside it (vpdisco, vpredcar, vpeb184) do. A car
-# outside this set is a custom one, and neither board accepts those yet.
+# outside this set is a downloaded one, which makes the run modded rather
+# than disqualifying it.
 VANILLA_CARS = frozenset(CAR_NAMES)
 
 # Which board a run belongs on.
@@ -235,10 +236,16 @@ def classify(car: str, unapproved: list[str] | tuple[str, ...],
     `unapproved` is what unapproved_archives() found. Judging on identity
     rather than on a count means a widescreen fix no longer costs someone the
     vanilla board, while a renamed handling mod still does.
+
+    A downloaded car is a modded run rather than no run at all. Dropping
+    those outright threw away most of a player's history on an install with
+    addon cars, and a time driven in one is still a time — it simply is not a
+    vanilla one. Nothing returns None any more; the return type keeps the
+    Optional so callers written against the old behaviour stay correct.
     """
-    if not is_vanilla_car(car, game):
-        return None
-    return BOARD_MODDED if unapproved else BOARD_VANILLA
+    if not is_vanilla_car(car, game) or unapproved:
+        return BOARD_MODDED
+    return BOARD_VANILLA
 
 
 def pretty_car(raw: str) -> str:

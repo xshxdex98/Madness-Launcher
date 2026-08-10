@@ -152,10 +152,10 @@ def existing_records(
     carry a different source and the board shows which is which. Publishing
     them is still governed by the opt-in.
     """
-    unapproved = mm1.unapproved_archives(Path(install))
+    unapproved = mm1.unapproved_archives(Path(install), game_id)
     out: list[Submission] = []
-    for record in mm1.snapshot(Path(install)).values():
-        board = mm1.classify(record.car, unapproved)
+    for record in mm1.snapshot(Path(install), game=game_id).values():
+        board = mm1.classify(record.car, unapproved, game_id)
         if board is None or not (MIN_PLAUSIBLE_SECONDS <= record.seconds <= mm1.MAX_TIME):
             continue
         out.append(

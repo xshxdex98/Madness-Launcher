@@ -148,9 +148,13 @@ check("stock car, no mods -> vanilla",
       mm1.classify("vpmustang99", []) == mm1.BOARD_VANILLA)
 check("stock car, unapproved archive -> modded",
       mm1.classify("vpmustang99", ["pack.ar"]) == mm1.BOARD_MODDED)
-check("custom car -> neither", mm1.classify("vpdisco", []) is None)
-check("custom car with archives -> still neither",
-      mm1.classify("vpeb184", ["pack.ar"]) is None)
+# A downloaded car makes the run modded rather than disqualifying it. A time
+# driven in one is still a time; it simply is not a vanilla one.
+check("addon car -> modded", mm1.classify("vpdisco", []) == mm1.BOARD_MODDED)
+check("addon car with archives -> still modded",
+      mm1.classify("vpeb184", ["pack.ar"]) == mm1.BOARD_MODDED)
+check("nothing is dropped outright any more",
+      mm1.classify("vpdisco", []) is not None)
 check("case does not matter", mm1.is_vanilla_car("VPMUSTANG99"))
 check("the roster is the stock ten", len(mm1.VANILLA_CARS) == 10,
       str(len(mm1.VANILLA_CARS)))
@@ -298,18 +302,20 @@ history = write_install({
 })
 mm1.load_city(None)
 imported = existing_records(history, "mm1", "Tester")
-check("times already on disk are imported", len(imported) == 3,
+check("times already on disk are imported", len(imported) == 4,
       str([(r.race_name, r.formatted) for r in imported]))
 check("they are marked as imported, not as witnessed",
       all(r.source == "imported" for r in imported))
 check("par times are still excluded",
       all(abs(r.seconds - 450.0) > 0.01 for r in imported))
-check("a custom car is still excluded",
-      all(r.car != "vpdisco" for r in imported))
+check("an addon car is imported too, as a modded time",
+      any(r.car == "vpdisco" and r.board == mm1.BOARD_MODDED for r in imported),
+      str([(r.car, r.board) for r in imported]))
 check("they carry the launcher username",
       all(r.username == "Tester" for r in imported))
-check("and land on the vanilla board in a clean folder",
-      all(r.board == mm1.BOARD_VANILLA for r in imported))
+check("stock cars land on the vanilla board in a clean folder",
+      all(r.board == mm1.BOARD_VANILLA
+          for r in imported if mm1.is_vanilla_car(r.car)))
 
 merged_once = store.merge([], imported)
 check("importing twice changes nothing",
