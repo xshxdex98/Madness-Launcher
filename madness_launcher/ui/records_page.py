@@ -13,7 +13,7 @@ says so rather than presenting it as fact.
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QPushButton,
     QTabWidget,
     QTreeWidget,
     QTreeWidgetItem,
@@ -31,6 +32,7 @@ from PySide6.QtWidgets import (
 from ..config import Config
 from ..games.registry import GAMES
 from ..records import mm1
+from ..news.model import age_of
 from . import theme
 from .widgets import Card
 
@@ -269,12 +271,18 @@ class GameRecords(QWidget):
 class RecordsPage(QWidget):
     """Lap records, by game and by board."""
 
+    # Asked to fetch the community board again. The window owns the feed,
+    # so the page requests rather than performs it.
+    refresh_requested = Signal()
+
     def __init__(self, config: Config, records_source):
         super().__init__()
         self.config = config
         # A callable rather than a list, so the page always draws whatever the
         # window currently holds instead of a copy taken when it was built.
         self._records_source = records_source
+        # Set by the window; when the feed last arrived, for the status line.
+        self.fetched_at = None
 
         root = QVBoxLayout(self)
         root.setContentsMargins(34, 28, 34, 24)
@@ -322,6 +330,20 @@ class RecordsPage(QWidget):
         self.show_wr.toggled.connect(lambda _: self.refresh())
         controls.addWidget(self.show_wr)
         controls.addStretch(1)
+
+        self.status = QLabel()
+        self.status.setObjectName("Faint")
+        controls.addWidget(self.status, 0, Qt.AlignVCenter)
+
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.setObjectName("Ghost")
+        self.refresh_button.setCursor(Qt.PointingHandCursor)
+        self.refresh_button.setToolTip(
+            "Fetch the community board now. It also refreshes on its own every "
+            "few minutes, and whenever this tab is opened."
+        )
+        self.refresh_button.clicked.connect(self.refresh_requested.emit)
+        controls.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
         root.addLayout(controls)
 
         self.games = QTabWidget()
@@ -362,3 +384,10 @@ class RecordsPage(QWidget):
         external = self.show_wr.isChecked()
         for view in self.views.values():
             view.show_records(records, own, sort, external)
+        self._refresh_status(len(records))
+
+    def _refresh_status(self, count: int) -> None:
+        """How much is on the board, and how old it is."""
+        when = age_of(self.fetched_at()) if self.fetched_at else ""
+        shown = f"{count} record{'s' if count != 1 else ''}"
+        self.status.setText(f"{shown} · updated {when}" if when else shown)

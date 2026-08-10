@@ -61,6 +61,11 @@ SETTINGS_KEY = "__settings__"
 # its first outbound request of the session.
 NEWS_START_DELAY_MS = 1200
 
+# How often a launcher that is simply left open asks for the feed again. The
+# service throttles to five minutes of its own accord, so this is the interval
+# at which a board on screen catches up with records other people have set.
+FEED_POLL_MS = 10 * 60 * 1000
+
 
 NO_USERNAME = "No username set"
 
@@ -137,6 +142,13 @@ class MainWindow(QMainWindow):
         self._select_initial()
         QTimer.singleShot(0, self.presence.start)
         QTimer.singleShot(NEWS_START_DELAY_MS, self.news.refresh)
+        # A launcher left open all evening must still pick up records other
+        # people set. Without this it fetches once at startup and never again,
+        # and the board a player is looking at silently ages.
+        self._feed_poll = QTimer(self)
+        self._feed_poll.setInterval(FEED_POLL_MS)
+        self._feed_poll.timeout.connect(self.news.refresh)
+        self._feed_poll.start()
         self._refresh_news_entry()
 
     # ------------------------------------------------------------------
@@ -909,6 +921,8 @@ class MainWindow(QMainWindow):
     def _records_page(self) -> "RecordsPage":
         if self._lap_records is None:
             self._lap_records = RecordsPage(self.config, self.all_records)
+            self._lap_records.refresh_requested.connect(self._refresh_records_now)
+            self._lap_records.fetched_at = lambda: self.news.fetched_at
             self._pages[RECORDS_KEY] = self._lap_records
             self.stack.addWidget(self._lap_records)
         return self._lap_records
@@ -922,8 +936,23 @@ class MainWindow(QMainWindow):
             self.stack.addWidget(self._news)
         return self._news
 
+    def _refresh_records_now(self) -> None:
+        """The Refresh button on the Lap Records page.
+
+        Forced past the throttle, because somebody pressing Refresh has a
+        reason to think the board is behind and being told to wait is not an
+        answer.
+        """
+        self.news.refresh(force=True)
+        self.flash_status("Checking the community board…")
+
     def _on_news_updated(self, _feed: object) -> None:
         self._refresh_news_entry()
+        # A feed carries the community board, so a launcher sitting on the Lap
+        # Records tab has to redraw when one arrives. Without this a record
+        # somebody else set only appears after navigating away and back.
+        if self._lap_records is not None:
+            self._lap_records.refresh()
         # The feed carries the webhook, so anything held back at startup can
         # go now.
         if self._unsent and self.config.settings.records_submit:
@@ -1010,6 +1039,11 @@ class MainWindow(QMainWindow):
 
         if key == RECORDS_KEY:
             page = self._records_page()
+            # Ask for a fresh feed on the way in. Throttled by the service, so
+            # opening the tab repeatedly costs one request every few minutes,
+            # but somebody who opens it to check the board gets the board as
+            # it is rather than as it was when the launcher started.
+            self.news.refresh()
             page.refresh()
             self.stack.setCurrentWidget(page)
             self.records_entry.setChecked(True)

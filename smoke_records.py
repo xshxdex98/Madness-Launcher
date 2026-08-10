@@ -914,6 +914,39 @@ check("a record can be forgotten twice without harm",
       (store.forget(one), len(store.load()))[1] == 2, str(len(store.load())))
 store.save([], set())
 
+print("\nthe board can be refreshed, and says how fresh it is")
+live: list = []
+pump = RecordsPage(config, lambda: live)
+asked: list = []
+pump.refresh_requested.connect(lambda: asked.append(1))
+check("there is a refresh button", pump.refresh_button.isEnabled())
+pump.refresh_button.click()
+check("pressing it asks the window to fetch", asked == [1], str(asked))
+check("the status line counts what is shown", "0 records" in pump.status.text(),
+      pump.status.text())
+
+live.append(entry(race=0, race_name="Dearborn Dash", seconds=41.2))
+pump.refresh()
+check("and updates when records arrive", "1 record" in pump.status.text(),
+      pump.status.text())
+live.append(entry(race=1, race_name="River Wild & Wacker", seconds=61.2))
+pump.refresh()
+check("a second record redraws the board",
+      pump.views["mm1"].views["vanilla"].tree.topLevelItemCount() == 2)
+check("and the count follows", "2 records" in pump.status.text(),
+      pump.status.text())
+
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+pump.fetched_at = lambda: datetime.now(timezone.utc) - timedelta(minutes=7)
+pump.refresh()
+check("the age of the feed is shown", "ago" in pump.status.text(),
+      pump.status.text())
+pump.fetched_at = lambda: None
+pump.refresh()
+check("and omitted when it is unknown", "updated" not in pump.status.text(),
+      pump.status.text())
+
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])
 blank_view = blank.views["mm1"].views["vanilla"]
