@@ -100,6 +100,7 @@ class MainWindow(QMainWindow):
         self._watchers: list[object] = []
         self._load_race_tables()
         self.records = record_store.load()
+        self._import_existing_records()
         self.submitter = RecordSubmitter(self)
         self.submitter.failed.connect(self._on_submit_failed)
 
@@ -772,11 +773,53 @@ class MainWindow(QMainWindow):
             Path(install.path) if install and install.path else None
         )
 
+    def _import_existing_records(self) -> None:
+        """Take in whatever the games already have on disk.
+
+        A player who has owned Midtown Madness for years arrives with a full
+        table of times. Without this the tab is empty until they beat one of
+        their own records, which for a good driver could be never.
+
+        Only what is genuinely new to the store is published, so this runs on
+        every start without re-posting anything, and improvements made outside
+        the launcher are picked up too.
+        """
+        from ..records.session import existing_records
+
+        fresh: list = []
+        for game_id in ("mm1",):
+            install = self.config.install(game_id)
+            if not install or not install.path:
+                continue
+            try:
+                fresh += existing_records(
+                    Path(install.path), game_id, self.config.settings.username
+                )
+            except OSError:
+                continue
+        if not fresh:
+            return
+
+        before = {(r.game, r.board, r.difficulty, r.race): r.seconds
+                  for r in self.records}
+        merged = record_store.merge(self.records, fresh)
+        added = [
+            r for r in merged
+            if before.get((r.game, r.board, r.difficulty, r.race)) is None
+            or r.seconds < before[(r.game, r.board, r.difficulty, r.race)]
+        ]
+        if not added:
+            return
+        self.records = merged
+        record_store.save(self.records)
+        self._maybe_submit(added)
+
     def adopt_record_watcher(self, watcher) -> None:
         """Take ownership of a watcher for a session that has just started."""
         watcher.setParent(self)
         watcher.found.connect(self._on_records_found)
         watcher.rejected.connect(self._on_record_rejected)
+        watcher.finished.connect(self._on_session_finished)
         self._watchers.append(watcher)
 
     def all_records(self) -> list:
@@ -804,6 +847,21 @@ class MainWindow(QMainWindow):
         if self._lap_records is not None:
             self._lap_records.refresh()
         self._maybe_submit(entries)
+
+    def _on_session_finished(self, found: int) -> None:
+        """Say something at the end of every watched session, including none.
+
+        The game only stores a time when it beats the one already there, and
+        only when the race was placed well enough, so most sessions produce
+        nothing. Reporting that plainly is the difference between a quiet
+        feature and one that looks broken.
+        """
+        if found:
+            return
+        self.flash_status(
+            "No new records this session — Midtown Madness only saves a time "
+            "when it beats your stored best for that race and difficulty."
+        )
 
     def _on_record_rejected(self, what: str, why: str) -> None:
         # Said out loud rather than swallowed: a personal best that quietly

@@ -517,10 +517,32 @@ MIN_RECORD_SECONDS = 8.0
 MAX_RECORD_SECONDS = 3600.0
 
 
-def parse_record(message: dict[str, Any]) -> dict[str, Any] | None:
-    """One lap record out of a channel message, or None if it is not one."""
+def parse_records(message: dict[str, Any]) -> list[dict[str, Any]]:
+    """Every lap record in a channel message.
+
+    A message can carry several. A player arriving with years of history has
+    dozens of times at once, and one post each would both flood the channel
+    and hit Discord's rate limit, so the launcher batches them and each
+    record occupies its own backticked line.
+    """
     content = str(message.get("content") or "")
-    fields = dict(_RECORD_FIELD.findall(content))
+    out: list[dict[str, Any]] = []
+    for line in content.splitlines():
+        record = _parse_record_line(line, message)
+        if record is not None:
+            out.append(record)
+    return out
+
+
+def parse_record(message: dict[str, Any]) -> dict[str, Any] | None:
+    """The first lap record in a message, or None."""
+    found = parse_records(message)
+    return found[0] if found else None
+
+
+def _parse_record_line(line: str, message: dict[str, Any]) -> dict[str, Any] | None:
+    """One lap record out of one line, or None if it is not one."""
+    fields = dict(_RECORD_FIELD.findall(line))
     if not all(k in fields for k in _RECORD_REQUIRED):
         return None
     try:
@@ -543,6 +565,9 @@ def parse_record(message: dict[str, Any]) -> dict[str, Any] | None:
         "seconds": round(seconds, 3),
         "username": fields.get("by", "")[:40],
         "set_at": fields.get("at", "")[:32],
+        # Whether the launcher watched this being driven or imported it from
+        # a table that already existed. Carried through so the board can say.
+        "source": (fields.get("src") or "launcher")[:24],
         # Kept so a disputed entry can be found and deleted in Discord.
         "message_id": str(message.get("id") or ""),
     }
@@ -570,14 +595,13 @@ def collect_records(config: dict[str, Any], token: str) -> tuple[list[dict], int
             failures += 1
             continue
         for message in messages:
-            record = parse_record(message)
-            if record is None:
-                continue
-            seen += 1
-            key = (record["game"], record["board"], record["difficulty"], record["race"])
-            current = best.get(key)
-            if current is None or record["seconds"] < current["seconds"]:
-                best[key] = record
+            for record in parse_records(message):
+                seen += 1
+                key = (record["game"], record["board"],
+                       record["difficulty"], record["race"])
+                current = best.get(key)
+                if current is None or record["seconds"] < current["seconds"]:
+                    best[key] = record
         log(f"records {channel_id}: {len(messages)} messages, {seen} records")
 
     out = sorted(

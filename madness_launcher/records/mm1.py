@@ -318,6 +318,14 @@ class LapRecord:
         """Identifies the slot this record occupies, ignoring the time in it."""
         return (self.city, self.difficulty, self.slot)
 
+    def signature(self) -> tuple[float, str, str]:
+        """What makes this entry itself, independent of which slot holds it.
+
+        A race's entries are kept in time order, so the same lap moves slots
+        as faster ones arrive above it. Identity has to come from the lap.
+        """
+        return (round(self.seconds, 3), self.car.lower(), self.driver.lower())
+
 
 def _string(raw: bytes) -> str:
     return raw.split(b"\x00")[0].decode("latin-1", "replace").strip()
@@ -393,16 +401,28 @@ def improvements(
     before: dict[tuple[str, str, int], LapRecord],
     after: dict[tuple[str, str, int], LapRecord],
 ) -> list[LapRecord]:
-    """Records that are new, or faster than they were.
+    """Entries that were not in the table before this session.
 
-    Comparing snapshots rather than trusting the file wholesale is what keeps
-    a session from re-reporting every time already in the table as though it
-    had just been driven.
+    Compared by content within a race, not slot by slot. Each race holds a
+    small leaderboard kept in ascending order, so inserting a time pushes
+    every slower entry down a slot. A slot-by-slot diff sees those shifts as
+    new records and attributes each one to the car and driver that moved into
+    the slot — reporting, for a single new lap, one genuine record and a
+    string of invented ones.
+
+    Comparing the set of (time, car, driver) a race held before against what
+    it holds now leaves exactly the entries that are actually new.
     """
+    previous: dict[tuple[str, str, int], set[tuple]] = {}
+    for record in before.values():
+        previous.setdefault(
+            (record.city, record.difficulty, record.race), set()
+        ).add(record.signature())
+
     out: list[LapRecord] = []
-    for key, record in after.items():
-        previous = before.get(key)
-        if previous is None or record.seconds < previous.seconds - 1e-4:
+    for record in after.values():
+        race_key = (record.city, record.difficulty, record.race)
+        if record.signature() not in previous.get(race_key, ()):
             out.append(record)
     out.sort(key=lambda r: (r.city, r.difficulty, r.slot))
     return out

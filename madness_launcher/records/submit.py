@@ -86,6 +86,34 @@ def describe(entry: Submission) -> str:
     return f"{headline}\n`{encoded}`"[:MAX_CONTENT]
 
 
+# Discord rate-limits a webhook to a handful of posts a few seconds apart, and
+# a player importing years of history has dozens of records at once. Several
+# to a message keeps a first run to a few posts instead of a flood.
+BATCH = 10
+
+
+def describe_batch(entries: list[Submission]) -> str:
+    """One message carrying several records."""
+    if len(entries) == 1:
+        return describe(entries[0])
+    lines = [f"**{len(entries)} lap records**"]
+    for entry in entries:
+        fields = {
+            "game": entry.game, "board": entry.board, "race": entry.race,
+            "name": entry.race_name, "kind": entry.race_kind,
+            "diff": entry.difficulty, "car": entry.car,
+            "time": f"{entry.seconds:.3f}",
+            "by": entry.username or entry.driver, "at": entry.set_at,
+            "src": entry.source,
+        }
+        encoded = " ".join(f"{k}={json.dumps(str(v))}" for k, v in fields.items())
+        lines.append(
+            f"{entry.formatted} — {entry.race_name} ({entry.difficulty})"
+            f"\n`{encoded}`"
+        )
+    return "\n".join(lines)[:MAX_CONTENT]
+
+
 class RecordSubmitter(QObject):
     """POSTs records to the webhook, one at a time."""
 
@@ -96,7 +124,7 @@ class RecordSubmitter(QObject):
         super().__init__(parent)
         self._net = QNetworkAccessManager(self)
         self._net.setRedirectPolicy(QNetworkRequest.NoLessSafeRedirectPolicy)
-        self._queue: list[tuple[str, Submission]] = []
+        self._queue: list[tuple[str, list[Submission]]] = []
         self._busy = False
 
     def submit(self, webhook: str, entries: list[Submission]) -> int:
@@ -104,15 +132,17 @@ class RecordSubmitter(QObject):
         target = usable_webhook(webhook)
         if not target:
             return 0
-        for entry in entries:
-            self._queue.append((target, entry))
+        # Grouped so that one message can carry several records; the relay
+        # reads every record line in a message, not just the first.
+        for start in range(0, len(entries), BATCH):
+            self._queue.append((target, entries[start : start + BATCH]))
         self._pump()
         return len(entries)
 
     def _pump(self) -> None:
         if self._busy or not self._queue:
             return
-        target, entry = self._queue.pop(0)
+        target, batch = self._queue.pop(0)
         self._busy = True
 
         request = QNetworkRequest(QUrl(target))
@@ -121,7 +151,7 @@ class RecordSubmitter(QObject):
         request.setTransferTimeout(TIMEOUT_MS)
         payload = json.dumps(
             {
-                "content": describe(entry),
+                "content": describe_batch(batch),
                 # The webhook must never be able to ping the whole server,
                 # whatever ends up in a race or car name.
                 "allowed_mentions": {"parse": []},
@@ -129,16 +159,18 @@ class RecordSubmitter(QObject):
         ).encode("utf-8")
 
         reply = self._net.post(request, payload)
-        reply.finished.connect(lambda r=reply, e=entry: self._done(r, e))
+        reply.finished.connect(lambda r=reply, b=batch: self._done(r, b))
 
-    def _done(self, reply: QNetworkReply, entry: Submission) -> None:
+    def _done(self, reply: QNetworkReply, batch: list[Submission]) -> None:
         reply.deleteLater()
         self._busy = False
         status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+        first = batch[0]
         if reply.error() != QNetworkReply.NoError:
-            self.failed.emit(entry, reply.errorString())
+            self.failed.emit(first, reply.errorString())
         elif isinstance(status, int) and status >= 400:
-            self.failed.emit(entry, f"the board answered {status}")
+            self.failed.emit(first, f"the board answered {status}")
         else:
-            self.sent.emit(entry)
+            for entry in batch:
+                self.sent.emit(entry)
         self._pump()

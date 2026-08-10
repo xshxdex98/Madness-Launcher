@@ -129,6 +129,51 @@ def plausible(entry: Submission, session_seconds: float) -> tuple[bool, str]:
     return True, ""
 
 
+SOURCE_LAUNCHER = "launcher"
+SOURCE_IMPORTED = "imported"
+
+
+def existing_records(
+    install: Path, game_id: str = "mm1", username: str = ""
+) -> list[Submission]:
+    """Everything already in the game's tables, as records.
+
+    A player who has had the game for years arrives with a full table and,
+    without this, an empty board until they beat one of their own times. Their
+    history is right there on disk and belongs in the tab.
+
+    Marked as imported rather than passed off as witnessed. The launcher did
+    not see these driven and cannot say when or how they were set, so they
+    carry a different source and the board shows which is which. Publishing
+    them is still governed by the opt-in.
+    """
+    unapproved = mm1.unapproved_archives(Path(install))
+    out: list[Submission] = []
+    for record in mm1.snapshot(Path(install)).values():
+        board = mm1.classify(record.car, unapproved)
+        if board is None or not (MIN_PLAUSIBLE_SECONDS <= record.seconds <= mm1.MAX_TIME):
+            continue
+        out.append(
+            Submission(
+                game=game_id,
+                board=board,
+                race=record.race,
+                race_name=record.race_name,
+                race_kind=mm1.race_kind(record.race),
+                difficulty=record.difficulty,
+                car=record.car,
+                car_name=record.car_name,
+                seconds=record.seconds,
+                driver=record.driver,
+                username=username,
+                set_at="",
+                mods=unapproved,
+                source=SOURCE_IMPORTED,
+            )
+        )
+    return out
+
+
 class RecordWatcher(QObject):
     """Watches one running game and reports what improved when it exits."""
 
@@ -138,6 +183,11 @@ class RecordWatcher(QObject):
     # swallowed: silently dropping somebody's personal best is worse than
     # telling them why it did not count.
     rejected = Signal(str, str)
+    # The session ended. Carries how many records came out of it, including
+    # none. Emitted even when nothing was found, because silence is not an
+    # answer: a player who finishes a race and sees nothing cannot tell "you
+    # did not beat your time" from "this is broken", and will assume broken.
+    finished = Signal(int)
 
     def __init__(
         self,
@@ -217,6 +267,7 @@ class RecordWatcher(QObject):
                 username=self.username,
                 set_at=stamp,
                 mods=self.mods,
+                source=SOURCE_LAUNCHER,
             )
             ok, why = plausible(entry, session_seconds)
             if ok:
@@ -226,3 +277,4 @@ class RecordWatcher(QObject):
 
         if good:
             self.found.emit(good)
+        self.finished.emit(len(good))

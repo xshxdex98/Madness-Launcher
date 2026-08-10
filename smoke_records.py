@@ -118,8 +118,16 @@ after = mm1.snapshot(faster)
 # Same slot, different install root — the key is city/difficulty/slot.
 moved = {k: v for k, v in after.items()}
 check("a faster time is an improvement", len(mm1.improvements(before, moved)) == 1)
+# A race holds a leaderboard, not one best time, and the game only writes an
+# entry that earned a place on it. So a lap slower than the leader is still a
+# new entry — it took second or third — and reporting it is correct.
 slower = mm1.snapshot(write_install({0: ("Pan", "vpmustang99", 99.0)}))
-check("a slower time is not", mm1.improvements(before, slower) == [])
+check("a slower lap the game chose to store is still new",
+      len(mm1.improvements(before, slower)) == 1)
+check("but a table that did not change yields nothing",
+      mm1.improvements(before, before) == [])
+check("and re-reading the same file twice yields nothing",
+      mm1.improvements(mm1.snapshot(install), mm1.snapshot(install)) == [])
 
 print("\nthe stock roster decides which board a run belongs on")
 check("stock car, no mods -> vanilla",
@@ -213,6 +221,126 @@ def entry(**kwargs) -> Submission:
     base.update(kwargs)
     return Submission(**base)
 
+
+print("\na race holds a sorted leaderboard, so entries shift when one is added")
+# Each race keeps its times in ascending order. Adding one pushes every
+# slower entry down a slot, and a slot-by-slot diff reads each shift as a new
+# record set by whoever moved into that slot — one real lap, several invented.
+was = mm1.snapshot(write_install({
+    0: ("Pan", "vpmustang99", 41.228),
+    2: ("Pan", "vpcaddie", 43.286),
+}))
+now = mm1.snapshot(write_install({
+    0: ("Pan", "vpmustang99", 41.228),
+    2: ("Tester", "vppanozgt", 42.000),   # inserted in the middle
+    4: ("Pan", "vpcaddie", 43.286),       # the same old lap, one slot down
+}))
+shifted = mm1.improvements(was, now)
+check("only the genuinely new lap is reported", len(shifted) == 1,
+      str([(r.car_name, r.formatted) for r in shifted]))
+check("and it is the one that was driven",
+      shifted and shifted[0].car == "vppanozgt", str(shifted))
+check("the displaced entry is not reported as new",
+      all(r.car != "vpcaddie" for r in shifted))
+check("an unchanged table still yields nothing",
+      mm1.improvements(was, was) == [])
+check("a lap identical but for its driver counts as new",
+      len(mm1.improvements(was, mm1.snapshot(write_install({
+          0: ("Pan", "vpmustang99", 41.228),
+          2: ("Someone", "vpcaddie", 43.286),
+      })))) == 1)
+
+print("\na player's existing times are taken in, not ignored")
+from madness_launcher.records.session import existing_records  # noqa: E402
+
+history = write_install({
+    0: ("Pan", "vpmustang99", 41.228),
+    1: ("Pan", "vpmustang99", 450.0),      # par time, must not be imported
+    2: ("Pan", "vpcaddie", 43.286),
+    30: ("Pan", "vppanozgt", 74.811),
+    40: ("Pan", "vpdisco", 60.0),          # custom car, belongs on no board
+})
+mm1.load_city(None)
+imported = existing_records(history, "mm1", "Tester")
+check("times already on disk are imported", len(imported) == 3,
+      str([(r.race_name, r.formatted) for r in imported]))
+check("they are marked as imported, not as witnessed",
+      all(r.source == "imported" for r in imported))
+check("par times are still excluded",
+      all(abs(r.seconds - 450.0) > 0.01 for r in imported))
+check("a custom car is still excluded",
+      all(r.car != "vpdisco" for r in imported))
+check("they carry the launcher username",
+      all(r.username == "Tester" for r in imported))
+check("and land on the vanilla board in a clean folder",
+      all(r.board == mm1.BOARD_VANILLA for r in imported))
+
+merged_once = store.merge([], imported)
+check("importing twice changes nothing",
+      len(store.merge(merged_once, imported)) == len(merged_once))
+faster_now = existing_records(
+    write_install({0: ("Pan", "vpmustang99", 39.000)}), "mm1", "Tester")
+after_pb = store.merge(merged_once, faster_now)
+best = [r for r in after_pb if r.race == 0 and r.difficulty == "pro"][0]
+check("a later personal best replaces the imported one",
+      abs(best.seconds - 39.000) < 1e-3, best.formatted)
+
+print("\nmany records go out in few messages")
+from madness_launcher.records.submit import BATCH, describe_batch  # noqa: E402
+
+many = [entry(race=i, race_name=f"Race {i}", seconds=40.0 + i) for i in range(3)]
+one_message = describe_batch(many)
+check("a batch carries every record", one_message.count("game=") == 3,
+      str(one_message.count("game=")))
+reparsed = build_news.parse_records({"id": "1", "content": one_message})
+check("and the relay reads them all back", len(reparsed) == 3, str(len(reparsed)))
+check("times survive the batch",
+      sorted(round(r["seconds"], 3) for r in reparsed) == [40.0, 41.0, 42.0],
+      str([r["seconds"] for r in reparsed]))
+check("a single record is still sent the readable way",
+      describe_batch([many[0]]) == describe(many[0]))
+check("the batch size keeps a long history to a few posts",
+      BATCH >= 5, str(BATCH))
+check("provenance survives a batch",
+      build_news.parse_records({"id": "1", "content": describe_batch(
+          [entry(race=0, source="imported"), entry(race=1)])})[0]["source"]
+      == "imported")
+
+print("\nevery watched session reports back, even an empty one")
+from madness_launcher.records.session import RecordWatcher  # noqa: E402
+
+
+class _Exited:
+    """Stands in for a game process that has already finished."""
+
+    def poll(self):
+        return 0
+
+
+quiet = write_install({0: ("Pan", "vpmustang99", 41.228)})
+watcher = RecordWatcher("mm1", quiet, _Exited(), username="Tester")
+seen: list = []
+watcher.found.connect(lambda e: seen.append(("found", len(e))))
+watcher.finished.connect(lambda n: seen.append(("finished", n)))
+watcher._collect()
+check("a session that beat nothing still reports back",
+      ("finished", 0) in seen, str(seen))
+check("and reports that it found nothing",
+      not any(s[0] == "found" for s in seen), str(seen))
+
+improved = write_install({0: ("Pan", "vpmustang99", 35.1)})
+watcher2 = RecordWatcher("mm1", quiet, _Exited(), username="Tester")
+watcher2._before = mm1.snapshot(quiet)
+watcher2.install = improved
+# The watcher was built a moment ago, so without this the session looks zero
+# seconds long and a 35-second lap is correctly judged not to fit in it.
+watcher2._started -= 600
+seen2: list = []
+watcher2.found.connect(lambda e: seen2.append(("found", len(e))))
+watcher2.finished.connect(lambda n: seen2.append(("finished", n)))
+watcher2._collect()
+check("a session that beat something reports the count",
+      ("finished", 1) in seen2 and ("found", 1) in seen2, str(seen2))
 
 print("\na record has to fit in the session that produced it")
 check("a normal lap in a long session", plausible(entry(), 600)[0])
