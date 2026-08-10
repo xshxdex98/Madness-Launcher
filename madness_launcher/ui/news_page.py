@@ -54,6 +54,10 @@ _URL_RE = re.compile(r"(https?://[^\s<>\"']+)")
 _BOLD_RE = re.compile(r"\*\*(.+?)\*\*", re.DOTALL)
 _ITALIC_RE = re.compile(r"(?<![\*\w])\*(?!\s)(.+?)(?<!\s)\*(?!\*)", re.DOTALL)
 _CODE_RE = re.compile(r"`([^`\n]+)`")
+# Discord's headings, which announcement posts lean on heavily for a title
+# line. Matched before newlines become <br>, so ^ still means start of line.
+_HEADING_RE = re.compile(r"^(#{1,3}) (.+)$", re.MULTILINE)
+_HEADING_SIZES = {1: 17, 2: 15, 3: 14}
 # Trailing punctuation is almost never part of the link someone pasted.
 _TRAILING = ".,;:!?)]}'\""
 
@@ -87,6 +91,11 @@ def to_rich_text(text: str) -> str:
     )
     body = _BOLD_RE.sub(lambda m: f"<b>{m.group(1)}</b>", body)
     body = _ITALIC_RE.sub(lambda m: f"<i>{m.group(1)}</i>", body)
+    body = _HEADING_RE.sub(
+        lambda m: f'<span style="font-size: {_HEADING_SIZES[len(m.group(1))]}px; '
+        f'font-weight: 700; color: {theme.TEXT};">{m.group(2)}</span>',
+        body,
+    )
     return body.replace("\n", "<br>")
 
 

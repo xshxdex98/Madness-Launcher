@@ -241,6 +241,18 @@ check("a link is produced", '<a href="https://example.com/a?x=1&amp;y=2"' in ric
 check("bold works", "<b>hi</b>" in to_rich_text("**hi**"))
 check("italic works", "<i>hi</i>" in to_rich_text("*hi*"))
 check("newlines become breaks", "<br>" in to_rich_text("a\nb"))
+check("a heading loses its hashes",
+      "# Big news" not in to_rich_text("# Big news")
+      and ">Big news<" in to_rich_text("# Big news"),
+      to_rich_text("# Big news"))
+check("a heading is enlarged", "17px" in to_rich_text("# Big news"),
+      to_rich_text("# Big news"))
+check("a sub-heading is smaller", "15px" in to_rich_text("## Less big"),
+      to_rich_text("## Less big"))
+check("a hash mid-sentence is left alone",
+      "C# is a language" in to_rich_text("C# is a language"))
+check("a hash with no space is not a heading",
+      "#1" in to_rich_text("#1 in the charts"))
 check(
     "trailing punctuation stays out of the link",
     to_rich_text("go to https://example.com.").endswith("</a>."),

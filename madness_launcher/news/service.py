@@ -268,11 +268,18 @@ class NewsService(QObject):
         self._feed = feed
         self._fetched_at = datetime.now(timezone.utc)
         self._error = ""
-        self._save_cache(
-            payload,
-            _header(reply, b"ETag"),
-            _header(reply, b"Last-Modified"),
-        )
+        try:
+            self._save_cache(
+                payload,
+                _header(reply, "ETag"),
+                _header(reply, "Last-Modified"),
+            )
+        except Exception:
+            # Caching is an optimisation and must never cost the user the feed
+            # that has already been fetched and parsed. Anything thrown here
+            # would otherwise escape the slot and strand the state machine on
+            # "loading", with a full feed in memory that the page never shows.
+            pass
         self._set_state("ready")
         self.updated.emit(feed)
 
@@ -313,9 +320,24 @@ class NewsService(QObject):
             pass
 
 
-def _header(reply: QNetworkReply, name: bytes) -> str:
-    value = reply.rawHeader(name)
-    return bytes(value).decode("ascii", "ignore") if value else ""
+def _header(reply: QNetworkReply, name: str) -> str:
+    """One response header as text.
+
+    PySide6 changed `rawHeader` from taking a QByteArray to taking a str, and
+    which one you get depends on the wheel the user happens to have. Passing
+    the wrong type raises TypeError rather than returning nothing, so both are
+    tried before giving up.
+    """
+    try:
+        value = reply.rawHeader(name)
+    except TypeError:
+        try:
+            value = reply.rawHeader(name.encode("ascii"))
+        except TypeError:
+            return ""
+    if not value:
+        return ""
+    return bytes(value).decode("ascii", "ignore") if not isinstance(value, str) else value
 
 
 def _atomic_write(target: Path, payload: bytes) -> None:
