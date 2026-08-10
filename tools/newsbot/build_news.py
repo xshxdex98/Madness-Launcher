@@ -558,6 +558,7 @@ def _parse_record_line(line: str, message: dict[str, Any]) -> dict[str, Any] | N
         "game": fields["game"][:16],
         "board": fields["board"],
         "race": race,
+        "city": fields.get("city", "")[:24],
         "race_name": fields.get("name", "")[:80],
         "race_kind": fields.get("kind", "")[:16],
         "difficulty": fields.get("diff", "")[:16],
@@ -585,6 +586,7 @@ def _record_key(record: dict[str, Any]) -> tuple:
     return (
         record["game"],
         record["board"],
+        record.get("city", "").lower(),
         record["difficulty"],
         record["race"],
         record["username"].lower(),

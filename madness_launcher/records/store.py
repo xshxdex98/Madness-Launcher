@@ -48,6 +48,7 @@ def _key(entry: Submission) -> tuple:
     return (
         entry.game,
         entry.board,
+        entry.city.lower(),
         entry.difficulty,
         entry.race,
         (entry.username or entry.driver).lower(),
@@ -81,6 +82,7 @@ def _from_dict(item: object) -> Submission | None:
     return Submission(
         game=str(item.get("game", ""))[:16],
         board=str(item.get("board", ""))[:16],
+        city=str(item.get("city", ""))[:24],
         race=race,
         # A published record names its own race, but an older relay may not
         # have. Falling back to this install's table beats showing a blank.

@@ -153,7 +153,8 @@ class BoardView(QWidget):
         best: dict[tuple, object] = {}
         for record in rows:
             who = (record.username or record.driver).lower()
-            key = (record.difficulty, record.race, who, record.car.lower())
+            key = (record.city.lower(), record.difficulty, record.race,
+                   who, record.car.lower())
             current = best.get(key)
             if current is None or record.seconds < current.seconds:
                 best[key] = record

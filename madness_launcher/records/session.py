@@ -59,6 +59,10 @@ class Submission:
 
     game: str
     board: str
+    # Which city the race belongs to. One game can have more than one,
+    # and its race numbering restarts in each — London race 0 and SF
+    # race 0 are different races that would otherwise share an identity.
+    city: str
     race: int
     race_name: str
     race_kind: str
@@ -89,6 +93,7 @@ class Submission:
         return {
             "game": self.game,
             "board": self.board,
+            "city": self.city,
             "race": self.race,
             "race_name": self.race_name,
             "race_kind": self.race_kind,
@@ -157,6 +162,7 @@ def existing_records(
             Submission(
                 game=game_id,
                 board=board,
+                city=record.city,
                 race=record.race,
                 race_name=record.race_name,
                 race_kind=mm1.race_kind(record.race),
@@ -256,6 +262,7 @@ class RecordWatcher(QObject):
             entry = Submission(
                 game=self.game_id,
                 board=board or "",
+                city=record.city,
                 race=record.race,
                 race_name=record.race_name,
                 race_kind=mm1.race_kind(record.race),

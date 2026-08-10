@@ -36,7 +36,11 @@ from madness_launcher.records.session import (  # noqa: E402
     plausible,
 )
 from madness_launcher.records.session import existing_records  # noqa: E402
-from madness_launcher.records.submit import describe, usable_webhook  # noqa: E402
+from madness_launcher.records.submit import (  # noqa: E402
+    describe,
+    describe_batch,
+    usable_webhook,
+)
 from madness_launcher.ui import theme  # noqa: E402
 from madness_launcher.ui.records_page import (  # noqa: E402
     COL_CAR,
@@ -223,7 +227,8 @@ check("digesting a missing file yields nothing",
 
 def entry(**kwargs) -> Submission:
     base = dict(
-        game="mm1", board="vanilla", race=14, race_name="Museum Marathon",
+        game="mm1", board="vanilla", city="chicago",
+        race=14, race_name="Museum Marathon",
         race_kind="Circuit", difficulty="pro", car="vpmustang99",
         car_name="Ford Mustang GT", seconds=101.234, driver="Pan",
         username="Tester", set_at="2026-08-10T18:00:00+00:00",
@@ -946,6 +951,42 @@ pump.fetched_at = lambda: None
 pump.refresh()
 check("and omitted when it is unknown", "updated" not in pump.status.text(),
       pump.status.text())
+
+print("\ntwo cities do not overwrite each other")
+# MM1 has one city so this never mattered. MM2 has two, and each numbers its
+# races from zero — London race 0 and SF race 0 are different races that
+# would share an identity if the city were left out of it.
+london = entry(game="mm2", city="london", race=0, race_name="Mini Race",
+               seconds=61.0, username="Tester")
+sf = entry(game="mm2", city="sf", race=0, race_name="Take It Easy",
+           seconds=44.0, username="Tester")
+both = store.merge([], [london, sf])
+check("both cities are kept", len(both) == 2, str(len(both)))
+check("their identities differ", store.key_id(london) != store.key_id(sf))
+check("the city is in the identity", "london" in store.key_id(london),
+      store.key_id(london))
+check("a faster lap still replaces its own city's entry",
+      len(store.merge(both, [entry(game="mm2", city="sf", race=0,
+                                   seconds=40.0, username="Tester")])) == 2)
+check("and it is the faster one that survives",
+      min(r.seconds for r in store.merge(
+          both, [entry(game="mm2", city="sf", race=0, seconds=40.0,
+                       username="Tester")]) if r.city == "sf") == 40.0)
+check("forgetting one city leaves the other",
+      len([r for r in both if r.city == "london"]) == 1)
+
+print("\nthe city survives the trip to the board and back")
+carried = describe(london)
+check("the message names the city", 'city="london"' in carried, carried[:120])
+back = build_news.parse_records({"id": "1", "content": carried})
+check("the relay reads it", back and back[0]["city"] == "london", str(back))
+pair = build_news.parse_records({"id": "2", "content": describe_batch([london, sf])})
+check("a batch keeps them apart",
+      {r["city"] for r in pair} == {"london", "sf"}, str(pair))
+build_news.discord_messages = lambda c, t, l: [
+    {"id": "1", "content": describe_batch([london, sf])}]
+kept, _, _ = build_news.collect_records({"records": [{"channel_id": "1"}]}, "tok")
+check("and the relay keeps one row per city", len(kept) == 2, str(len(kept)))
 
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])

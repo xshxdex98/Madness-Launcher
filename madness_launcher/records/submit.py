@@ -69,6 +69,7 @@ def describe(entry: Submission) -> str:
     fields = {
         "game": entry.game,
         "board": entry.board,
+        "city": entry.city,
         "race": entry.race,
         "name": entry.race_name,
         "kind": entry.race_kind,
@@ -100,6 +101,7 @@ def _record_line(entry: Submission) -> str:
     fields = {
         "game": entry.game,
         "board": entry.board,
+        "city": entry.city,
         "race": entry.race,
         "name": entry.race_name,
         "diff": entry.difficulty,
