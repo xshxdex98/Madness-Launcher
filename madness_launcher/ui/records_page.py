@@ -130,16 +130,23 @@ class BoardView(QWidget):
                      sort: int = 0) -> None:
         self.tree.clear()
         rows = [r for r in records if r.game == self.game_id and r.board == self.board]
-        # Best time per race first, then by race order, so the table reads as
-        # a leaderboard rather than as a log of attempts.
+        # One row per driver per race, not one row per race. Collapsing to a
+        # single best time made the board useless the moment verified world
+        # records were added beside community ones: every race already held a
+        # world record, so nobody else's time could ever appear on it. Keeping
+        # each driver's best turns it back into a leaderboard, where a slower
+        # time still has somewhere to sit.
         best: dict[tuple, object] = {}
         for record in rows:
-            key = (record.difficulty, record.race)
+            who = (record.username or record.driver).lower()
+            key = (record.difficulty, record.race, who, record.source)
             current = best.get(key)
             if current is None or record.seconds < current.seconds:
                 best[key] = record
 
-        ordered = sorted(best.values(), key=lambda r: (r.race, r.difficulty))
+        ordered = sorted(
+            best.values(), key=lambda r: (r.race, r.difficulty, r.seconds)
+        )
         # Sorting is switched off while rows are added, then switched back on
         # with the wanted order. Leaving it on makes every insert re-sort the
         # whole table, which on a full board is sixty-four needless passes.
@@ -161,7 +168,7 @@ class BoardView(QWidget):
                 {
                     # Race sorts by its position in the game, not its name, so
                     # "race order" means the order they appear in the game.
-                    0: (record.race, record.difficulty),
+                    0: (record.race, record.difficulty, record.seconds),
                     1: record.seconds,
                     2: record.car_name.lower(),
                     3: who.lower(),

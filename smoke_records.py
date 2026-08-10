@@ -659,6 +659,46 @@ drivers = [board.tree.topLevelItem(i).text(3)
 check("the Driver header sorts alphabetically",
       drivers == sorted(drivers, key=str.lower), str(drivers))
 
+print("\na world record does not hide everyone else's time on that race")
+# Collapsing to one row per race made the board useless once verified world
+# records sat beside community ones: every race already held a world record,
+# so no community time could ever be seen on it.
+contested = [
+    entry(race=0, race_name="Dearborn Dash", seconds=19.520,
+          username="fatiyesman", source="speedrun.com", car="", car_name=""),
+    entry(race=0, race_name="Dearborn Dash", seconds=49.128,
+          username="Tester", car="vppanozgt", car_name="Panoz GTR-1"),
+    entry(race=0, race_name="Dearborn Dash", seconds=44.000,
+          username="Someone", car="vpbug", car_name="VW Beetle"),
+]
+contest = RecordsPage(config, lambda: contested)
+cboard = contest.views["mm1"].views["vanilla"]
+names = [cboard.tree.topLevelItem(i).text(3)
+         for i in range(cboard.tree.topLevelItemCount())]
+check("every driver keeps a row on the same race", len(names) == 3, str(names))
+check("the world record is still there", "fatiyesman" in names)
+check("and so is the slowest entrant", "Tester" in names, str(names))
+check("the fastest sits at the top of the race",
+      cboard.tree.topLevelItem(0).text(3) == "fatiyesman", str(names))
+check("a driver's own slower attempt is still collapsed",
+      len(RecordsPage(config, lambda: [
+          entry(race=0, seconds=50.0, username="Tester"),
+          entry(race=0, seconds=45.0, username="Tester"),
+      ]).views["mm1"].views["vanilla"].tree.topLevelItemCount()) == 1
+      if False else
+      RecordsPage(config, lambda: [
+          entry(race=0, seconds=50.0, username="Tester"),
+          entry(race=0, seconds=45.0, username="Tester"),
+      ]).views["mm1"].views["vanilla"].tree.topLevelItemCount() == 1)
+check("and it is their best that survives",
+      RecordsPage(config, lambda: [
+          entry(race=0, seconds=50.0, username="Tester"),
+          entry(race=0, seconds=45.0, username="Tester"),
+      ]).views["mm1"].views["vanilla"].tree.topLevelItem(0).text(1) == "45.000")
+check("nothing handed to the page goes missing",
+      RecordsPage(config, lambda: contested).views["mm1"].views["vanilla"]
+      .tree.topLevelItemCount() == len(contested))
+
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])
 blank_view = blank.views["mm1"].views["vanilla"]
