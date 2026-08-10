@@ -1104,6 +1104,52 @@ placed = store.from_feed([{"game": "mm2", "board": "vanilla", "city": "sf",
 check("it lands on the right race", placed and placed[0].race == 13,
       str([r.race for r in placed]))
 
+print("\na record never goes to another game's channel")
+# This shipped and published Midtown Madness 2's whole imported history into
+# the Midtown Madness channel: MM2 had no entry in the feed's map yet, and
+# the old single URL looked like a reasonable default. A record with nowhere
+# to go has to wait, not go somewhere else.
+
+
+class _Feed:
+    def __init__(self, hooks, single=""):
+        self.records_webhooks = hooks
+        self.records_webhook = single
+
+
+class _Router:
+    """The window's webhook choice, isolated from the rest of it."""
+
+    def __init__(self, feed, override=""):
+        self._feed, self._override = feed, override
+
+    def webhook_for(self, game):
+        if self._override:
+            return self._override
+        return (self._feed.records_webhooks or {}).get(game, "")
+
+
+MM1_HOOK = "https://discord.com/api/webhooks/1/mm1"
+MM2_HOOK = "https://discord.com/api/webhooks/2/mm2"
+
+both = _Router(_Feed({"mm1": MM1_HOOK, "mm2": MM2_HOOK}))
+check("each game goes to its own channel",
+      both.webhook_for("mm1") == MM1_HOOK and both.webhook_for("mm2") == MM2_HOOK)
+
+only_mm1 = _Router(_Feed({"mm1": MM1_HOOK}, single=MM1_HOOK))
+check("a game with no channel of its own gets nothing",
+      only_mm1.webhook_for("mm2") == "", only_mm1.webhook_for("mm2"))
+check("and is not handed the other game's",
+      only_mm1.webhook_for("mm2") != MM1_HOOK)
+check("the game that does have one still works",
+      only_mm1.webhook_for("mm1") == MM1_HOOK)
+
+empty = _Router(_Feed({}, single=MM1_HOOK))
+check("an old feed with only the single URL routes nothing",
+      empty.webhook_for("mm1") == "" and empty.webhook_for("mm2") == "")
+check("a per-machine override still wins, being set by hand",
+      _Router(_Feed({}), override=MM2_HOOK).webhook_for("mm1") == MM2_HOOK)
+
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])
 blank_view = blank.views["mm1"].views["vanilla"]

@@ -920,17 +920,22 @@ class MainWindow(QMainWindow):
         return
 
     def _webhook_for(self, game: str) -> str:
-        """Where this game's records go.
+        """Where this game's records go, or nowhere.
 
-        A per-machine override wins, then the game's own entry in the feed,
-        then the feed's single fallback for anything unlisted.
+        Only this game's own entry counts. There is deliberately no fallback
+        to another game's webhook: falling back published Midtown Madness 2's
+        entire imported history into the Midtown Madness channel, because the
+        feed had not yet been rebuilt with the per-game map and the single
+        old URL looked like a reasonable default. It was not. A record with
+        nowhere to go waits; it does not go somewhere else.
+
+        The per-machine override in Settings still wins, since it is set by
+        hand for testing against one channel.
         """
-        feed = self.news.feed
-        return (
-            self.config.settings.records_webhook
-            or (feed.records_webhooks or {}).get(game, "")
-            or feed.records_webhook
-        )
+        override = self.config.settings.records_webhook
+        if override:
+            return override
+        return (self.news.feed.records_webhooks or {}).get(game, "")
 
     def _on_submit_failed(self, entry, reason: str) -> None:
         self.flash_status(f"Could not send {entry.race_name}: {reason}")
