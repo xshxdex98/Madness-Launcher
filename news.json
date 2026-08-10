@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-10T20:07:45Z",
+  "generated": "2026-08-10T20:25:45Z",
   "announcements": [
     {
       "id": "1536066593161879572",
@@ -521,6 +521,20 @@
     }
   ],
   "records": [
+    {
+      "game": "mm1",
+      "board": "vanilla",
+      "race": 0,
+      "race_name": "Dearborn Dash",
+      "race_kind": "Blitz",
+      "difficulty": "pro",
+      "car": "vppanozgt",
+      "seconds": 49.128,
+      "username": "xSHXDEx",
+      "set_at": "2026-08-10T20:15:55+00:00",
+      "source": "launcher",
+      "message_id": "1536468121873817611"
+    },
     {
       "game": "mm1",
       "board": "vanilla",
