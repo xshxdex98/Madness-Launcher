@@ -50,7 +50,9 @@ MIN_PLAUSIBLE_SECONDS = 8.0
 # the session is measured generously.
 SESSION_SLACK_SECONDS = 30.0
 
-GAMES_WITH_RECORDS = ("mm1",)
+# Games whose record tables the launcher can read. Both keep them the
+# same way; profiles.py holds what differs.
+GAMES_WITH_RECORDS = ("mm1", "mm2")
 
 
 @dataclass
@@ -212,10 +214,10 @@ class RecordWatcher(QObject):
         # What the game will actually load, judged from the folder itself.
         # Taken now rather than at the end, so archives added mid-session
         # cannot retroactively qualify a run for the vanilla board.
-        self.unapproved = mm1.unapproved_archives(self.install)
+        self.unapproved = mm1.unapproved_archives(self.install, game_id)
         self.mods = self.unapproved or list(mods or [])
         self._started = time.monotonic()
-        self._before = mm1.snapshot(self.install)
+        self._before = mm1.snapshot(self.install, game=self.game_id)
         self._timer = QTimer(self)
         self._timer.setInterval(POLL_MS)
         self._timer.timeout.connect(self._check)
@@ -252,20 +254,20 @@ class RecordWatcher(QObject):
 
     def _collect(self) -> None:
         session_seconds = time.monotonic() - self._started
-        after = mm1.snapshot(self.install)
+        after = mm1.snapshot(self.install, game=self.game_id)
         improved = mm1.improvements(self._before, after)
 
         stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
         good: list[Submission] = []
         for record in improved:
-            board = mm1.classify(record.car, self.unapproved)
+            board = mm1.classify(record.car, self.unapproved, self.game_id)
             entry = Submission(
                 game=self.game_id,
                 board=board or "",
                 city=record.city,
                 race=record.race,
                 race_name=record.race_name,
-                race_kind=mm1.race_kind(record.race),
+                race_kind=record.kind,
                 difficulty=record.difficulty,
                 car=record.car,
                 car_name=record.car_name,

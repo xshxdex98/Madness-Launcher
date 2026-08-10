@@ -692,6 +692,26 @@ SPEEDRUN_CATEGORIES = ("Amateur", "Professional")
 
 _DIFFICULTY_FROM_CATEGORY = {"amateur": "amateur", "professional": "pro"}
 
+# Prefixes speedrun.com puts on a level name when a game has cities.
+_CITY_PREFIXES = {"sf": "sf", "london": "london", "chicago": "chicago"}
+
+
+def _split_city(name: str, block: dict[str, Any]) -> tuple[str, str]:
+    """Pull the city off the front of a level name.
+
+    A two-city game lists levels as "SF Blitz: Golden Race"; a one-city
+    game just names the race. The city matters because each city numbers
+    its races from zero, so without it London race 0 and SF race 0 are
+    indistinguishable.
+    """
+    default = str(block.get("city") or "")
+    if ":" not in name:
+        return default, name.strip()
+    prefix, race = name.split(":", 1)
+    first = prefix.strip().split()[0].lower() if prefix.strip() else ""
+    city = _CITY_PREFIXES.get(first, default)
+    return city, race.strip()
+
 
 def speedrun_records(config: dict[str, Any]) -> tuple[list[dict], int]:
     """World records per race from speedrun.com's own leaderboards.
@@ -706,10 +726,23 @@ def speedrun_records(config: dict[str, Any]) -> tuple[list[dict], int]:
     Checkpoint, so publishing an index here would file every Circuit record
     under a Checkpoint race.
     """
-    block = config.get("speedrun")
-    block = block if isinstance(block, dict) else {}
-    if block.get("enabled") is not True:
+    blocks = config.get("speedrun")
+    if isinstance(blocks, dict):
+        blocks = [blocks]
+    if not isinstance(blocks, list):
         return [], 0
+    out: list[dict[str, Any]] = []
+    failures = 0
+    for block in blocks:
+        if isinstance(block, dict) and block.get("enabled") is True:
+            rows, failed = _speedrun_one(block)
+            out += rows
+            failures += failed
+    return out, failures
+
+
+def _speedrun_one(block: dict[str, Any]) -> tuple[list[dict], int]:
+    """One game's leaderboards."""
 
     abbreviation = str(block.get("game") or "midtown1")
     wanted = [str(c) for c in (block.get("categories") or SPEEDRUN_CATEGORIES)]
@@ -737,6 +770,9 @@ def speedrun_records(config: dict[str, Any]) -> tuple[list[dict], int]:
         log("warning: speedrun.com returned no levels or no matching categories")
         return [], 1
 
+    # "SF Blitz: Golden Race" on a two-city game; a bare race name on a
+    # one-city game. The city has to come off the front, because the two
+    # cities number their races separately.
     out: list[dict[str, Any]] = []
     failures = 0
     for level in levels:
@@ -771,14 +807,18 @@ def speedrun_records(config: dict[str, Any]) -> tuple[list[dict], int]:
                 for p in (run.get("players") or [])
             ) or "Anonymous"
 
+            raw_name = str(level.get("name") or "")
+            city, race_name = _split_city(raw_name, block)
             out.append({
                 "game": game_key,
                 # A verified run on the stock game is a vanilla record.
                 "board": "vanilla",
+                "city": city,
                 "race": -1,
-                "race_name": str(level.get("name") or "")[:80],
+                "race_name": race_name[:80],
                 "difficulty": _DIFFICULTY_FROM_CATEGORY.get(
-                    str(category.get("name", "")).lower(), ""
+                    str(category.get("name", "")).lower(),
+                    str(category.get("name", "")).lower()[:16],
                 ),
                 "seconds": round(float(seconds), 3),
                 "username": who[:40],
@@ -925,6 +965,11 @@ def build(config: dict[str, Any], token: str) -> dict[str, Any]:
         # Where launchers post a new record. Published here so it can be
         # rotated after abuse without shipping a new build.
         "records_webhook": str(config.get("records_webhook") or ""),
+        # One per game: each game posts to its own channel.
+        "records_webhooks": {
+            str(k): str(v)
+            for k, v in (config.get("records_webhooks") or {}).items()
+        },
     }
 
 

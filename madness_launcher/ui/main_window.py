@@ -32,6 +32,7 @@ from ..detect import identify_as
 from ..games.registry import GAMES, PLANNED, by_id
 from ..news import NewsService, ThumbnailCache, safe_url
 from ..records import mm1 as mm1_records
+from ..records import session as record_session
 from ..records import store as record_store
 from ..records.submit import RecordSubmitter
 from . import gameart, theme, wordmark
@@ -806,7 +807,7 @@ class MainWindow(QMainWindow):
         from ..records.session import existing_records
 
         fresh: list = []
-        for game_id in ("mm1",):
+        for game_id in record_session.GAMES_WITH_RECORDS:
             install = self.config.install(game_id)
             if not install or not install.path:
                 continue
@@ -896,24 +897,40 @@ class MainWindow(QMainWindow):
         """Send records to the community board, if the user asked us to."""
         if not self.config.settings.records_submit:
             return
-        webhook = (
-            self.config.settings.records_webhook
-            or self.news.feed.records_webhook
-        )
-        if not webhook:
-            # Held until the feed arrives with one, rather than dropped.
-            self._unsent.extend(entries)
-            return
-        if self._unsent:
-            entries = self._unsent + list(entries)
-            self._unsent = []
-        if not webhook:
-            return
-        sent = self.submitter.submit(webhook, entries)
+        # Each game posts to its own channel, so the records are grouped by
+        # game and each group goes to its own webhook.
+        pending = self._unsent + list(entries)
+        self._unsent = []
+        by_game: dict[str, list] = {}
+        for entry in pending:
+            by_game.setdefault(entry.game, []).append(entry)
+
+        sent = 0
+        for game, group in by_game.items():
+            webhook = self._webhook_for(game)
+            if not webhook:
+                # Held until the feed arrives with one, rather than dropped.
+                self._unsent.extend(group)
+                continue
+            sent += self.submitter.submit(webhook, group)
         if sent:
             self.flash_status(
                 f"Sent {sent} record{'s' if sent != 1 else ''} to the board"
             )
+        return
+
+    def _webhook_for(self, game: str) -> str:
+        """Where this game's records go.
+
+        A per-machine override wins, then the game's own entry in the feed,
+        then the feed's single fallback for anything unlisted.
+        """
+        feed = self.news.feed
+        return (
+            self.config.settings.records_webhook
+            or (feed.records_webhooks or {}).get(game, "")
+            or feed.records_webhook
+        )
 
     def _on_submit_failed(self, entry, reason: str) -> None:
         self.flash_status(f"Could not send {entry.race_name}: {reason}")

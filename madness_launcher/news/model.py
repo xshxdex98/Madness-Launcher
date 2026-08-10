@@ -255,6 +255,9 @@ class NewsFeed:
     # than compiled in, so abuse is answered by rotating one JSON field
     # instead of shipping a build to everybody.
     records_webhook: str = ""
+    # One webhook per game, since each game's records go to their own
+    # channel. Falls back to records_webhook for anything unlisted.
+    records_webhooks: dict = field(default_factory=dict)
     # Lap records the relay collected from the board channel. Carried in
     # the same feed rather than a file of their own: the launcher already
     # fetches this one on a throttle, and a full board is a few kilobytes.
@@ -322,6 +325,11 @@ class NewsFeed:
 
         return cls(
             records_webhook=safe_url(data.get("records_webhook")),
+            records_webhooks={
+                str(k)[:16]: safe_url(v)
+                for k, v in (data.get("records_webhooks") or {}).items()
+                if isinstance(k, str) and safe_url(v)
+            } if isinstance(data.get("records_webhooks"), dict) else {},
             records=[
                 item
                 for item in _sequence(data.get("records"))[:MAX_BOARD_RECORDS]

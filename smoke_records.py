@@ -994,6 +994,116 @@ build_news.discord_messages = lambda c, t, l: [
 kept, _, _ = build_news.collect_records({"records": [{"channel_id": "1"}]}, "tok")
 check("and the relay keeps one row per city", len(kept) == 2, str(len(kept)))
 
+print("\nMidtown Madness 2 reads with the same machinery")
+from madness_launcher.records import profiles  # noqa: E402
+
+
+def mm2_install(city_entries: dict[str, dict[int, tuple[str, str, float]]]):
+    """An MM2 folder: 16-byte header, magic 1, 320 slots, several cities."""
+    root = Path(tempfile.mkdtemp(prefix="mm2-"))
+    for city, entries in city_entries.items():
+        folder = root / "players" / city
+        folder.mkdir(parents=True)
+        blob = bytearray(struct.pack("<IIII", 1, 12, 10, 10))
+        for slot in range(320):
+            rec = bytearray(mm1.RECORD)
+            if slot in entries:
+                driver, car, seconds = entries[slot]
+                rec[4 : 4 + len(driver)] = driver.encode()
+                rec[44 : 44 + len(car)] = car.encode()
+                rec[124:128] = struct.pack("<f", seconds)
+                rec[128:132] = struct.pack("<I", 1)
+            blob += rec
+        (folder / "pro.dat").write_bytes(bytes(blob) + b"\x00" * 8)
+    (root / "mm2core.ar").write_bytes(b"stock")
+    return root
+
+
+spec = profiles.profile("mm2")
+check("MM2 has a 16-byte header", spec.header == 16, str(spec.header))
+check("and a magic of 1", spec.magic == 1, str(spec.magic))
+check("and two cities", set(spec.cities) == {"london", "sf"}, str(spec.cities))
+check("MM1 is unchanged", profiles.profile("mm1").header == 8)
+
+two = mm2_install({
+    "sf": {130: ("Professional", "vpbullet", 44.5),
+           220: ("Professional", "vpauditt", 20.1),
+           40: ("Professional", "s7", 61.0)},        # addon car
+    "london": {130: ("Professional", "vpbug", 9.2)},
+})
+recs = mm1.snapshot(two, game="mm2")
+check("both cities are read", {r.city for r in recs.values()} == {"sf", "london"},
+      str({r.city for r in recs.values()}))
+check("an MM1 parse finds nothing in an MM2 file",
+      mm1.parse(two / "players" / "sf" / "pro.dat", game="mm1") == [])
+
+named = {(r.city, r.race): r.race_name for r in recs.values()}
+check("SF race 13 is Hang Time", named[("sf", 13)] == "Hang Time",
+      named[("sf", 13)])
+check("SF race 22 is a Blitz",
+      mm1.race_kind(22, "mm2", "sf") == "Blitz", mm1.race_kind(22, "mm2", "sf"))
+check("SF race 0 is a Checkpoint", mm1.race_kind(0, "mm2", "sf") == "Checkpoint")
+check("London race 13 differs from SF's",
+      named[("london", 13)] != named[("sf", 13)],
+      f'{named[("london", 13)]} vs {named[("sf", 13)]}')
+
+print("\nMM2's archive rule is the prefix its owner asked for")
+check("a stock mm2 archive is not an addition",
+      mm1.active_archives(two, "mm2") == [], str(mm1.active_archives(two, "mm2")))
+(two / "!racepack.ar").write_bytes(b"x" * 100)
+check("anything else is", mm1.unapproved_archives(two, "mm2") == ["!racepack.ar"],
+      str(mm1.unapproved_archives(two, "mm2")))
+(two / "!racepack.ar").unlink()
+check("a stock car with nothing added is vanilla",
+      mm1.classify("vpbullet", [], "mm2") == mm1.BOARD_VANILLA)
+check("an MM2 addon car is modded",
+      mm1.classify("s7", [], "mm2") == mm1.BOARD_MODDED)
+check("an MM1 car is not automatically an MM2 car",
+      mm1.is_vanilla_car("vpdisco", "mm2") is False)
+
+print("\nand the two games do not share a race numbering")
+imported = existing_records(two, "mm2", "Tester")
+check("every MM2 record names its race",
+      all(not r.race_name.startswith("Race ") for r in imported),
+      str([r.race_name for r in imported]))
+check("the addon car came through as modded",
+      any(r.car == "s7" and r.board == mm1.BOARD_MODDED for r in imported))
+keys = {store.key_id(r) for r in imported}
+check("identities are unique across cities", len(keys) == len(imported))
+check("an MM1 record cannot collide with an MM2 one",
+      store.key_id(entry(game="mm1", city="chicago", race=13))
+      != store.key_id(entry(game="mm2", city="sf", race=13)))
+
+print("\nthe board gives MM2 a city level and MM1 none")
+mm2_page = RecordsPage(config, lambda: imported)
+check("MM2 has city tabs", mm2_page.views["mm2"].city_tabs is not None)
+check("named for the cities",
+      {mm2_page.views["mm2"].city_tabs.tabText(i).split("  ")[0]
+       for i in range(2)} == {"London", "San Francisco"},
+      str([mm2_page.views["mm2"].city_tabs.tabText(i) for i in range(2)]))
+check("MM1 has none, having only Chicago",
+      mm2_page.views["mm1"].city_tabs is None)
+sf_rows = mm2_page.views["mm2"].cities["sf"].views["vanilla"].tree
+london_rows = mm2_page.views["mm2"].cities["london"].views["vanilla"].tree
+check("each city shows only its own races",
+      sf_rows.topLevelItemCount() and london_rows.topLevelItemCount(),
+      f"{sf_rows.topLevelItemCount()} / {london_rows.topLevelItemCount()}")
+check("MM1's board tabs are still reachable the old way",
+      set(mm2_page.views["mm1"].views) == {"vanilla", "modded"})
+
+print("\nan external record names its city, and places by name")
+check("a two-city level name splits",
+      build_news._split_city("SF Circuit: Hang Time", {}) == ("sf", "Hang Time"))
+check("a one-city level name does not",
+      build_news._split_city("Dearborn Dash", {"city": "chicago"})
+      == ("chicago", "Dearborn Dash"))
+placed = store.from_feed([{"game": "mm2", "board": "vanilla", "city": "sf",
+                           "difficulty": "default race settings",
+                           "race_name": "Hang Time", "seconds": 105.14,
+                           "source": "speedrun.com"}])
+check("it lands on the right race", placed and placed[0].race == 13,
+      str([r.race for r in placed]))
+
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])
 blank_view = blank.views["mm1"].views["vanilla"]

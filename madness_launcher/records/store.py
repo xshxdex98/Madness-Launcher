@@ -72,24 +72,31 @@ def _from_dict(item: object) -> Submission | None:
     except (TypeError, ValueError):
         return None
     name = str(item.get("race_name", ""))
+    # Every lookup below is per game and per city. Resolving a name without
+    # them searched Midtown Madness's table for a San Francisco race and
+    # dropped the record, which is how a whole game's world records would
+    # have gone missing in silence.
+    game = str(item.get("game", ""))[:16]
+    city = str(item.get("city", ""))[:24]
     if race < 0:
         # An external leaderboard knows the race by name only; the index is
         # this install's own numbering and is resolved here.
-        race = mm1.race_index_by_name(name)
+        race = mm1.race_index_by_name(name, game, city)
     if race < 0 or not (0 < seconds < 86400):
         return None
     car = str(item.get("car", ""))
     return Submission(
-        game=str(item.get("game", ""))[:16],
+        game=game,
         board=str(item.get("board", ""))[:16],
-        city=str(item.get("city", ""))[:24],
+        city=city,
         race=race,
         # A published record names its own race, but an older relay may not
         # have. Falling back to this install's table beats showing a blank.
-        race_name=(name or mm1.race_label(race))[:80],
+        race_name=(name or mm1.race_label(race, game, city))[:80],
         # External leaderboards do not classify a race; once it has been
         # placed by name, this install's own table knows what kind it is.
-        race_kind=(str(item.get("race_kind", "")) or mm1.race_kind(race))[:16],
+        race_kind=(str(item.get("race_kind", ""))
+                   or mm1.race_kind(race, game, city))[:16],
         difficulty=str(item.get("difficulty", ""))[:16],
         car=car[:40],
         # Published records carry the raw car id only; the pretty name is

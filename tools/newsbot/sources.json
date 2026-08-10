@@ -10,7 +10,6 @@
     "https://discord.com/oauth2/authorize?client_id=1536421123133022318",
     "&scope=bot&permissions=66560   (View Channels + Read Message History)"
   ],
-
   "announcements": [
     {
       "guild_id": "796156308545601558",
@@ -18,9 +17,7 @@
       "limit": 15
     }
   ],
-
   "video_channels": [],
-
   "_records_note": [
     "The channel launchers post lap records to. Create a dedicated one, make",
     "a webhook on it, and put that webhook URL in records_webhook below.",
@@ -32,7 +29,14 @@
     {
       "guild_id": "796156308545601558",
       "channel_id": "994084533857177741",
-      "limit": 100
+      "limit": 100,
+      "_for": "mm1"
+    },
+    {
+      "guild_id": "796156308545601558",
+      "channel_id": "994084644276416582",
+      "limit": 100,
+      "_for": "mm2"
     }
   ],
   "_prune_note": [
@@ -43,28 +47,53 @@
   ],
   "records_prune": true,
   "records_webhook": "https://discord.com/api/webhooks/1536446666033471611/p0KiQd14wrCS7GaSe3Dko1YwGepf7gFXqq9SKVnuk2DdnWXHKh3zhRPklp6kdwtB6ZhO",
-
   "_speedrun_note": [
-    "World records pulled from speedrun.com's own leaderboards, which are",
-    "moderator-verified against video. Published alongside community",
-    "submissions and labelled, never merged into them. Races are carried by",
-    "NAME: speedrun.com lists them Blitz/Checkpoint/Circuit and the game",
-    "orders them Blitz/Circuit/Checkpoint, so an index would misfile them."
+    "One block per game. board_game is the launcher's id for it.",
+    "MM1's categories are Amateur and Professional, matching the game's own",
+    "two difficulty tables. MM2's are race-setting rules rather than",
+    "difficulties, so its records carry the category name as their",
+    "difficulty instead of being passed off as amateur or pro times.",
+    "MM2 levels are named '<City> <Kind>: <Race>', and the city is split off",
+    "because each city numbers its races from zero."
   ],
-  "speedrun": {
-    "enabled": true,
-    "game": "midtown1",
-    "board_game": "mm1",
-    "categories": ["Amateur", "Professional"]
-  },
-
+  "speedrun": [
+    {
+      "enabled": true,
+      "game": "midtown1",
+      "board_game": "mm1",
+      "city": "chicago",
+      "categories": [
+        "Amateur",
+        "Professional"
+      ]
+    },
+    {
+      "enabled": true,
+      "game": "midtown2",
+      "board_game": "mm2",
+      "categories": [
+        "Default race settings"
+      ]
+    }
+  ],
   "youtube": [
-    { "channel_id": "UCXcv42XHTloD5XSk9FIqPrQ", "name": "Panoz" },
-    { "channel_id": "UCcndPF7UpwKvRBsWI1RxH7A", "name": "MadManMammoth" },
-    { "channel_id": "UCWbuhJxbcrs4Nr-I_OIF1iA", "name": "MidtownMadness1" },
-    { "channel_id": "UCw72ZKWx9lFMNFhLd593YMw", "name": "VJ" }
+    {
+      "channel_id": "UCXcv42XHTloD5XSk9FIqPrQ",
+      "name": "Panoz"
+    },
+    {
+      "channel_id": "UCcndPF7UpwKvRBsWI1RxH7A",
+      "name": "MadManMammoth"
+    },
+    {
+      "channel_id": "UCWbuhJxbcrs4Nr-I_OIF1iA",
+      "name": "MidtownMadness1"
+    },
+    {
+      "channel_id": "UCw72ZKWx9lFMNFhLd593YMw",
+      "name": "VJ"
+    }
   ],
-
   "video_filter": {
     "enabled": true,
     "_comment": [
@@ -79,9 +108,14 @@
       "midtown madness",
       "monster truck madness",
       "motocross madness",
-      "mm1", "mm2",
-      "mtm", "mtm1", "mtm2",
-      "mcm", "mcm1", "mcm2",
+      "mm1",
+      "mm2",
+      "mtm",
+      "mtm1",
+      "mtm2",
+      "mcm",
+      "mcm1",
+      "mcm2",
       "open1560",
       "midtown club",
       "madness crew",
@@ -99,5 +133,9 @@
       "march madness",
       "madness returns"
     ]
+  },
+  "records_webhooks": {
+    "mm1": "https://discord.com/api/webhooks/1536446666033471611/p0KiQd14wrCS7GaSe3Dko1YwGepf7gFXqq9SKVnuk2DdnWXHKh3zhRPklp6kdwtB6ZhO",
+    "mm2": "https://discord.com/api/webhooks/1536515289162981467/olJ0sXngsRwcaFjqWKUuNnChuBDoM6gjz9bpXCuD_QCNqcSomEbS8JKunrW7Ra4P-8nI"
   }
 }

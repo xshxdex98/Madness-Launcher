@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
 
 from ..config import Config
 from ..games.registry import GAMES
-from ..records import mm1
+from ..records import mm1, profiles
 from ..news.model import age_of
 from . import theme
 from .widgets import Card
@@ -39,7 +39,7 @@ from .widgets import Card
 # Games that can produce records at all. The others get a tab explaining why
 # rather than being hidden, so the roadmap is visible the way the library's
 # greyed-out cards are.
-SUPPORTED = ("mm1",)
+SUPPORTED = ("mm1", "mm2")
 
 BOARDS = (
     (mm1.BOARD_VANILLA, "Vanilla", "Stock cars, stock races, no archives loaded."),
@@ -53,6 +53,10 @@ COL_RANK, COL_RACE, COL_TIME, COL_CAR, COL_DRIVER, COL_DIFF, COL_SOURCE = range(
 
 # Records that came from an external leaderboard rather than from a launcher.
 EXTERNAL = "speedrun.com"
+
+# What to call a city folder on screen.
+CITY_LABELS = {"chicago": "Chicago", "london": "London",
+               "sf": "San Francisco"}
 
 # label, column, order. Race order is the default because a board is normally
 # read race by race; the other two answer "what are the fastest times here".
@@ -88,9 +92,10 @@ class RecordItem(QTreeWidgetItem):
 class BoardView(QWidget):
     """One board for one game: a table of races and the best time on each."""
 
-    def __init__(self, game_id: str, board: str, blurb: str):
+    def __init__(self, game_id: str, city: str, board: str, blurb: str):
         super().__init__()
         self.game_id = game_id
+        self.city = city
         self.board = board
 
         layout = QVBoxLayout(self)
@@ -139,7 +144,11 @@ class BoardView(QWidget):
     def show_records(self, records: list, own_names: set[str],
                      sort: int = 0, show_external: bool = True) -> None:
         self.tree.clear()
-        rows = [r for r in records if r.game == self.game_id and r.board == self.board]
+        rows = [
+            r for r in records
+            if r.game == self.game_id and r.board == self.board
+            and (not self.city or r.city.lower() == self.city)
+        ]
 
         # One row per driver per race. Collapsing to a single best time made
         # the board useless the moment verified world records sat beside
@@ -240,11 +249,13 @@ class BoardView(QWidget):
             )
 
 
-class GameRecords(QWidget):
-    """Vanilla and Modded for one game."""
+class CityBoards(QWidget):
+    """Vanilla and Modded for one city of one game."""
 
-    def __init__(self, game_id: str):
+    def __init__(self, game_id: str, city: str = ""):
         super().__init__()
+        self.game_id = game_id
+        self.city = city
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -252,21 +263,77 @@ class GameRecords(QWidget):
         self.tabs = QTabWidget()
         self.views: dict[str, BoardView] = {}
         for board, label, blurb in BOARDS:
-            view = BoardView(game_id, board, blurb)
+            view = BoardView(game_id, city, board, blurb)
             self.views[board] = view
             self.tabs.addTab(view, label)
         layout.addWidget(self.tabs)
 
+    def matches(self, record) -> bool:
+        return (record.game == self.game_id
+                and (not self.city or record.city.lower() == self.city))
+
     def show_records(self, records: list, own_names: set[str],
                      sort: int = 0, show_external: bool = True) -> None:
-        for board, view in self.views.items():
+        for index, (board, view) in enumerate(self.views.items()):
             view.show_records(records, own_names, sort, show_external)
-            index = list(self.views).index(board)
-            count = sum(
-                1 for r in records if r.board == board and r.game == view.game_id
-            )
+            count = sum(1 for r in records
+                        if r.board == board and self.matches(r))
             label = dict((b, l) for b, l, _ in BOARDS)[board]
             self.tabs.setTabText(index, f"{label}  {count}" if count else label)
+
+
+class GameRecords(QWidget):
+    """One game's boards, under a city level when the game has cities.
+
+    Midtown Madness has only Chicago, so a city tab there would be a tab
+    with nothing to choose. Midtown Madness 2 has London and San
+    Francisco, and their races are numbered separately — without the
+    split the two cities' boards would read as one long confusing list.
+    """
+
+    def __init__(self, game_id: str):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        spec = profiles.profile(game_id)
+        self.cities: dict[str, CityBoards] = {}
+        self.city_tabs: QTabWidget | None = None
+
+        if len(spec.cities) > 1:
+            self.city_tabs = QTabWidget()
+            for city in spec.cities:
+                boards = CityBoards(game_id, city)
+                self.cities[city] = boards
+                self.city_tabs.addTab(boards, CITY_LABELS.get(city, city.title()))
+            layout.addWidget(self.city_tabs)
+        else:
+            only = spec.cities[0] if spec.cities else ""
+            boards = CityBoards(game_id, only)
+            self.cities[only] = boards
+            layout.addWidget(boards)
+
+    @property
+    def views(self) -> dict:
+        """The boards of the first city, for a single-city game."""
+        return next(iter(self.cities.values())).views
+
+    @property
+    def tabs(self):
+        """The board tabs of the first city."""
+        return next(iter(self.cities.values())).tabs
+
+    def show_records(self, records: list, own_names: set[str],
+                     sort: int = 0, show_external: bool = True) -> None:
+        for index, (city, boards) in enumerate(self.cities.items()):
+            boards.show_records(records, own_names, sort, show_external)
+            if self.city_tabs is not None:
+                count = sum(1 for r in records if boards.matches(r))
+                label = CITY_LABELS.get(city, city.title())
+                self.city_tabs.setTabText(
+                    index, f"{label}  {count}" if count else label
+                )
 
 
 class RecordsPage(QWidget):
