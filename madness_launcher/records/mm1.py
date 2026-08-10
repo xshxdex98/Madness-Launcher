@@ -73,20 +73,52 @@ RACE_NAMES: dict[int, str] = {}
 # person calls them. Unknown cars fall back to the raw name with the prefix
 # stripped, so a modded car still reads sensibly.
 CAR_NAMES = {
-    "vpbug": "Volkswagen Beetle",
+    "vpbug": "VW Beetle",
+    "vpbullet": "Bullet",
+    "vpbus": "City Bus",
     "vpcaddie": "Cadillac Eldorado",
     "vpcop": "Police Cruiser",
     "vpford": "Ford F-350",
     "vpmustang99": "Ford Mustang GT",
-    "vppanozgt": "Panoz GTR-1",
-    "vpbus": "City Bus",
-    "vpcabby": "Taxi Cab",
-    "vpfreight": "Freightliner",
     "vppanoz": "Panoz Roadster",
-    "vproadster": "Panoz Roadster",
-    "vpsemi": "Semi",
-    "vpvwbug": "Volkswagen Beetle",
+    "vppanozgt": "Panoz GTR-1",
+    "vpsemi": "Freightliner Semi",
 }
+
+# The stock roster, read out of the game's own ui.ar rather than recalled from
+# a 1999 manual: exactly these ten car ids appear there, and none of the
+# add-on vehicles that ship beside it (vpdisco, vpredcar, vpeb184) do. A car
+# outside this set is a custom one, and neither board accepts those yet.
+VANILLA_CARS = frozenset(CAR_NAMES)
+
+# Which board a run belongs on.
+BOARD_VANILLA = "vanilla"
+BOARD_MODDED = "modded"
+
+
+def is_vanilla_car(car: str) -> bool:
+    return car.lower() in VANILLA_CARS
+
+
+def classify(car: str, enabled_mods: list[str] | tuple[str, ...]) -> str | None:
+    """Which board a time belongs on, or None if it belongs on neither.
+
+    Vanilla means the game as shipped: stock car, stock races, nothing loaded
+    that could alter handling. Modded allows racepacks — different tracks, but
+    still a stock car, so the times remain about driving rather than about
+    which vehicle someone downloaded.
+
+    The vanilla test is deliberately stricter than "no handling mods": any
+    enabled archive at all disqualifies a run. Telling a graphics pack from a
+    handling pack means reading the contents of an ARES archive, and until
+    that exists the failure has to be chosen. Being too strict misfiles a
+    legitimate vanilla run onto the modded board, which is a shrug. Being too
+    lenient lets a modified-handling run set the vanilla record, which poisons
+    the board permanently and cannot be detected after the fact.
+    """
+    if not is_vanilla_car(car):
+        return None
+    return BOARD_MODDED if enabled_mods else BOARD_VANILLA
 
 
 def pretty_car(raw: str) -> str:
