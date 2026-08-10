@@ -165,7 +165,7 @@ def existing_records(
                 city=record.city,
                 race=record.race,
                 race_name=record.race_name,
-                race_kind=mm1.race_kind(record.race),
+                race_kind=record.kind,
                 difficulty=record.difficulty,
                 car=record.car,
                 car_name=record.car_name,

@@ -332,6 +332,10 @@ class LapRecord:
     seconds: float
     city: str = ""
     difficulty: str = ""
+    # Which game this came out of. Without it the record cannot name
+    # its own race: the tables are per game and per city, and a record
+    # that knows neither falls back to "Race 14".
+    game: str = "mm1"
 
     @property
     def race(self) -> int:
@@ -339,11 +343,19 @@ class LapRecord:
 
     @property
     def race_name(self) -> str:
-        return race_label(self.race)
+        return race_label(self.race, self.game, self.city)
+
+    @property
+    def kind(self) -> str:
+        return race_kind(self.race, self.game, self.city)
 
     @property
     def car_name(self) -> str:
         return pretty_car(self.car)
+
+    @property
+    def vanilla_car(self) -> bool:
+        return is_vanilla_car(self.car, self.game)
 
     @property
     def formatted(self) -> str:
@@ -418,6 +430,7 @@ def parse(path: Path, city: str = "", difficulty: str = "",
                 seconds=seconds,
                 city=city,
                 difficulty=difficulty,
+                game=game,
             )
         )
     return out
