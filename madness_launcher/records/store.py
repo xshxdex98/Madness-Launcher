@@ -113,8 +113,26 @@ def _from_dict(item: object) -> Submission | None:
 
 
 def key_id(entry: Submission) -> str:
-    """A stable text form of a record's identity, for the forgotten list."""
-    return "|".join(str(part) for part in _key(entry))
+    """What the forgotten list remembers a record by.
+
+    Deliberately NOT the full identity. That one has grown twice during this
+    feature — the car was added, then the city — and each time every stored
+    key stopped matching, so records the user had deleted quietly came back
+    on the next launch.
+
+    This is the part that describes the race rather than the claimant: game,
+    board, city, difficulty, race and car. It leaves out who set it, so a
+    rename or a change to how drivers are identified cannot resurrect a
+    deleted record. Blunter than the identity, and that is the point.
+    """
+    return "|".join(str(part) for part in (
+        entry.game,
+        entry.board,
+        entry.city.lower(),
+        entry.difficulty,
+        entry.race,
+        entry.car.lower(),
+    ))
 
 
 def forgotten() -> set[str]:
