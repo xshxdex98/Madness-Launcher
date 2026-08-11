@@ -75,7 +75,16 @@
         "Default race settings"
       ],
       "skip_kinds": [
-        "Crash Course"
+        "Crash Course",
+        "Circuit"
+      ],
+      "_skip_why": [
+        "Crash Course: not in the game's record tables at all — the other",
+        "three types fill all 320 slots, so no launcher can place them.",
+        "Circuit: the game records each LAP as its own entry, proven by",
+        "driving two laps and getting two records. speedrun.com times the",
+        "whole race, so the two measure different things and ranking them",
+        "together showed casual laps beating verified world records."
       ]
     }
   ],
