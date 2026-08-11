@@ -6,6 +6,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QDialog,
@@ -315,6 +316,24 @@ class ModsPanel(QWidget):
         add_folder.clicked.connect(self._import_folder)
         row.addWidget(add_folder)
 
+        self.enable_all = QPushButton("Enable all")
+        self.enable_all.setToolTip(
+            "Enable every mod currently listed. With a filter typed in, "
+            "only the mods it matches."
+        )
+        self.enable_all.clicked.connect(lambda: self._bulk(True))
+        row.addWidget(self.enable_all)
+
+        self.disable_all = QPushButton("Disable all")
+        self.disable_all.setObjectName("Danger")
+        self.disable_all.setToolTip(
+            "Disable every mod currently listed, restoring the files each "
+            "one displaced. With a filter typed in, only the mods it "
+            "matches."
+        )
+        self.disable_all.clicked.connect(lambda: self._bulk(False))
+        row.addWidget(self.disable_all)
+
         row.addStretch(1)
 
         self.search = QLineEdit()
@@ -453,6 +472,92 @@ class ModsPanel(QWidget):
 
     def enabled_slugs(self) -> list[str]:
         return [m.slug for m in self.manager.list_mods() if m.enabled]
+
+    def _bulk(self, enable: bool) -> None:
+        """Enable or disable every mod on show.
+
+        Acts on what is listed rather than on the whole library, so a filter
+        narrows it — turning on forty mods when you meant the six you searched
+        for would be tedious to undo.
+
+        One mod failing does not stop the rest. A game folder can refuse a
+        single file while the others are fine, and abandoning the run halfway
+        would leave the library in a state nobody asked for.
+        """
+        # isHidden(), not isVisible(): a row is "listed" when the filter
+        # has not hidden it. isVisible() is also false whenever the panel
+        # is not the tab currently on screen, which made both buttons do
+        # nothing at all unless the Mods tab happened to be open.
+        rows = [r for r in self._rows if not r.isHidden()]
+        targets = [r for r in rows if r.mod.enabled != enable and r.mod.available]
+        if not targets:
+            self._status(
+                "Every mod listed is already "
+                + ("enabled" if enable else "disabled")
+            )
+            return
+
+        filtered = self.search.text().strip()
+        scope = f"the {len(targets)} listed" if filtered else str(len(targets))
+        word = "Enable" if enable else "Disable"
+        detail = (
+            "Files each mod owns are written into the game folder, and any "
+            "original they displace is backed up first."
+            if enable else
+            "Each mod's files are removed from the game folder and whatever "
+            "they displaced is put back."
+        )
+        if QMessageBox.question(
+            self,
+            f"{word} {scope} mod{'s' if len(targets) != 1 else ''}?",
+            f"{word} {scope} mod{'s' if len(targets) != 1 else ''} for "
+            f"{self.game.title}?\n\n{detail}",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        ) != QMessageBox.Yes:
+            return
+
+        failures: list[str] = []
+        done = 0
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            for row in targets:
+                try:
+                    if enable:
+                        self.manager.enable(row.mod)
+                    else:
+                        self.manager.disable(row.mod)
+                    done += 1
+                except (ModError, OSError) as exc:
+                    failures.append(f"{row.mod.name}: {exc}")
+        finally:
+            QApplication.restoreOverrideCursor()
+
+        self.reload()
+        # The panel's own handler, not a row's signal: it refreshes the
+        # conflict badges and tells the game page the enabled set moved.
+        self._on_row_state_changed()
+
+        if failures:
+            QMessageBox.warning(
+                self,
+                f"{done} changed, {len(failures)} could not be",
+                f"{done} mod{'s' if done != 1 else ''} "
+                f"{'enabled' if enable else 'disabled'}.\n\n"
+                + "\n".join(failures[:8])
+                + ("\n…" if len(failures) > 8 else "")
+                + "\n\nIf the game is running, close it and try again.",
+            )
+        else:
+            self._status(
+                f"{done} mod{'s' if done != 1 else ''} "
+                f"{'enabled' if enable else 'disabled'}"
+            )
+
+    def _status(self, message: str) -> None:
+        window = self.window()
+        if hasattr(window, "flash_status"):
+            window.flash_status(message)
 
     def _on_filter(self, text: str) -> None:
         self._filter = text.strip()

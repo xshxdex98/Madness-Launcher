@@ -33,7 +33,7 @@ from PySide6.QtWidgets import (
 from ..news import Announcement, NewsFeed, NewsService, ThumbnailCache, Video, age_of
 from ..news.model import safe_url
 from . import theme
-from .widgets import StatusDot, scrollable
+from .widgets import Card, StatusDot, scrollable
 
 THUMB_WIDTH = 168
 THUMB_HEIGHT = 94
@@ -66,6 +66,19 @@ _EMOJI_TOKEN = re.compile(r":(\w{1,32}):")
 # Roughly cap-height for 13px body text, so a line with emoji in it does not
 # stand taller than the lines around it.
 EMOJI_SIZE = 18
+
+# The community's own servers. Shown on the News page because that is where
+# the announcements these mirror come from, and because a launcher that shows
+# you a Discord channel's posts should tell you how to reach the Discord.
+#
+# Only ever opened in the user's browser, never joined from in here: the
+# launcher has no business holding anyone's Discord session.
+DISCORDS = (
+    ("Madness Crew", "https://discord.gg/tjTQAbFdqQ",
+     "Announcements, races and the community this launcher is built for."),
+    ("Midtown Club", "https://discord.gg/hFsM2WVThW",
+     "Midtown Madness modding, racepacks and multiplayer."),
+)
 
 
 def to_rich_text(
@@ -442,6 +455,7 @@ class NewsPage(QWidget):
         root.setSpacing(16)
 
         root.addWidget(self._build_header())
+        root.addWidget(self._build_discord())
         root.addWidget(self._build_tabs(), 1)
 
         service.updated.connect(self._on_updated)
@@ -481,6 +495,27 @@ class NewsPage(QWidget):
         layout.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         return host
+
+    def _build_discord(self) -> QWidget:
+        """Links to the community's servers."""
+        card = Card(
+            "Discord",
+            "The announcements above are mirrored from Madness Crew. "
+            "Links open in your browser.",
+        )
+        row = QHBoxLayout()
+        row.setSpacing(9)
+        for name, invite, blurb in DISCORDS:
+            button = QPushButton(name)
+            button.setCursor(Qt.PointingHandCursor)
+            button.setToolTip(f"{blurb}\n{invite}")
+            # Routed through the same guard as every other link in the feed,
+            # so only an http(s) address is ever handed to the browser.
+            button.clicked.connect(lambda _=False, url=invite: open_link(url))
+            row.addWidget(button)
+        row.addStretch(1)
+        card.body.addLayout(row)
+        return card
 
     def _build_tabs(self) -> QWidget:
         self.tabs = QTabWidget()
