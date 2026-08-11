@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
 
 from ..config import Config
 from ..games.registry import GAMES
-from ..records import mm1, profiles
+from ..records import profiles, reader
 from ..news.model import age_of
 from . import theme
 from .widgets import Card
@@ -42,8 +42,8 @@ from .widgets import Card
 SUPPORTED = ("mm1", "mm2")
 
 BOARDS = (
-    (mm1.BOARD_VANILLA, "Vanilla", "Stock cars, stock races, no archives loaded."),
-    (mm1.BOARD_MODDED, "Modded", "Racepacks allowed. Stock cars only."),
+    (reader.BOARD_VANILLA, "Vanilla", "Stock cars, stock races, no archives loaded."),
+    (reader.BOARD_MODDED, "Modded", "Racepacks allowed. Stock cars only."),
 )
 
 COLUMNS = ("#", "Race", "Time", "Car", "Driver", "Difficulty", "Source")
@@ -243,7 +243,7 @@ class BoardView(QWidget):
             self.empty.setText(
                 "No times yet. Finish a race with the launcher running and it "
                 "will appear here."
-                if self.board == mm1.BOARD_VANILLA
+                if self.board == reader.BOARD_VANILLA
                 else "No times yet. Race with a racepack enabled and a stock "
                 "car to fill this board."
             )

@@ -18,7 +18,7 @@ from pathlib import Path
 
 from .. import paths
 from ..news.model import safe_url
-from . import mm1
+from . import reader
 from .session import Submission
 
 # A guard against a file that has somehow grown unbounded, not a real limit:
@@ -81,7 +81,7 @@ def _from_dict(item: object) -> Submission | None:
     if race < 0:
         # An external leaderboard knows the race by name only; the index is
         # this install's own numbering and is resolved here.
-        race = mm1.race_index_by_name(name, game, city)
+        race = reader.race_index_by_name(name, game, city)
     if race < 0 or not (0 < seconds < 86400):
         return None
     car = str(item.get("car", ""))
@@ -92,16 +92,16 @@ def _from_dict(item: object) -> Submission | None:
         race=race,
         # A published record names its own race, but an older relay may not
         # have. Falling back to this install's table beats showing a blank.
-        race_name=(name or mm1.race_label(race, game, city))[:80],
+        race_name=(name or reader.race_label(race, game, city))[:80],
         # External leaderboards do not classify a race; once it has been
         # placed by name, this install's own table knows what kind it is.
         race_kind=(str(item.get("race_kind", ""))
-                   or mm1.race_kind(race, game, city))[:16],
+                   or reader.race_kind(race, game, city))[:16],
         difficulty=str(item.get("difficulty", ""))[:16],
         car=car[:40],
         # Published records carry the raw car id only; the pretty name is
         # derived here so the board reads the same as the local table.
-        car_name=str(item.get("car_name") or mm1.pretty_car(car))[:60],
+        car_name=str(item.get("car_name") or reader.pretty_car(car))[:60],
         seconds=seconds,
         driver=str(item.get("driver", ""))[:40],
         username=str(item.get("username", ""))[:40],

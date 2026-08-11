@@ -7,7 +7,6 @@ from pathlib import Path
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QFont, QFontMetrics, QIcon, QPixmap
 from PySide6.QtWidgets import (
-    QApplication,
     QButtonGroup,
     QCheckBox,
     QDialog,
@@ -31,7 +30,7 @@ from ..config import Config
 from ..detect import identify_as
 from ..games.registry import GAMES, PLANNED, by_id
 from ..news import NewsService, ThumbnailCache, safe_url
-from ..records import mm1 as mm1_records
+from ..records import reader
 from ..records import session as record_session
 from ..records import store as record_store
 from ..records.submit import RecordSubmitter
@@ -789,7 +788,7 @@ class MainWindow(QMainWindow):
         board shows nothing.
         """
         install = self.config.install("mm1")
-        mm1_records.load_city(
+        reader.load_city(
             Path(install.path) if install and install.path else None
         )
 

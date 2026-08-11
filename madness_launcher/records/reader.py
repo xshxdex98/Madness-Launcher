@@ -1,4 +1,9 @@
-"""Reading Midtown Madness's own best-time tables.
+"""Reading a Madness game's own best-time tables.
+
+Serves both Midtown Madness and Midtown Madness 2. Everything that
+differs between them — header size, magic, cities, car roster, race
+table, archive rule — lives in profiles.py, and every function here
+takes a game id defaulting to mm1.
 
 The game already keeps what a leaderboard needs. Each city folder under
 `players/` holds one file per difficulty — `players/chicago/amateur.dat`,

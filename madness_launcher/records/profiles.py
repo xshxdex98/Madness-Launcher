@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 
 from . import mm2tables
 
-# MM1's stock roster, read out of its ui.ar. See mm1.CAR_NAMES for the
+# MM1's stock roster, read out of its ui.ar. See reader.CAR_NAMES for the
 # descriptions the game gives them.
 MM1_CARS = (
     "vpbug", "vpbullet", "vpbus", "vpcaddie", "vpcop",

@@ -29,7 +29,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 
 import build_news  # noqa: E402
 from madness_launcher.config import Config, Settings  # noqa: E402
-from madness_launcher.records import mm1, store  # noqa: E402
+from madness_launcher.records import reader, store  # noqa: E402
 from madness_launcher.records.session import (  # noqa: E402
     MIN_PLAUSIBLE_SECONDS,
     Submission,
@@ -70,9 +70,9 @@ app.setStyleSheet(theme.stylesheet())
 
 def build_dat(entries: dict[int, tuple[str, str, float]]) -> bytes:
     """A .dat in the game's own layout, for slots we choose."""
-    blob = bytearray(struct.pack("<II", mm1.MAGIC, 12))
+    blob = bytearray(struct.pack("<II", reader.MAGIC, 12))
     for slot in range(360):
-        record = bytearray(mm1.RECORD)
+        record = bytearray(reader.RECORD)
         if slot in entries:
             driver, car, seconds = entries[slot]
             record[0:4] = b"\x01\x02\x03\x04"
@@ -101,7 +101,7 @@ install = write_install(
         140: ("Pan", "vppanozgt", 101.5),
     }
 )
-records = mm1.parse(install / "players" / "chicago" / "pro.dat")
+records = reader.parse(install / "players" / "chicago" / "pro.dat")
 check("three real records", len(records) == 3, str(len(records)))
 check("the par time is not one of them",
       all(abs(r.seconds - 450.0) > 0.01 for r in records))
@@ -117,47 +117,47 @@ check("sub-minute times omit the minutes", records[0].formatted == "41.228",
 print("\na file that is not one of these is refused, not misread")
 broken = install / "players" / "chicago" / "junk.dat"
 broken.write_bytes(b"not a save file at all")
-check("wrong magic yields nothing", mm1.parse(broken) == [])
-check("a missing file yields nothing", mm1.parse(install / "nope.dat") == [])
+check("wrong magic yields nothing", reader.parse(broken) == [])
+check("a missing file yields nothing", reader.parse(install / "nope.dat") == [])
 empty = install / "players" / "chicago" / "empty.dat"
-empty.write_bytes(struct.pack("<II", mm1.MAGIC, 12))
-check("a header with no records yields nothing", mm1.parse(empty) == [])
+empty.write_bytes(struct.pack("<II", reader.MAGIC, 12))
+check("a header with no records yields nothing", reader.parse(empty) == [])
 
 print("\nonly improvements count as new records")
-before = mm1.snapshot(install)
+before = reader.snapshot(install)
 check("snapshot found them", len(before) == 3, str(len(before)))
-check("nothing improved against itself", mm1.improvements(before, before) == [])
+check("nothing improved against itself", reader.improvements(before, before) == [])
 faster = write_install({0: ("Pan", "vpmustang99", 40.0)})
-after = mm1.snapshot(faster)
+after = reader.snapshot(faster)
 # Same slot, different install root — the key is city/difficulty/slot.
 moved = {k: v for k, v in after.items()}
-check("a faster time is an improvement", len(mm1.improvements(before, moved)) == 1)
+check("a faster time is an improvement", len(reader.improvements(before, moved)) == 1)
 # A race holds a leaderboard, not one best time, and the game only writes an
 # entry that earned a place on it. So a lap slower than the leader is still a
 # new entry — it took second or third — and reporting it is correct.
-slower = mm1.snapshot(write_install({0: ("Pan", "vpmustang99", 99.0)}))
+slower = reader.snapshot(write_install({0: ("Pan", "vpmustang99", 99.0)}))
 check("a slower lap the game chose to store is still new",
-      len(mm1.improvements(before, slower)) == 1)
+      len(reader.improvements(before, slower)) == 1)
 check("but a table that did not change yields nothing",
-      mm1.improvements(before, before) == [])
+      reader.improvements(before, before) == [])
 check("and re-reading the same file twice yields nothing",
-      mm1.improvements(mm1.snapshot(install), mm1.snapshot(install)) == [])
+      reader.improvements(reader.snapshot(install), reader.snapshot(install)) == [])
 
 print("\nthe stock roster decides which board a run belongs on")
 check("stock car, no mods -> vanilla",
-      mm1.classify("vpmustang99", []) == mm1.BOARD_VANILLA)
+      reader.classify("vpmustang99", []) == reader.BOARD_VANILLA)
 check("stock car, unapproved archive -> modded",
-      mm1.classify("vpmustang99", ["pack.ar"]) == mm1.BOARD_MODDED)
+      reader.classify("vpmustang99", ["pack.ar"]) == reader.BOARD_MODDED)
 # A downloaded car makes the run modded rather than disqualifying it. A time
 # driven in one is still a time; it simply is not a vanilla one.
-check("addon car -> modded", mm1.classify("vpdisco", []) == mm1.BOARD_MODDED)
+check("addon car -> modded", reader.classify("vpdisco", []) == reader.BOARD_MODDED)
 check("addon car with archives -> still modded",
-      mm1.classify("vpeb184", ["pack.ar"]) == mm1.BOARD_MODDED)
+      reader.classify("vpeb184", ["pack.ar"]) == reader.BOARD_MODDED)
 check("nothing is dropped outright any more",
-      mm1.classify("vpdisco", []) is not None)
-check("case does not matter", mm1.is_vanilla_car("VPMUSTANG99"))
-check("the roster is the stock ten", len(mm1.VANILLA_CARS) == 10,
-      str(len(mm1.VANILLA_CARS)))
+      reader.classify("vpdisco", []) is not None)
+check("case does not matter", reader.is_vanilla_car("VPMUSTANG99"))
+check("the roster is the stock ten", len(reader.VANILLA_CARS) == 10,
+      str(len(reader.VANILLA_CARS)))
 
 
 print("\nonly the allowlisted fixes keep a run on the vanilla board")
@@ -181,52 +181,52 @@ def archive_install(files: dict[str, bytes], staged: dict[str, bytes] | None = N
 # Reproduce an allowlisted archive exactly by size and digest without needing
 # the real file: the check is content-addressed, so any bytes that hash to an
 # allowlisted digest are by definition that file.
-REAL = {h: n for h, n in mm1.VANILLA_ARCHIVES.items()}
+REAL = {h: n for h, n in reader.VANILLA_ARCHIVES.items()}
 
 clean = archive_install({})
-check("a stock folder has nothing added", mm1.active_archives(clean) == [])
+check("a stock folder has nothing added", reader.active_archives(clean) == [])
 check("and classifies as vanilla",
-      mm1.classify("vpmustang99", mm1.unapproved_archives(clean))
-      == mm1.BOARD_VANILLA)
+      reader.classify("vpmustang99", reader.unapproved_archives(clean))
+      == reader.BOARD_VANILLA)
 
 check("the game's own archives are never counted as mods",
-      all(p.name.lower() not in mm1.BASE_ARCHIVES for p in mm1.active_archives(clean)))
+      all(p.name.lower() not in reader.BASE_ARCHIVES for p in reader.active_archives(clean)))
 
 racepack = archive_install({"!!!Chicago_Rebellion_RP.ar": b"racepack" * 500})
-check("an added archive is seen", len(mm1.active_archives(racepack)) == 1)
+check("an added archive is seen", len(reader.active_archives(racepack)) == 1)
 check("an unknown archive is unapproved",
-      mm1.unapproved_archives(racepack) == ["!!!Chicago_Rebellion_RP.ar"])
+      reader.unapproved_archives(racepack) == ["!!!Chicago_Rebellion_RP.ar"])
 check("and pushes the run to the modded board",
-      mm1.classify("vpmustang99", mm1.unapproved_archives(racepack))
-      == mm1.BOARD_MODDED)
+      reader.classify("vpmustang99", reader.unapproved_archives(racepack))
+      == reader.BOARD_MODDED)
 
 staged = archive_install({}, staged={"!!!BigRacepack.ar": b"x" * 5000})
 check("archives parked in a subfolder are not loaded",
-      mm1.active_archives(staged) == [])
+      reader.active_archives(staged) == [])
 check("so a staging folder does not make a run modded",
-      mm1.classify("vpmustang99", mm1.unapproved_archives(staged))
-      == mm1.BOARD_VANILLA)
+      reader.classify("vpmustang99", reader.unapproved_archives(staged))
+      == reader.BOARD_VANILLA)
 
 print("\nthe allowlist is by content, so a filename proves nothing")
 spoof = archive_install({"!!!!wsfix16to9.ar": b"a handling mod in disguise" * 100})
 check("a mod wearing an allowlisted name is still unapproved",
-      mm1.unapproved_archives(spoof) == ["!!!!wsfix16to9.ar"])
+      reader.unapproved_archives(spoof) == ["!!!!wsfix16to9.ar"])
 check("and lands on the modded board",
-      mm1.classify("vpmustang99", mm1.unapproved_archives(spoof))
-      == mm1.BOARD_MODDED)
+      reader.classify("vpmustang99", reader.unapproved_archives(spoof))
+      == reader.BOARD_MODDED)
 check("every allowlisted entry is a sha256 digest",
       all(len(h) == 64 and all(c in "0123456789abcdef" for c in h)
-          for h in mm1.VANILLA_ARCHIVES))
-check("four fixes are allowed", len(mm1.VANILLA_ARCHIVES) == 4,
-      str(len(mm1.VANILLA_ARCHIVES)))
+          for h in reader.VANILLA_ARCHIVES))
+check("four fixes are allowed", len(reader.VANILLA_ARCHIVES) == 4,
+      str(len(reader.VANILLA_ARCHIVES)))
 check("their sizes are known so most files never get hashed",
-      len(mm1._ALLOWED_SIZES) == 4)
+      len(reader._ALLOWED_SIZES) == 4)
 
 digest_of = archive_install({"x.ar": b"known bytes"})
 check("digesting a real file works",
-      len(mm1.archive_digest(digest_of / "x.ar")) == 64)
+      len(reader.archive_digest(digest_of / "x.ar")) == 64)
 check("digesting a missing file yields nothing",
-      mm1.archive_digest(digest_of / "nope.ar") == "")
+      reader.archive_digest(digest_of / "nope.ar") == "")
 
 
 def entry(**kwargs) -> Submission:
@@ -245,16 +245,16 @@ print("\na race holds a sorted leaderboard, so entries shift when one is added")
 # Each race keeps its times in ascending order. Adding one pushes every
 # slower entry down a slot, and a slot-by-slot diff reads each shift as a new
 # record set by whoever moved into that slot — one real lap, several invented.
-was = mm1.snapshot(write_install({
+was = reader.snapshot(write_install({
     0: ("Pan", "vpmustang99", 41.228),
     2: ("Pan", "vpcaddie", 43.286),
 }))
-now = mm1.snapshot(write_install({
+now = reader.snapshot(write_install({
     0: ("Pan", "vpmustang99", 41.228),
     2: ("Tester", "vppanozgt", 42.000),   # inserted in the middle
     4: ("Pan", "vpcaddie", 43.286),       # the same old lap, one slot down
 }))
-shifted = mm1.improvements(was, now)
+shifted = reader.improvements(was, now)
 check("only the genuinely new lap is reported", len(shifted) == 1,
       str([(r.car_name, r.formatted) for r in shifted]))
 check("and it is the one that was driven",
@@ -262,9 +262,9 @@ check("and it is the one that was driven",
 check("the displaced entry is not reported as new",
       all(r.car != "vpcaddie" for r in shifted))
 check("an unchanged table still yields nothing",
-      mm1.improvements(was, was) == [])
+      reader.improvements(was, was) == [])
 check("a lap identical but for its driver counts as new",
-      len(mm1.improvements(was, mm1.snapshot(write_install({
+      len(reader.improvements(was, reader.snapshot(write_install({
           0: ("Pan", "vpmustang99", 41.228),
           2: ("Someone", "vpcaddie", 43.286),
       })))) == 1)
@@ -275,7 +275,7 @@ print("\na time survives a round trip without appearing to get faster")
 # looked freshly beaten by a fraction of a millisecond — a duplicate record
 # published on every launch, forever.
 drifty = write_install({0: ("Pan", "vpmustang99", 120.0417709350586)})
-parsed_once = mm1.snapshot(drifty)
+parsed_once = reader.snapshot(drifty)
 round_tripped = store.from_feed(
     [r.as_dict() for r in store.merge([], existing_records(drifty, "mm1", "T"))]
 )
@@ -286,7 +286,7 @@ check("and matches after a trip through JSON",
       round_tripped and abs(round_tripped[0].seconds - 120.042) < 1e-9,
       repr(round_tripped[0].seconds if round_tripped else None))
 check("so re-reading the same save finds nothing new",
-      mm1.improvements(mm1.snapshot(drifty), mm1.snapshot(drifty)) == [])
+      reader.improvements(reader.snapshot(drifty), reader.snapshot(drifty)) == [])
 stored_again = store.merge(round_tripped, existing_records(drifty, "mm1", "T"))
 check("and re-importing it does not add a duplicate",
       len(stored_again) == len(round_tripped), str(len(stored_again)))
@@ -300,7 +300,7 @@ history = write_install({
     30: ("Pan", "vppanozgt", 74.811),
     40: ("Pan", "vpdisco", 60.0),          # custom car, belongs on no board
 })
-mm1.load_city(None)
+reader.load_city(None)
 imported = existing_records(history, "mm1", "Tester")
 check("times already on disk are imported", len(imported) == 4,
       str([(r.race_name, r.formatted) for r in imported]))
@@ -309,13 +309,13 @@ check("they are marked as imported, not as witnessed",
 check("par times are still excluded",
       all(abs(r.seconds - 450.0) > 0.01 for r in imported))
 check("an addon car is imported too, as a modded time",
-      any(r.car == "vpdisco" and r.board == mm1.BOARD_MODDED for r in imported),
+      any(r.car == "vpdisco" and r.board == reader.BOARD_MODDED for r in imported),
       str([(r.car, r.board) for r in imported]))
 check("they carry the launcher username",
       all(r.username == "Tester" for r in imported))
 check("stock cars land on the vanilla board in a clean folder",
-      all(r.board == mm1.BOARD_VANILLA
-          for r in imported if mm1.is_vanilla_car(r.car)))
+      all(r.board == reader.BOARD_VANILLA
+          for r in imported if reader.is_vanilla_car(r.car)))
 
 merged_once = store.merge([], imported)
 check("importing twice changes nothing",
@@ -408,7 +408,7 @@ check("and reports that it found nothing",
 
 improved = write_install({0: ("Pan", "vpmustang99", 35.1)})
 watcher2 = RecordWatcher("mm1", quiet, _Exited(), username="Tester")
-watcher2._before = mm1.snapshot(quiet)
+watcher2._before = reader.snapshot(quiet)
 watcher2.install = improved
 # The watcher was built a moment ago, so without this the session looks zero
 # seconds long and a 35-second lap is correctly judged not to fit in it.
@@ -567,41 +567,41 @@ print("\nthe race table is always loaded, so named records can place")
 # The bug this guards: nothing in the launcher loaded the table, so every
 # record that names its race instead of numbering it — all of them from
 # speedrun.com — failed to place and the board went quietly empty.
-mm1.RACE_NAMES.clear()
-mm1.RACE_KINDS.clear()
+reader.RACE_NAMES.clear()
+reader.RACE_KINDS.clear()
 check("with no table loaded, a named record cannot place",
       store.from_feed([{"game": "mm1", "race_name": "Museum Marathon",
                         "seconds": 99.0}]) == [])
-fallback = mm1.load_city(None)
+fallback = reader.load_city(None)
 check("a launcher with no install still gets a table",
-      len(mm1.RACE_NAMES) == 32, str(len(mm1.RACE_NAMES)))
+      len(reader.RACE_NAMES) == 32, str(len(reader.RACE_NAMES)))
 check("and says where it came from", fallback.source == "built-in",
       fallback.source)
 check("named records now place",
       len(store.from_feed([{"game": "mm1", "race_name": "Museum Marathon",
                             "seconds": 99.0}])) == 1)
 check("the built-in table matches the game's own ordering",
-      mm1.race_label(0) == "Dearborn Dash"
-      and mm1.race_label(14) == "Museum Marathon"
-      and mm1.race_label(31) == "Frosty Finale",
-      f"{mm1.race_label(0)} / {mm1.race_label(14)} / {mm1.race_label(31)}")
+      reader.race_label(0) == "Dearborn Dash"
+      and reader.race_label(14) == "Museum Marathon"
+      and reader.race_label(31) == "Frosty Finale",
+      f"{reader.race_label(0)} / {reader.race_label(14)} / {reader.race_label(31)}")
 check("kinds come with it",
-      mm1.race_kind(0) == "Blitz" and mm1.race_kind(14) == "Circuit"
-      and mm1.race_kind(31) == "Checkpoint")
+      reader.race_kind(0) == "Blitz" and reader.race_kind(14) == "Circuit"
+      and reader.race_kind(31) == "Checkpoint")
 
 print("\nexternal records are placed by name, never by position")
-check("a race name resolves", mm1.race_index_by_name("Museum Marathon") >= 0)
+check("a race name resolves", reader.race_index_by_name("Museum Marathon") >= 0)
 check("the site's spelling of Soldier Sneaker still matches",
-      mm1.race_index_by_name("Solider Sneaker")
-      == mm1.race_index_by_name("Soldier Sneaker"),
+      reader.race_index_by_name("Solider Sneaker")
+      == reader.race_index_by_name("Soldier Sneaker"),
       "both spellings must land on one race")
 check("an unknown race lands nowhere",
-      mm1.race_index_by_name("Not A Real Race") == -1)
+      reader.race_index_by_name("Not A Real Race") == -1)
 check("a record with no index is placed by its name",
       store.from_feed([{"game": "mm1", "board": "vanilla", "difficulty": "pro",
                         "race_name": "Museum Marathon", "seconds": 99.0,
                         "source": "speedrun.com"}])[0].race
-      == mm1.race_index_by_name("Museum Marathon"))
+      == reader.race_index_by_name("Museum Marathon"))
 check("a record with neither index nor known name is dropped",
       store.from_feed([{"game": "mm1", "race_name": "Nope", "seconds": 99.0}]) == [])
 check("provenance survives",
@@ -1006,7 +1006,7 @@ def mm2_install(city_entries: dict[str, dict[int, tuple[str, str, float]]]):
         folder.mkdir(parents=True)
         blob = bytearray(struct.pack("<IIII", 1, 12, 10, 10))
         for slot in range(320):
-            rec = bytearray(mm1.RECORD)
+            rec = bytearray(reader.RECORD)
             if slot in entries:
                 driver, car, seconds = entries[slot]
                 rec[4 : 4 + len(driver)] = driver.encode()
@@ -1031,35 +1031,35 @@ two = mm2_install({
            40: ("Professional", "s7", 61.0)},        # addon car
     "london": {130: ("Professional", "vpbug", 9.2)},
 })
-recs = mm1.snapshot(two, game="mm2")
+recs = reader.snapshot(two, game="mm2")
 check("both cities are read", {r.city for r in recs.values()} == {"sf", "london"},
       str({r.city for r in recs.values()}))
 check("an MM1 parse finds nothing in an MM2 file",
-      mm1.parse(two / "players" / "sf" / "pro.dat", game="mm1") == [])
+      reader.parse(two / "players" / "sf" / "pro.dat", game="mm1") == [])
 
 named = {(r.city, r.race): r.race_name for r in recs.values()}
 check("SF race 13 is Hang Time", named[("sf", 13)] == "Hang Time",
       named[("sf", 13)])
 check("SF race 22 is a Blitz",
-      mm1.race_kind(22, "mm2", "sf") == "Blitz", mm1.race_kind(22, "mm2", "sf"))
-check("SF race 0 is a Checkpoint", mm1.race_kind(0, "mm2", "sf") == "Checkpoint")
+      reader.race_kind(22, "mm2", "sf") == "Blitz", reader.race_kind(22, "mm2", "sf"))
+check("SF race 0 is a Checkpoint", reader.race_kind(0, "mm2", "sf") == "Checkpoint")
 check("London race 13 differs from SF's",
       named[("london", 13)] != named[("sf", 13)],
       f'{named[("london", 13)]} vs {named[("sf", 13)]}')
 
 print("\nMM2's archive rule is the prefix its owner asked for")
 check("a stock mm2 archive is not an addition",
-      mm1.active_archives(two, "mm2") == [], str(mm1.active_archives(two, "mm2")))
+      reader.active_archives(two, "mm2") == [], str(reader.active_archives(two, "mm2")))
 (two / "!racepack.ar").write_bytes(b"x" * 100)
-check("anything else is", mm1.unapproved_archives(two, "mm2") == ["!racepack.ar"],
-      str(mm1.unapproved_archives(two, "mm2")))
+check("anything else is", reader.unapproved_archives(two, "mm2") == ["!racepack.ar"],
+      str(reader.unapproved_archives(two, "mm2")))
 (two / "!racepack.ar").unlink()
 check("a stock car with nothing added is vanilla",
-      mm1.classify("vpbullet", [], "mm2") == mm1.BOARD_VANILLA)
+      reader.classify("vpbullet", [], "mm2") == reader.BOARD_VANILLA)
 check("an MM2 addon car is modded",
-      mm1.classify("s7", [], "mm2") == mm1.BOARD_MODDED)
+      reader.classify("s7", [], "mm2") == reader.BOARD_MODDED)
 check("an MM1 car is not automatically an MM2 car",
-      mm1.is_vanilla_car("vpdisco", "mm2") is False)
+      reader.is_vanilla_car("vpdisco", "mm2") is False)
 
 print("\nand the two games do not share a race numbering")
 imported = existing_records(two, "mm2", "Tester")
@@ -1067,7 +1067,7 @@ check("every MM2 record names its race",
       all(not r.race_name.startswith("Race ") for r in imported),
       str([r.race_name for r in imported]))
 check("the addon car came through as modded",
-      any(r.car == "s7" and r.board == mm1.BOARD_MODDED for r in imported))
+      any(r.car == "s7" and r.board == reader.BOARD_MODDED for r in imported))
 keys = {store.key_id(r) for r in imported}
 check("identities are unique across cities", len(keys) == len(imported))
 check("an MM1 record cannot collide with an MM2 one",

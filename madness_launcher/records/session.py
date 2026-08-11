@@ -27,7 +27,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
-from . import mm1
+from . import reader
 
 # How often to ask whether the game has exited.
 POLL_MS = 3000
@@ -120,11 +120,11 @@ def plausible(entry: Submission, session_seconds: float) -> tuple[bool, str]:
     obviously wrong; none of them can tell a good driver from a patient one
     with a hex editor.
     """
-    if entry.board not in (mm1.BOARD_VANILLA, mm1.BOARD_MODDED):
+    if entry.board not in (reader.BOARD_VANILLA, reader.BOARD_MODDED):
         return False, "not a stock car"
     if entry.seconds < MIN_PLAUSIBLE_SECONDS:
         return False, f"{entry.formatted} is faster than anyone drives"
-    if entry.seconds > mm1.MAX_TIME:
+    if entry.seconds > reader.MAX_TIME:
         return False, "longer than an hour"
     if entry.seconds > session_seconds + SESSION_SLACK_SECONDS:
         return False, (
@@ -154,11 +154,11 @@ def existing_records(
     carry a different source and the board shows which is which. Publishing
     them is still governed by the opt-in.
     """
-    unapproved = mm1.unapproved_archives(Path(install), game_id)
+    unapproved = reader.unapproved_archives(Path(install), game_id)
     out: list[Submission] = []
-    for record in mm1.snapshot(Path(install), game=game_id).values():
-        board = mm1.classify(record.car, unapproved, game_id)
-        if board is None or not (MIN_PLAUSIBLE_SECONDS <= record.seconds <= mm1.MAX_TIME):
+    for record in reader.snapshot(Path(install), game=game_id).values():
+        board = reader.classify(record.car, unapproved, game_id)
+        if board is None or not (MIN_PLAUSIBLE_SECONDS <= record.seconds <= reader.MAX_TIME):
             continue
         out.append(
             Submission(
@@ -214,10 +214,10 @@ class RecordWatcher(QObject):
         # What the game will actually load, judged from the folder itself.
         # Taken now rather than at the end, so archives added mid-session
         # cannot retroactively qualify a run for the vanilla board.
-        self.unapproved = mm1.unapproved_archives(self.install, game_id)
+        self.unapproved = reader.unapproved_archives(self.install, game_id)
         self.mods = self.unapproved or list(mods or [])
         self._started = time.monotonic()
-        self._before = mm1.snapshot(self.install, game=self.game_id)
+        self._before = reader.snapshot(self.install, game=self.game_id)
         self._timer = QTimer(self)
         self._timer.setInterval(POLL_MS)
         self._timer.timeout.connect(self._check)
@@ -254,13 +254,13 @@ class RecordWatcher(QObject):
 
     def _collect(self) -> None:
         session_seconds = time.monotonic() - self._started
-        after = mm1.snapshot(self.install, game=self.game_id)
-        improved = mm1.improvements(self._before, after)
+        after = reader.snapshot(self.install, game=self.game_id)
+        improved = reader.improvements(self._before, after)
 
         stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
         good: list[Submission] = []
         for record in improved:
-            board = mm1.classify(record.car, self.unapproved, self.game_id)
+            board = reader.classify(record.car, self.unapproved, self.game_id)
             entry = Submission(
                 game=self.game_id,
                 board=board or "",
