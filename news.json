@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-11T00:05:50Z",
+  "generated": "2026-08-11T00:09:34Z",
   "announcements": [
     {
       "id": "1536066593161879572",
@@ -521,6 +521,21 @@
     }
   ],
   "records": [
+    {
+      "game": "mm2",
+      "board": "vanilla",
+      "race": 13,
+      "city": "sf",
+      "race_name": "Hang Time",
+      "race_kind": "Circuit",
+      "difficulty": "amateur",
+      "car": "vpbullet",
+      "seconds": 39.288,
+      "username": "xSHXDEx",
+      "set_at": "",
+      "source": "launcher",
+      "message_id": "1536525440859246742"
+    },
     {
       "game": "mm1",
       "board": "vanilla",
