@@ -773,9 +773,21 @@ def _speedrun_one(block: dict[str, Any]) -> tuple[list[dict], int]:
     # "SF Blitz: Golden Race" on a two-city game; a bare race name on a
     # one-city game. The city has to come off the front, because the two
     # cities number their races separately.
+    # Race types the game does not keep in its record tables. Midtown
+    # Madness 2 has thirteen Crash Course events per city and only 320
+    # record slots, which the other three types fill exactly — so the
+    # game stores those somewhere else and no launcher can place them.
+    # Publishing them meant 26 records nobody could use, and 26 requests
+    # a run to fetch them.
+    skip = [str(s).lower() for s in (block.get("skip_kinds") or [])]
+    skipped = 0
+
     out: list[dict[str, Any]] = []
     failures = 0
     for level in levels:
+        if skip and any(s in str(level.get("name", "")).lower() for s in skip):
+            skipped += 1
+            continue
         for category in categories:
             try:
                 board = api(
@@ -827,7 +839,9 @@ def _speedrun_one(block: dict[str, Any]) -> tuple[list[dict], int]:
                 "url": str(run.get("weblink") or "")[:200],
             })
 
-    log(f"speedrun.com: {len(out)} records across {len(levels)} races")
+    log(f"speedrun.com: {len(out)} records across "
+        f"{len(levels) - skipped} races"
+        + (f", {skipped} skipped" if skipped else ""))
     return out, failures
 
 

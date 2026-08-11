@@ -73,6 +73,9 @@
       "board_game": "mm2",
       "categories": [
         "Default race settings"
+      ],
+      "skip_kinds": [
+        "Crash Course"
       ]
     }
   ],
