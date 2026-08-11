@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QStackedWidget,
     QStatusBar,
     QVBoxLayout,
@@ -45,7 +46,19 @@ from .setup_page import SetupPage
 from .username_dialog import UsernameDialog
 from .widgets import Card, LogoArea, StatusDot, scrollable
 
+# The sidebar tracks the window rather than sitting at one width, so the logo
+# in it has room to grow on a large screen. It only ever grows: the entry
+# labels are elided against the narrow case, and letting it shrink below that
+# would run a long title underneath the status dot.
 SIDEBAR_WIDTH = 256
+SIDEBAR_MAX_WIDTH = 320
+SIDEBAR_FRACTION = 0.21
+# The logo's share of the window height. Bounded at the top so a big screen
+# does not turn the brand slot into a poster, and at the bottom so a short one
+# still shows something recognisable.
+LOGO_FRACTION = 0.155
+LOGO_MIN = 56
+LOGO_MAX = 190
 SIDEBAR_ICON = 18
 # What a game entry has left for its label once the sidebar margins, the button
 # padding, the icon and the status dot have taken their share. Long titles are
@@ -159,17 +172,34 @@ class MainWindow(QMainWindow):
         side = QWidget()
         side.setObjectName("Sidebar")
         side.setFixedWidth(SIDEBAR_WIDTH)
+        self.sidebar = side
 
-        layout = QVBoxLayout(side)
-        layout.setContentsMargins(14, 20, 14, 14)
-        layout.setSpacing(6)
+        outer = QVBoxLayout(side)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        # The logo is pinned above the navigation rather than sitting at the
+        # top of it, so that when the window is too short for every entry it is
+        # the list that scrolls and the brand mark that stays put.
+        head = QWidget()
+        head_layout = QVBoxLayout(head)
+        head_layout.setContentsMargins(14, 20, 14, 0)
+        head_layout.setSpacing(0)
 
         self.logo = LogoArea()
         self.logo.clicked.connect(self._choose_logo)
         self._refresh_logo()
-        layout.addWidget(self.logo)
+        head_layout.addWidget(self.logo)
+        outer.addWidget(head)
 
-        layout.addSpacing(22)
+        # Six games, three community entries and a heading apiece do not fit a
+        # 620px window, which is the smallest one allowed. Scrolling is how
+        # that overflow is absorbed; before this the layout simply squeezed
+        # whatever would give way, which was the logo.
+        nav = QWidget()
+        layout = QVBoxLayout(nav)
+        layout.setContentsMargins(14, 22, 14, 0)
+        layout.setSpacing(6)
 
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
@@ -257,6 +287,26 @@ class MainWindow(QMainWindow):
 
         layout.addStretch(1)
 
+        area = scrollable(nav)
+        area.setObjectName("SidebarScroll")
+        area.viewport().setAutoFillBackground(False)
+        nav.setAutoFillBackground(False)
+        # A resizable scroll area asks for its content's full minimum height,
+        # which is the entire nav column — so it would take the room from the
+        # logo and the account block and never actually scroll. Ignored means
+        # it accepts whatever is left over, which is the point of it.
+        area.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Ignored)
+        outer.addWidget(area, 1)
+
+        # The account block is pinned to the bottom of the sidebar, outside the
+        # scrolling area: who you are signed in as and the way to Settings
+        # should not be something you have to scroll to find.
+        foot = QWidget()
+        layout = QVBoxLayout(foot)
+        layout.setContentsMargins(14, 0, 14, 14)
+        layout.setSpacing(6)
+        outer.addWidget(foot)
+
         # A hairline separates the account block from the navigation above it,
         # so the empty space between them reads as deliberate rather than as a
         # gap the layout failed to fill.
@@ -301,7 +351,24 @@ class MainWindow(QMainWindow):
         layout.addWidget(count_row)
         self._refresh_presence()
 
+        self._fit_sidebar()
         return side
+
+    def _fit_sidebar(self) -> None:
+        """Size the sidebar, and the logo in it, to the current window."""
+        width = min(
+            SIDEBAR_MAX_WIDTH,
+            max(SIDEBAR_WIDTH, round(self.width() * SIDEBAR_FRACTION)),
+        )
+        self.sidebar.setFixedWidth(width)
+        self.logo.fit(
+            width - 28,  # the header's left and right margins
+            min(LOGO_MAX, max(LOGO_MIN, round(self.height() * LOGO_FRACTION))),
+        )
+
+    def resizeEvent(self, event):  # noqa: N802 - Qt naming
+        super().resizeEvent(event)
+        self._fit_sidebar()
 
     def _make_entry(self, game_id: str, title: str, year: str) -> QWidget:
         host = QWidget()

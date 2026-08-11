@@ -29,7 +29,9 @@ from madness_launcher.ui.library_page import CARD_WIDTH, LibraryPage  # noqa: E4
 from madness_launcher.ui.main_window import (  # noqa: E402
     CHAT_KEY,
     LIBRARY_KEY,
+    LOGO_MAX,
     SETTINGS_KEY,
+    SIDEBAR_WIDTH,
     MainWindow,
 )
 
@@ -92,6 +94,82 @@ branding.clear_logo()
 window._refresh_logo()
 check("removing the user logo restores the wordmark", window.logo.has_logo())
 check("user logo really is gone", branding.stored_logo() is None)
+
+print("\nlogo scales with the window")
+# A big square image, the shape most likely to overflow its slot: it is
+# limited by height rather than width, so it is the one that used to be
+# painted at full size inside a frame the layout had squeezed to a sliver.
+square = SANDBOX / "square.png"
+big = QPixmap(512, 512)
+big.fill(QColor("#3366FF"))
+big.save(str(square), "PNG")
+branding.install_logo(square)
+window._refresh_logo()
+# Shown, because Qt holds back the resize event on a hidden window and the
+# sidebar sizes itself from that event.
+window.show()
+
+sizes = {}
+for w, h in ((940, 620), (1120, 740), (1920, 1080)):
+    window.resize(w, h)
+    app.processEvents()
+    sizes[(w, h)] = (window.sidebar.width(), window.logo.height())
+    print(f"  ({w}x{h}: sidebar {sizes[(w, h)][0]}, logo {sizes[(w, h)][1]})")
+
+small, mid, large = sizes.values()
+check("logo grows with the window", small[1] < mid[1] < large[1])
+check("sidebar widens on a large window", small[0] == mid[0] < large[0])
+check(
+    "sidebar never narrows past the width its labels are elided for",
+    all(width >= SIDEBAR_WIDTH for width, _ in sizes.values()),
+    str(sizes),
+)
+check(
+    "logo is bounded on a huge window",
+    large[1] <= LOGO_MAX,
+    f"{large[1]} > {LOGO_MAX}",
+)
+
+# The actual defect: the frame kept the height the layout gave it while the
+# image was painted at whatever size it liked, and spilled over the edges.
+for (w, h), (_, logo_height) in sizes.items():
+    window.resize(w, h)
+    app.processEvents()
+    drawn = window.logo._content_size(window.logo.width())[1]
+    check(
+        f"image fits inside its frame at {w}x{h}",
+        drawn + 2 * window.logo.PAD <= window.logo.height(),
+        f"{drawn}px image in a {window.logo.height()}px frame",
+    )
+
+# Squeezed to nothing on purpose: the paint path must cope rather than
+# drawing over the navigation below it.
+window.logo.fit(200, 0)
+check("a starved slot still holds its floor", window.logo.height() >= window.logo.MIN_HEIGHT)
+window.logo.setFixedHeight(12)
+window.logo.grab()  # would raise or overdraw if the fit were unguarded
+check("painting a slot smaller than its floor is safe", True)
+window.logo.setMinimumHeight(0)
+window.logo.setMaximumHeight(16777215)
+
+tiny = SANDBOX / "tiny.png"
+small_pix = QPixmap(48, 16)
+small_pix.fill(QColor("#FF8800"))
+small_pix.save(str(tiny), "PNG")
+branding.install_logo(tiny)
+window._refresh_logo()
+window.resize(1920, 1080)
+app.processEvents()
+check(
+    "a small image is not blown up past its own resolution",
+    window.logo._content_size(window.logo.width())[1] <= 16,
+    str(window.logo._content_size(window.logo.width())),
+)
+
+branding.clear_logo()
+window._refresh_logo()
+window.resize(1120, 740)
+app.processEvents()
 
 print("\nlibrary is the front door")
 check("opens on the library", window.stack.currentWidget() is window._library_page())
