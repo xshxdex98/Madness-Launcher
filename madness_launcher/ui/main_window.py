@@ -90,6 +90,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.config = config
         self._pages: dict[str, QWidget] = {}
+        # Pages built under a palette that is no longer the current one. They
+        # are put right as they are opened rather than all at once.
+        self._stale_pages: set[str] = set()
         self._entries: dict[str, QPushButton] = {}
         self._dots: dict[str, StatusDot] = {}
         self._accent = ""
@@ -1130,6 +1133,14 @@ class MainWindow(QMainWindow):
         # set one — see _apply_theme_for.
         self._apply_theme_for(key)
 
+        # A page left holding an older palette is put right on the way in,
+        # rather than all of them at the moment the colour was picked.
+        if key in self._stale_pages:
+            self._stale_pages.discard(key)
+            page = self._pages.get(key)
+            if page is not None:
+                self._restyle_page(page)
+
         # Whatever we move to, the Overview backdrops stop decoding, and the
         # chat page learns whether it is the thing on screen.
         for other_key, other in self._pages.items():
@@ -1254,30 +1265,49 @@ class MainWindow(QMainWindow):
 
     def _set_palette(self, p: palette.Palette) -> None:
         """Put a palette on screen, including everything that bakes it in."""
-        app = QApplication.instance()
-        if app is None:
+        if p == theme.current():
+            # Every page asks for its palette on the way in, and for anyone
+            # without per-game themes the answer is always the same one. That
+            # has to cost nothing, or opening Settings would repolish the
+            # entire widget tree for no change at all.
+            return
+        if QApplication.instance() is None:
             theme.apply(p)
             return
-        theme.restyle(app, p)
+
+        # The window, not the application — see theme.restyle. The sheet set
+        # on the application at startup stays put underneath it.
+        theme.restyle(self, p)
 
         # Anything painted rather than styled holds the colours it was painted
         # with, so it has to be drawn again: the sidebar glyphs, the status
-        # dots, the wordmark, and each game page's accent rules.
+        # dots, the wordmark.
         gameart.clear_cache()
         self._refresh_entry_icons()
         self._refresh_nav_glyphs()
         self._refresh_logo()
         self._fit_sidebar()
-        self._refresh_dots()
-        # Every built page, not only the one on screen: card artwork, board
-        # rows and accent rules all hold colours from when they were drawn,
-        # and a page left stale would show the old palette on the way back to
-        # it. This only runs when the palette really changes.
-        for page in self._pages.values():
-            if hasattr(page, "restyle"):
-                page.restyle()
-            if hasattr(page, "refresh"):
-                page.refresh()
+        # Repainted in the new colours rather than re-detected: a change of
+        # theme is no reason to go back to the disk and re-verify six installs.
+        for dot in self._dots.values():
+            dot.set_state(dot.state)
+
+        # A page's own accent rules and its painted artwork still hold the old
+        # palette. Only the one being looked at is put right now; the rest are
+        # marked and done on the way in, which is a page transition the eye
+        # already expects. Doing all of them here added 157ms to every colour
+        # picked, to fix pages nobody was looking at.
+        current = self.stack.currentWidget()
+        self._stale_pages = {
+            key for key, page in self._pages.items() if page is not current
+        }
+        self._restyle_page(current)
+
+    def _restyle_page(self, page) -> None:
+        if hasattr(page, "restyle"):
+            page.restyle()
+        if hasattr(page, "refresh"):
+            page.refresh()
 
     def _refresh_nav_glyphs(self) -> None:
         """Repaint the sidebar's own icons, which are drawn in the palette."""

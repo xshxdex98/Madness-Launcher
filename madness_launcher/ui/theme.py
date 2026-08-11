@@ -84,17 +84,26 @@ def apply(p: Palette) -> None:
     ON_ACCENT = p.on_accent
 
 
-def restyle(app, p: Palette | None = None) -> None:
-    """Put a palette on screen.
+def restyle(root, p: Palette | None = None) -> None:
+    """Put a palette on screen, by styling `root` and everything under it.
 
     The glyphs have to be repainted before the stylesheet is rebuilt, because
     the stylesheet points at them by path: the tick is drawn to contrast with
     the accent and the arrows in the muted text colour, so a cached set is
     stale the moment either moves.
 
-    This restyles the whole application, which repolishes every widget in the
-    tree. That is not cheap — see accent_rules — so call it when the palette
-    actually changes and not on every click.
+    Pass the QApplication once at startup, while the tree is still small.
+    After that pass the main window, and mind the difference — it is worth
+    about a second. Setting a stylesheet on the application does global work
+    on every widget that exists, and measured on a launcher with all six game
+    pages built that came to 1.4s against 207ms for the same sheet on the
+    window. It is not the sheet: the four-line `*` block on its own costs
+    three quarters of a second the application way.
+
+    Styling the window instead reaches everything that is on screen, and
+    every dialog too, since all of them are parented into it — a dialog
+    inherits its parent's sheet. The application-level sheet set at startup
+    stays underneath as the floor for anything that is not.
     """
     from . import icons
 
@@ -102,7 +111,7 @@ def restyle(app, p: Palette | None = None) -> None:
         apply(p)
     icons.invalidate()
     set_icons(icons.ensure_icons())
-    app.setStyleSheet(stylesheet())
+    root.setStyleSheet(stylesheet())
 
 
 def _mix(hex_color: str, other: str, amount: float) -> str:

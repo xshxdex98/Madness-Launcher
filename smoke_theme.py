@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 SANDBOX = Path(tempfile.mkdtemp(prefix="madness-theme-"))
 os.environ["MADNESS_LAUNCHER_HOME"] = str(SANDBOX)
 
-from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtWidgets import QApplication, QWidget  # noqa: E402
 
 from madness_launcher import paths  # noqa: E402
 from madness_launcher.config import Config, Settings  # noqa: E402
@@ -41,7 +41,10 @@ theme.set_icons(icons.ensure_icons())
 app.setStyleSheet(theme.stylesheet())
 
 from madness_launcher.ui.main_window import (  # noqa: E402
+    CHAT_KEY,
     LIBRARY_KEY,
+    NEWS_KEY,
+    RECORDS_KEY,
     SETTINGS_KEY,
     MainWindow,
 )
@@ -173,7 +176,11 @@ window.theme_editor._use_preset(green)
 app.processEvents()
 check("a preset is applied at once", theme.current() == green)
 check("and saved", palette.Palette.from_dict(window.config.settings.theme) == green)
-check("and reaches the stylesheet", green.bg in app.styleSheet())
+check(
+    "and reaches the stylesheet",
+    green.bg in window.styleSheet(),
+    "the themed sheet goes on the window — on the application it costs ~1.4s",
+)
 check("the tick is repainted for the new accent", theme.ON_ACCENT == green.on_accent)
 
 before = theme.current()
@@ -275,6 +282,197 @@ check("the global reset clears what was saved", window.config.settings.theme == 
 check("and puts the shipped palette back", theme.current() == d)
 
 # ----------------------------------------------------------------------
+print("\nnone of it hangs")
+# Every page built, which is when the tree is big enough for a repolish to
+# be felt. This is the state a launcher is in after a few minutes of use.
+for key in [g.id for g in GAMES] + [LIBRARY_KEY, NEWS_KEY, RECORDS_KEY, CHAT_KEY]:
+    window._show(key)
+window._show(LIBRARY_KEY)
+app.processEvents()
+print(f"  ({len(window._pages)} pages, {len(app.allWidgets())} widgets)")
+
+
+def worst(fn, runs=3):
+    best = 1e9
+    for _ in range(runs):
+        start = time.perf_counter()
+        fn()
+        best = min(best, (time.perf_counter() - start) * 1000)
+        app.processEvents()
+    return best
+
+
+into_settings = worst(lambda: (window._show(LIBRARY_KEY), window._show(SETTINGS_KEY)))
+print(f"  (opening Settings {into_settings:.1f}ms)")
+check(
+    "opening Settings does not restyle anything",
+    into_settings < 120,
+    f"{into_settings:.1f}ms — the guard in _set_palette is not holding",
+)
+
+flip = [palette.PRESETS["Carbon"], palette.PRESETS["Slate"]]
+
+
+def swap():
+    flip.reverse()
+    window._set_palette(flip[0])
+
+
+picked = worst(swap)
+print(f"  (changing a colour {picked:.1f}ms)")
+check(
+    "changing a colour stays responsive",
+    picked < 600,
+    f"{picked:.1f}ms — styling the application instead of the window costs ~1.4s here",
+)
+
+print("\na page not on screen catches up when it is opened")
+
+
+class Spy(QWidget):
+    """Stands in for a page, and counts what is done to it.
+
+    A real GamePage cannot be built here — with no game installed the window
+    shows a SetupPage instead, which has no accent sheet to look at. What
+    matters is the bookkeeping, and that is the same either way.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.restyled = 0
+        self.refreshed = 0
+
+    def restyle(self):
+        self.restyled += 1
+
+    def refresh(self):
+        self.refreshed += 1
+
+
+spy = Spy()
+old = window._pages[GAME]
+window.stack.removeWidget(old)
+window._pages[GAME] = spy
+window.stack.addWidget(spy)
+
+window._show(LIBRARY_KEY)
+app.processEvents()
+before = (spy.restyled, spy.refreshed)
+window._set_palette(palette.PRESETS["Deep purple"])
+app.processEvents()
+check(
+    "a page nobody is looking at is marked, not redone",
+    GAME in window._stale_pages and LIBRARY_KEY not in window._stale_pages,
+    str(sorted(window._stale_pages)),
+)
+check(
+    "and it is genuinely left alone at that moment",
+    (spy.restyled, spy.refreshed) == before,
+    "redoing every page here was 157ms on every colour picked",
+)
+window._show(GAME)
+app.processEvents()
+check("opening it clears the mark", GAME not in window._stale_pages)
+check(
+    "and puts it right",
+    spy.restyled == before[0] + 1 and spy.refreshed == before[1] + 1,
+    f"{(spy.restyled, spy.refreshed)} from {before}",
+)
+window._show(LIBRARY_KEY)
+window._show(GAME)
+app.processEvents()
+check(
+    "opening it again costs nothing further",
+    spy.restyled == before[0] + 1,
+    "a page that is already current should not be restyled on every visit",
+)
+
+window.stack.removeWidget(spy)
+window._pages[GAME] = old
+window.stack.addWidget(old)
+
+print("\ndialogs follow the window's theme")
+from PySide6.QtWidgets import QMessageBox  # noqa: E402
+
+window._set_palette(palette.PRESETS["Daylight"])
+app.processEvents()
+box = QMessageBox(window)
+box.setText("styled?")
+box.show()
+app.processEvents()
+seen = box.palette().color(box.backgroundRole()).name().upper()
+check(
+    "a dialog parented to the window is themed with it",
+    seen == palette.PRESETS["Daylight"].bg,
+    f"{seen} is not {palette.PRESETS['Daylight'].bg} — the sheet is on the window, "
+    "so anything parented outside it would be missed",
+)
+box.close()
+window._set_palette(palette.DEFAULT)
+app.processEvents()
+
+print("\nthe checkbox tick is really redrawn, not served from a cache")
+# The glyphs are rewritten to the same four paths every time, and the
+# stylesheet points at them by path — so a cached image would leave the tick
+# in the old colour with nothing to show for the repaint.
+from PySide6.QtGui import QColor  # noqa: E402
+from PySide6.QtWidgets import QCheckBox  # noqa: E402
+
+probe = QCheckBox("ticked", window)
+probe.setChecked(True)
+probe.resize(160, 24)
+probe.show()
+
+
+def tick_ink() -> str:
+    """The colour of the tick, read off the rendered indicator.
+
+    Cropped to the 17px indicator: anything wider picks up the label and the
+    unpainted margin beside it, which are lighter than either ink and would
+    decide the answer on their own.
+    """
+    image = probe.grab().toImage()
+    accent = QColor(theme.ACCENT)
+    counts = {palette.ON_ACCENT_DARK: 0, palette.ON_ACCENT_LIGHT: 0}
+    for y in range(2, min(17, image.height())):
+        for x in range(2, min(16, image.width())):
+            pixel = QColor(image.pixel(x, y))
+            near_accent = (
+                abs(pixel.red() - accent.red())
+                + abs(pixel.green() - accent.green())
+                + abs(pixel.blue() - accent.blue())
+            ) < 40
+            if near_accent:
+                continue  # the indicator's own fill
+            for ink in counts:
+                target = QColor(ink)
+                if (
+                    abs(pixel.red() - target.red())
+                    + abs(pixel.green() - target.green())
+                    + abs(pixel.blue() - target.blue())
+                ) < 40:
+                    counts[ink] += 1
+    return max(counts, key=counts.get) if any(counts.values()) else ""
+
+
+window._set_palette(palette.DEFAULT)
+app.processEvents()
+check(
+    "on the stock orange the tick is dark",
+    tick_ink() == palette.ON_ACCENT_DARK,
+    tick_ink(),
+)
+window._set_palette(palette.DEFAULT.with_accent("#241C5A"))
+app.processEvents()
+check(
+    "on a dark accent it comes back light",
+    tick_ink() == palette.ON_ACCENT_LIGHT,
+    f"{tick_ink()} — the tick PNG was not reloaded after being rewritten",
+)
+probe.deleteLater()
+window._set_palette(palette.DEFAULT)
+app.processEvents()
+
 print("\nthe Settings page fits the smallest window")
 window.resize(940, 620)
 window._show(SETTINGS_KEY)
