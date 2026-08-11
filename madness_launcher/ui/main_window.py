@@ -837,7 +837,10 @@ class MainWindow(QMainWindow):
             return
         self.records = merged
         record_store.save(self.records)
-        self._maybe_submit(added)
+        # Deliberately not published. These are times the launcher read
+        # off the disk, not times it watched being driven, and a player
+        # switching submission on should not find years of unwitnessed
+        # history appear on the community board under their name.
 
     def adopt_record_watcher(self, watcher) -> None:
         """Take ownership of a watcher for a session that has just started."""
@@ -899,7 +902,14 @@ class MainWindow(QMainWindow):
             return
         # Each game posts to its own channel, so the records are grouped by
         # game and each group goes to its own webhook.
-        pending = self._unsent + list(entries)
+        # Only what the launcher watched being driven. Imported and
+        # externally-sourced records are for the local board; publishing
+        # them would put times on the community board that nobody here
+        # saw set. Filtered at the point of sending, so no future caller
+        # can reintroduce it by forgetting.
+        witnessed = [e for e in entries
+                     if getattr(e, "source", "") == record_session.SOURCE_LAUNCHER]
+        pending = self._unsent + witnessed
         self._unsent = []
         by_game: dict[str, list] = {}
         for entry in pending:

@@ -1150,6 +1150,35 @@ check("an old feed with only the single URL routes nothing",
 check("a per-machine override still wins, being set by hand",
       _Router(_Feed({}), override=MM2_HOOK).webhook_for("mm1") == MM2_HOOK)
 
+print("\nonly runs the launcher watched are ever published")
+# Imported history fills the local board and goes no further. Switching
+# submission on should not put years of times nobody here saw driven onto the
+# community board under the player's name.
+from madness_launcher.records.session import (  # noqa: E402
+    SOURCE_IMPORTED,
+    SOURCE_LAUNCHER,
+)
+
+
+def sendable(entries: list) -> list:
+    """The window's filter, in isolation."""
+    return [e for e in entries if getattr(e, "source", "") == SOURCE_LAUNCHER]
+
+
+watched = entry(race=0, seconds=41.2, source=SOURCE_LAUNCHER)
+history = entry(race=1, seconds=61.2, source=SOURCE_IMPORTED)
+external = entry(race=2, seconds=19.5, source="speedrun.com")
+
+check("a watched run is sent", sendable([watched]) == [watched])
+check("imported history is not", sendable([history]) == [])
+check("an external record is not", sendable([external]) == [])
+check("a mixed batch sends only the watched one",
+      sendable([history, watched, external]) == [watched])
+check("importing a whole save sends nothing",
+      sendable([entry(race=i, source=SOURCE_IMPORTED) for i in range(30)]) == [])
+check("imported records are still kept locally",
+      len(store.merge([], [history, watched])) == 2)
+
 print("\nan empty board explains itself rather than sitting blank")
 blank = RecordsPage(config, lambda: [])
 blank_view = blank.views["mm1"].views["vanilla"]
