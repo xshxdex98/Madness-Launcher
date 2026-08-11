@@ -7,6 +7,7 @@ from pathlib import Path
 from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QFont, QFontMetrics, QIcon, QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QCheckBox,
     QDialog,
@@ -35,7 +36,7 @@ from ..records import reader
 from ..records import session as record_session
 from ..records import store as record_store
 from ..records.submit import RecordSubmitter
-from . import gameart, theme, wordmark
+from . import gameart, palette, theme, wordmark
 from .chat_page import ChatPage
 from .game_page import GamePage
 from .library_page import LibraryPage
@@ -43,6 +44,7 @@ from .news_page import NewsPage
 from .records_page import RecordsPage
 from .presence import Presence
 from .setup_page import SetupPage
+from .theme_editor import ThemeEditor
 from .username_dialog import UsernameDialog
 from .widgets import Card, LogoArea, StatusDot, scrollable
 
@@ -681,6 +683,13 @@ class MainWindow(QMainWindow):
         appearance.body.addLayout(logo_row)
         layout.addWidget(appearance)
 
+        self.theme_editor = ThemeEditor(self._theme_scopes())
+        self.theme_editor.changed.connect(self._theme_changed)
+        self.theme_editor.cleared.connect(self._theme_cleared)
+        self.theme_editor.scope_changed.connect(self._load_theme_scope)
+        self.theme_editor.load("", self._palette_for(""), False)
+        layout.addWidget(self.theme_editor)
+
         behaviour = Card("Behaviour")
         close_box = QCheckBox("Close the launcher after starting a game")
         close_box.setChecked(self.config.settings.close_on_launch)
@@ -1116,6 +1125,11 @@ class MainWindow(QMainWindow):
         return page
 
     def _show(self, key: str) -> None:
+        # A game wearing its own theme puts it on as it opens, and the page
+        # that follows takes it off again. Free unless somebody has actually
+        # set one — see _apply_theme_for.
+        self._apply_theme_for(key)
+
         # Whatever we move to, the Overview backdrops stop decoding, and the
         # chat page learns whether it is the thing on screen.
         for other_key, other in self._pages.items():
@@ -1132,7 +1146,6 @@ class MainWindow(QMainWindow):
             # when it decides whether the arriving feed counts as read.
             page.set_visible_to_user(True)
             self._refresh_news_entry()
-            self._apply_accent(theme.DEFAULT_ACCENT)
             return
 
         if key == RECORDS_KEY:
@@ -1145,7 +1158,6 @@ class MainWindow(QMainWindow):
             page.refresh()
             self.stack.setCurrentWidget(page)
             self.records_entry.setChecked(True)
-            self._apply_accent(theme.DEFAULT_ACCENT)
             return
 
         if key == SETTINGS_KEY:
@@ -1153,9 +1165,13 @@ class MainWindow(QMainWindow):
             self._refresh_logo_controls()
             self._refresh_identity_controls()
             self.news_url_field.setText(self.config.settings.news_url)
+            # Back to previewing whichever scope the editor is showing. The
+            # line above put the global theme on, as it does for every page,
+            # which would otherwise leave the wells describing one palette
+            # while the window wore another.
+            self._load_theme_scope(self.theme_editor.scope())
             self.stack.setCurrentWidget(self._pages[SETTINGS_KEY])
             self._entries[SETTINGS_KEY].setChecked(True)
-            self._apply_accent(theme.DEFAULT_ACCENT)
             return
 
         if key == LIBRARY_KEY:
@@ -1163,13 +1179,11 @@ class MainWindow(QMainWindow):
             page.refresh()
             self.stack.setCurrentWidget(page)
             self.library_entry.setChecked(True)
-            self._apply_accent(theme.DEFAULT_ACCENT)
             return
 
         if key == CHAT_KEY:
             self.stack.setCurrentWidget(self._chat_page())
             self.chat_entry.setChecked(True)
-            self._apply_accent(theme.DEFAULT_ACCENT)
             return
 
         if key not in self._pages:
@@ -1186,8 +1200,6 @@ class MainWindow(QMainWindow):
         if button:
             button.setChecked(True)
 
-        game = by_id(key)
-        self._apply_accent(game.accent if game else theme.DEFAULT_ACCENT)
         self._refresh_dots()
 
     def _rebuild_page(self, game_id: str) -> None:
@@ -1209,13 +1221,107 @@ class MainWindow(QMainWindow):
     # Reactions
     # ------------------------------------------------------------------
 
-    def _apply_accent(self, accent: str) -> None:
-        """No longer needed: each game page styles its own accent.
+    # ------------------------------------------------------------------
+    # Theme
+    # ------------------------------------------------------------------
 
-        Kept as a no-op so the call sites read the same; the application-wide
-        stylesheet is set once at startup and never replaced.
+    def _palette_for(self, key: str) -> palette.Palette:
+        """The palette a page should be shown in.
+
+        A game either carries a complete theme of its own or follows the one
+        the launcher is wearing. There is no partial inheritance: half a
+        palette from one place and half from another is a rule nobody can
+        predict the result of, and the customiser starts a game off from the
+        current colours anyway, so nothing is lost by keeping it whole.
         """
-        return
+        own = self.config.settings.game_themes.get(key)
+        if own is not None:
+            return palette.Palette.from_dict(own)
+        return palette.Palette.from_dict(self.config.settings.theme)
+
+    def _apply_theme_for(self, key: str) -> None:
+        """Wear the palette for a page, if it is not already being worn.
+
+        Guarded because restyling means setting a stylesheet on the whole
+        application, which repolishes every widget in the tree — the very cost
+        accent_rules exists to avoid. For anyone who has not given a game its
+        own theme every page resolves to the same palette, so this does
+        nothing at all and switching stays as quick as it was.
+        """
+        wanted = self._palette_for(key)
+        if wanted != theme.current():
+            self._set_palette(wanted)
+
+    def _set_palette(self, p: palette.Palette) -> None:
+        """Put a palette on screen, including everything that bakes it in."""
+        app = QApplication.instance()
+        if app is None:
+            theme.apply(p)
+            return
+        theme.restyle(app, p)
+
+        # Anything painted rather than styled holds the colours it was painted
+        # with, so it has to be drawn again: the sidebar glyphs, the status
+        # dots, the wordmark, and each game page's accent rules.
+        gameart.clear_cache()
+        self._refresh_entry_icons()
+        self._refresh_nav_glyphs()
+        self._refresh_logo()
+        self._fit_sidebar()
+        self._refresh_dots()
+        # Every built page, not only the one on screen: card artwork, board
+        # rows and accent rules all hold colours from when they were drawn,
+        # and a page left stale would show the old palette on the way back to
+        # it. This only runs when the palette really changes.
+        for page in self._pages.values():
+            if hasattr(page, "restyle"):
+                page.restyle()
+            if hasattr(page, "refresh"):
+                page.refresh()
+
+    def _refresh_nav_glyphs(self) -> None:
+        """Repaint the sidebar's own icons, which are drawn in the palette."""
+        for key, name in (
+            (LIBRARY_KEY, "library"),
+            (NEWS_KEY, "news"),
+            (RECORDS_KEY, "records"),
+            (CHAT_KEY, "chat"),
+            (SETTINGS_KEY, "settings"),
+        ):
+            button = self._entries.get(key)
+            if button is not None:
+                button.setIcon(QIcon(gameart.nav_glyph(name, SIDEBAR_ICON)))
+
+    # -- the customiser ----------------------------------------------------
+
+    def _theme_scopes(self) -> list[tuple[str, str]]:
+        return [("", "Everywhere")] + [(g.id, g.title) for g in GAMES]
+
+    def _load_theme_scope(self, scope: str) -> None:
+        """Show a scope in the editor, and preview it while it is open."""
+        own = self.config.settings.game_themes.get(scope) if scope else None
+        inherited = bool(scope) and own is None
+        self.theme_editor.load(scope, self._palette_for(scope), inherited)
+        # Previewed even when inherited, so the wells show what the game
+        # actually looks like rather than an empty starting point.
+        self._set_palette(self._palette_for(scope))
+
+    def _theme_changed(self, scope: str, p: palette.Palette) -> None:
+        # Only the differences are stored, so a later change to the shipped
+        # palette still reaches every colour nobody has overridden.
+        changes = p.changes()
+        if scope:
+            self.config.settings.game_themes[scope] = changes
+        else:
+            self.config.settings.theme = changes
+        self.config.save()
+        self._set_palette(p)
+
+    def _theme_cleared(self, scope: str) -> None:
+        self.config.settings.game_themes.pop(scope, None)
+        self.config.save()
+        self._load_theme_scope(scope)
+        self.flash_status("Theme reset")
 
     def _on_game_located(self, game_id: str) -> None:
         self._rebuild_page(game_id)

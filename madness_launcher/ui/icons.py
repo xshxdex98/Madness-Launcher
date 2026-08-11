@@ -18,6 +18,17 @@ from . import theme
 _cache: dict[str, str] | None = None
 
 
+def invalidate() -> None:
+    """Forget the painted glyphs, so the next call repaints them.
+
+    Called when the palette changes: the tick is drawn to contrast with the
+    accent and the arrows in the muted text colour, so a cached set is wrong
+    the moment either of those moves.
+    """
+    global _cache
+    _cache = None
+
+
 def _new(width: int, height: int, scale: int) -> QPixmap:
     pm = QPixmap(width * scale, height * scale)
     pm.setDevicePixelRatio(scale)
@@ -32,10 +43,10 @@ def _painter(pm: QPixmap) -> QPainter:
 
 
 def _check(scale: int) -> QPixmap:
-    """Tick drawn dark, because it sits on the accent-filled indicator."""
+    """The tick sits on the accent-filled indicator, so it is drawn to suit it."""
     pm = _new(13, 13, scale)
     p = _painter(pm)
-    pen = QPen(QColor("#14161A"))
+    pen = QPen(QColor(theme.ON_ACCENT))
     pen.setWidthF(2.0)
     pen.setCapStyle(Qt.RoundCap)
     pen.setJoinStyle(Qt.RoundJoin)

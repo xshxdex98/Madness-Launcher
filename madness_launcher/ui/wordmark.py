@@ -58,12 +58,15 @@ def _draw(scale: int, accent: str) -> QPixmap:
     return pixmap
 
 
-def default_logo(accent: str = theme.DEFAULT_ACCENT, scale: int = 2) -> Path:
+def default_logo(accent: str = "", scale: int = 2) -> Path:
     """Paint the wordmark to disk and return its path.
 
-    Rewritten each run so a change of display font or palette is picked up.
+    Rewritten on demand so a change of display font or palette is picked up.
+    The accent defaults to the live one rather than to the shipped one: as a
+    default argument the latter is evaluated at import, which left the
+    wordmark wearing the stock orange under every custom theme.
     """
     target = paths.app_root() / "branding" / "default-logo.png"
     target.parent.mkdir(parents=True, exist_ok=True)
-    _draw(scale, accent).save(str(target), "PNG")
+    _draw(scale, accent or theme.ACCENT).save(str(target), "PNG")
     return target

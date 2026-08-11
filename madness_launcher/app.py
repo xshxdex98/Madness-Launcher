@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication
 
 from . import APP_NAME, paths
 from .config import Config
-from .ui import fonts, icons, theme
+from .ui import fonts, icons, palette, theme
 from .ui.main_window import MainWindow
 
 
@@ -31,9 +31,13 @@ def main() -> int:
     window_icon = paths.resource("assets", "madness_crew.ico")
     if window_icon.is_file():
         app.setWindowIcon(QIcon(str(window_icon)))
+    config = Config.load()
+    # The saved palette goes on before anything is painted. The glyphs are
+    # drawn in it and the stylesheet points at them by path, so applying it
+    # afterwards would mean painting the whole interface twice on every start.
+    theme.apply(palette.Palette.from_dict(config.settings.theme))
     theme.set_icons(icons.ensure_icons())
 
-    config = Config.load()
     # Borrow the game's own display face, if a configured copy ships it.
     family = fonts.load_display_font(
         [Path(i.path) for i in config.installs.values() if i.path]

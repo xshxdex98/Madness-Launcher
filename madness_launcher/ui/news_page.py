@@ -110,7 +110,7 @@ def to_rich_text(
             return match.group(0)
         # html.escape turned & into &amp;, which is what an href should carry;
         # Qt decodes it again when the link is activated.
-        return f'<a href="{url}" style="color: {theme.DEFAULT_ACCENT};">{url}</a>{tail}'
+        return f'<a href="{url}" style="color: {theme.ACCENT};">{url}</a>{tail}'
 
     body = _URL_RE.sub(link, escaped)
     body = _CODE_RE.sub(

@@ -272,8 +272,12 @@ class GameCard(QFrame):
         # games must not trigger a global restyle.
         # Only a set-up game gets the accent-filled button; "Set up" stays
         # neutral so the colour means "this one is ready to go".
+        # The label goes on with the fill, because it is the fill it has to be
+        # read against: a dark accent needs light text, and the global sheet
+        # cannot know which accent this particular card carries.
         self.setStyleSheet(
-            f'#GameCard #CardPlay[ready="true"] {{ background: {game.accent}; }}'
+            f'#GameCard #CardPlay[ready="true"] {{ background: {game.accent};'
+            f" color: {theme.on_accent(game.accent)}; }}"
             f'#GameCard #CardPlay[ready="true"]:hover {{'
             f" background: {_mix(game.accent, '#FFFFFF', 0.18).name()}; }}"
             f"#GameCard:hover {{ border-color: {game.accent}; }}"

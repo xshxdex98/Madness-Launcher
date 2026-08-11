@@ -80,11 +80,18 @@ class GamePage(QWidget):
         root.addWidget(self.tabs, 1)
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
-        # The game's accent is scoped to this page. Applying it to the whole
-        # application instead repolished every widget on each sidebar click.
-        self.setStyleSheet(theme.accent_rules(self.game.accent))
-
+        self.restyle()
         self.refresh()
+
+    def restyle(self) -> None:
+        """Re-apply the accent rules against the palette now in force.
+
+        The game's accent is scoped to this page: applying it to the whole
+        application instead repolished every widget on each sidebar click. The
+        rules also mention the surrounding surfaces, though, so a change of
+        palette leaves them holding colours that no longer exist.
+        """
+        self.setStyleSheet(theme.accent_rules(self.game.accent))
 
     # ------------------------------------------------------------------
     # Header

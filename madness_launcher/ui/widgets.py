@@ -213,12 +213,17 @@ class LogoArea(QFrame):
 class StatusDot(QLabel):
     """A coloured dot used for install/verification state."""
 
-    COLORS = {
-        "good": theme.GOOD,
-        "warn": theme.WARN,
-        "bad": theme.BAD,
-        "idle": theme.FAINT,
-    }
+    # Looked up when the dot is painted, not when the class is defined. As a
+    # class attribute this froze whatever the palette happened to be at import
+    # and the dots then kept the old colours through a theme change.
+    @staticmethod
+    def colors() -> dict[str, str]:
+        return {
+            "good": theme.GOOD,
+            "warn": theme.WARN,
+            "bad": theme.BAD,
+            "idle": theme.FAINT,
+        }
 
     def __init__(self, state: str = "idle", size: int = 8):
         super().__init__()
@@ -234,7 +239,7 @@ class StatusDot(QLabel):
 
     def set_state(self, state: str) -> None:
         self._state = state
-        color = QColor(self.COLORS.get(state, theme.FAINT))
+        color = QColor(self.colors().get(state, theme.FAINT))
         pm = QPixmap(self._size, self._size)
         pm.fill(Qt.transparent)
         painter = QPainter(pm)

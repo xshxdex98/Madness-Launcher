@@ -88,6 +88,25 @@ class Settings:
     # Normally delivered in the news feed so it can be rotated without a
     # rebuild; set here only to point one machine somewhere else.
     records_webhook: str = ""
+    # Colours the user has changed, as {palette field: "#RRGGBB"}. Only the
+    # differences from the shipped palette are kept, so a future change to the
+    # defaults reaches anyone who has not overridden that particular colour.
+    theme: dict[str, str] = field(default_factory=dict)
+    # Per-game overrides, {game id: same shape}. A game with no entry uses the
+    # theme above; an entry is created only when someone customises that game,
+    # which is why absent and empty have to mean different things here.
+    game_themes: dict[str, dict[str, str]] = field(default_factory=dict)
+
+    @staticmethod
+    def _colours(raw: Any) -> dict[str, str]:
+        """A {field: colour} mapping, discarding anything that is not one."""
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(k): str(v)
+            for k, v in raw.items()
+            if isinstance(k, str) and isinstance(v, str)
+        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Settings":
@@ -106,7 +125,22 @@ class Settings:
             news_last_seen=str(data.get("news_last_seen", "")),
             records_submit=bool(data.get("records_submit", False)),
             records_webhook=str(data.get("records_webhook", "")),
+            theme=cls._colours(data.get("theme")),
+            game_themes=cls._game_themes(data.get("game_themes")),
         )
+
+    @classmethod
+    def _game_themes(cls, raw: Any) -> dict[str, dict[str, str]]:
+        # `or {}` is not enough of a guard: a non-empty value of the wrong
+        # type gets through it and then fails on .items(), which would stop
+        # the launcher starting over an edited config file.
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(game_id): cls._colours(colours)
+            for game_id, colours in raw.items()
+            if isinstance(colours, dict)
+        }
 
 
 class Config:

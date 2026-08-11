@@ -1,28 +1,45 @@
 """Visual language for the launcher.
 
-One dark palette, one accent that changes per game. Surfaces are separated by
+One palette, one accent that changes per game. Surfaces are separated by
 lightness and a hairline border rather than shadows, which keeps the window
 flat and readable at any DPI.
+
+The palette itself lives in palette.py as a value. This module holds whichever
+one is currently on screen, unpacked into module-level names because that is
+how the rest of the interface reads it — `theme.BG` in an f-string, a hundred
+times over. Rebinding those names in `apply()` keeps every one of those reads
+working while still allowing the colours to change at runtime; the only rule
+is that a colour must be read inside a function, never captured at import.
 """
 
 from __future__ import annotations
 
-# Chicago at night: a navy-tinted greyscale rather than a neutral one, so the
-# shell reads as part of Midtown Madness without resorting to 1999 chrome.
-BG = "#0B0F16"
-SURFACE = "#121824"
-ELEVATED = "#18202E"
-HOVER = "#1F2937"
-BORDER = "#222C3C"
-BORDER_STRONG = "#2F3D51"
-TEXT = "#E7ECF3"
-MUTED = "#8795AB"
-FAINT = "#5A6982"
-GOOD = "#4CAF7D"
-WARN = "#D9A441"
-BAD = "#D9584B"
+from .palette import Palette  # noqa: F401  (re-exported for convenience)
+from .palette import DEFAULT, darken, lighten, mix
 
-DEFAULT_ACCENT = "#E0912F"
+_active: Palette = DEFAULT
+
+BG = DEFAULT.bg
+SURFACE = DEFAULT.surface
+ELEVATED = DEFAULT.elevated
+HOVER = DEFAULT.hover
+BORDER = DEFAULT.border
+BORDER_STRONG = DEFAULT.border_strong
+TEXT = DEFAULT.text
+MUTED = DEFAULT.muted
+FAINT = DEFAULT.faint
+GOOD = DEFAULT.good
+WARN = DEFAULT.warn
+BAD = DEFAULT.bad
+
+# The accent the palette was saved with. A game page overrides it with its own
+# on the way past, so this is what everything outside a game page uses.
+ACCENT = DEFAULT.accent
+# Text drawn on top of the accent, picked for contrast against it.
+ON_ACCENT = DEFAULT.on_accent
+
+# The colours the launcher ships with, for a Reset button to return to.
+DEFAULT_ACCENT = DEFAULT.accent
 
 # Body text stays on the system UI font for legibility at small sizes.
 FONT = "Segoe UI"
@@ -36,23 +53,66 @@ def set_display_font(family: str) -> None:
     DISPLAY_FONT = family
 
 
+def current() -> Palette:
+    """The palette on screen right now."""
+    return _active
+
+
+def apply(p: Palette) -> None:
+    """Make a palette the current one.
+
+    Only rebinds the names. Restyling the application, and repainting the
+    glyphs and the wordmark that bake colours in, is the caller's job — those
+    are expensive and the caller knows whether anything is on screen yet.
+    """
+    global _active, BG, SURFACE, ELEVATED, HOVER, BORDER, BORDER_STRONG
+    global TEXT, MUTED, FAINT, GOOD, WARN, BAD, ACCENT, ON_ACCENT
+    _active = p
+    BG = p.bg
+    SURFACE = p.surface
+    ELEVATED = p.elevated
+    HOVER = p.hover
+    BORDER = p.border
+    BORDER_STRONG = p.border_strong
+    TEXT = p.text
+    MUTED = p.muted
+    FAINT = p.faint
+    GOOD = p.good
+    WARN = p.warn
+    BAD = p.bad
+    ACCENT = p.accent
+    ON_ACCENT = p.on_accent
+
+
+def restyle(app, p: Palette | None = None) -> None:
+    """Put a palette on screen.
+
+    The glyphs have to be repainted before the stylesheet is rebuilt, because
+    the stylesheet points at them by path: the tick is drawn to contrast with
+    the accent and the arrows in the muted text colour, so a cached set is
+    stale the moment either moves.
+
+    This restyles the whole application, which repolishes every widget in the
+    tree. That is not cheap — see accent_rules — so call it when the palette
+    actually changes and not on every click.
+    """
+    from . import icons
+
+    if p is not None:
+        apply(p)
+    icons.invalidate()
+    set_icons(icons.ensure_icons())
+    app.setStyleSheet(stylesheet())
+
+
 def _mix(hex_color: str, other: str, amount: float) -> str:
     """Blend two #rrggbb colours; amount 0 keeps the first, 1 gives the second."""
-    a = hex_color.lstrip("#")
-    b = other.lstrip("#")
-    out = []
-    for i in (0, 2, 4):
-        ca, cb = int(a[i : i + 2], 16), int(b[i : i + 2], 16)
-        out.append(round(ca + (cb - ca) * amount))
-    return "#" + "".join(f"{c:02X}" for c in out)
+    return mix(hex_color, other, amount)
 
 
-def lighten(hex_color: str, amount: float = 0.15) -> str:
-    return _mix(hex_color, "#FFFFFF", amount)
-
-
-def darken(hex_color: str, amount: float = 0.15) -> str:
-    return _mix(hex_color, "#000000", amount)
+def on_accent(accent: str) -> str:
+    """Text to draw on top of a given accent, whichever of the two reads."""
+    return DEFAULT.with_accent(accent).on_accent
 
 
 # Paths to the painted glyphs, installed by ui.icons at startup. Empty until
@@ -79,7 +139,7 @@ def accent_brush():
     """
     from PySide6.QtGui import QBrush, QColor
 
-    return QBrush(QColor(DEFAULT_ACCENT))
+    return QBrush(QColor(ACCENT))
 
 
 def accent_rules(accent: str) -> str:
@@ -91,6 +151,7 @@ def accent_rules(accent: str) -> str:
     every click in the sidebar. Scoping it to the page that actually uses the
     accent makes switching games instant.
     """
+    ink = on_accent(accent)
     accent_hover = lighten(accent, 0.12)
     accent_press = darken(accent, 0.12)
     accent_soft = _mix(accent, BG, 0.78)
@@ -100,7 +161,7 @@ def accent_rules(accent: str) -> str:
 QPushButton#Primary {{
     background: {accent};
     border: 1px solid {accent};
-    color: #14161A;
+    color: {ink};
     font-weight: 700;
 }}
 QPushButton#Primary:hover {{
@@ -119,7 +180,7 @@ QPushButton#PlayButton {{
     background: {accent};
     border: none;
     border-radius: 9px;
-    color: #14161A;
+    color: {ink};
     font-size: 17px;
     font-weight: 700;
     padding: 12px 44px;
@@ -139,7 +200,7 @@ QLineEdit:focus, QSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus {{
 }}
 QLineEdit, QSpinBox, QComboBox, QPlainTextEdit {{
     selection-background-color: {accent};
-    selection-color: #14161A;
+    selection-color: {ink};
 }}
 QComboBox QAbstractItemView {{ selection-background-color: {accent_soft}; }}
 
@@ -153,7 +214,9 @@ QPushButton#LinkButton:hover {{ color: {accent}; }}
 """
 
 
-def stylesheet(accent: str = DEFAULT_ACCENT) -> str:
+def stylesheet(accent: str = "") -> str:
+    accent = accent or ACCENT
+    ink = on_accent(accent)
     accent_hover = lighten(accent, 0.12)
     accent_press = darken(accent, 0.12)
     accent_soft = _mix(accent, BG, 0.78)
@@ -363,9 +426,10 @@ QPushButton#CardPlay {{
     background: {ELEVATED};
 }}
 
+/* The fill and the label both come from the card's own accent, set in
+   library_page — only the border is safe to state here. */
 QPushButton#CardPlay[ready="true"] {{
     border-color: transparent;
-    color: #10151F;
 }}
 
 QPushButton#CardPlay:hover {{
@@ -500,7 +564,7 @@ QPushButton:disabled {{
 QPushButton#Primary {{
     background: {accent};
     border: 1px solid {accent};
-    color: #14161A;
+    color: {ink};
     font-weight: 700;
 }}
 
@@ -524,7 +588,7 @@ QPushButton#PlayButton {{
     background: {accent};
     border: none;
     border-radius: 9px;
-    color: #14161A;
+    color: {ink};
     font-size: 17px;
     font-weight: 700;
     padding: 12px 44px;
@@ -629,7 +693,7 @@ QLineEdit, QSpinBox, QComboBox, QPlainTextEdit {{
     border-radius: 7px;
     padding: 7px 10px;
     selection-background-color: {accent};
-    selection-color: #14161A;
+    selection-color: {ink};
 }}
 
 QLineEdit:focus, QSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus {{
@@ -774,7 +838,7 @@ QTextBrowser#Transcript {{
     padding: 12px 14px;
     font-size: 13px;
     selection-background-color: {accent};
-    selection-color: #14161A;
+    selection-color: {ink};
 }}
 
 QListWidget#UserList {{

@@ -43,11 +43,13 @@ class VideoBackground(QWidget):
     # than assume the state they asked for took effect.
     state_changed = Signal()
 
-    def __init__(self, accent: str = theme.DEFAULT_ACCENT, scrim: float = 0.62):
+    def __init__(self, accent: str = "", scrim: float = 0.62):
         super().__init__()
         self.setAttribute(Qt.WA_StyledBackground, False)
         self._image: QImage | None = None
-        self._accent = accent
+        # Resolved here rather than in the signature: a default argument is
+        # evaluated at import, which would pin this to the shipped accent.
+        self._accent = accent or theme.ACCENT
         self._scrim = scrim
         self._player = None
         self._sink = None
