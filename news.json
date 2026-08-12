@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-11T22:29:19Z",
+  "generated": "2026-08-12T00:43:11Z",
   "announcements": [
     {
       "id": "1536558660262559764",
@@ -521,6 +521,36 @@
     }
   ],
   "records": [
+    {
+      "game": "mm2",
+      "board": "vanilla",
+      "race": 0,
+      "city": "sf",
+      "race_name": "Racing 101",
+      "race_kind": "Checkpoint",
+      "difficulty": "pro",
+      "car": "vpmustang99",
+      "seconds": 19.381,
+      "username": "xSHXDEx",
+      "set_at": "2026-08-11T23:18:25+00:00",
+      "source": "launcher",
+      "message_id": "1536876427306078309"
+    },
+    {
+      "game": "mm2",
+      "board": "vanilla",
+      "race": 22,
+      "city": "sf",
+      "race_name": "Ignorance Is Blitz",
+      "race_kind": "",
+      "difficulty": "pro",
+      "car": "vpmustang99",
+      "seconds": 17.359,
+      "username": "xSHXDEx",
+      "set_at": "2026-08-11T23:06:41+00:00",
+      "source": "launcher",
+      "message_id": "1536873477251014767"
+    },
     {
       "game": "mm1",
       "board": "vanilla",
