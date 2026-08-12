@@ -423,16 +423,45 @@ def learn_name(
     return stem, name
 
 
+# Where the rider profile keeps the engine size of the selected bike.
+#
+# Found by riding, not by reading: a 125cc lap on SX01 turned this word from
+# 250 to 125, and of the 1190 words in the profile it was the only one that
+# moved to a value in CLASSES. The bike's texture changed from KTM250SX to
+# KTM125SX in the same write, which says the same thing twice.
+PROFILE_CLASS_AT = 2328
+
+
+def profile_class(path: Path) -> int:
+    """The engine size on one rider profile, or 0 if it does not look like one."""
+    try:
+        blob = path.read_bytes()
+    except OSError:
+        return 0
+    if len(blob) < PROFILE_CLASS_AT + 4:
+        return 0
+    value = struct.unpack_from("<I", blob, PROFILE_CLASS_AT)[0]
+    return value if value in CLASSES else 0
+
+
 def selected_class(install: Path) -> str:
-    """The engine class currently chosen, if it can be told.
+    """The engine class currently chosen, as "125cc", or empty if unknown.
 
-    Not yet known. The class is not in a .hs1 slot, and the profile has
-    several words that could be it — 250, 500 and 600 all appear near the
-    bike entries, and which is authoritative cannot be told by looking. It is
-    being settled by riding one track on two classes and diffing, the same
-    way Midtown Madness 2's race order was, after guessing it wrong twice.
+    A profile-wide selection rather than something stored against each time,
+    because the game does not record a class in the table — a slot holds a
+    name and a time and nothing else. So this is the class that was selected
+    when the game last wrote its profile, which for a session the launcher
+    watched is the class the session was ridden on.
 
-    Returns empty until then, which the board renders as no class rather than
-    as a wrong one.
+    The honest limit: change bike between two races in one sitting and both
+    times take the class of the second. Nothing on disk can distinguish them.
+
+    Returns empty rather than a guess when the profile cannot be read, and
+    the board shows no class rather than a wrong one.
     """
-    return ""
+    sizes = {profile_class(p) for p in profile_files(Path(install))}
+    sizes.discard(0)
+    # More than one profile with different bikes: no way to say which rode.
+    if len(sizes) != 1:
+        return ""
+    return f"{sizes.pop()}cc"

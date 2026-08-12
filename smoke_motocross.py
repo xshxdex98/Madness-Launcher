@@ -196,12 +196,45 @@ check("a reorder names the track that moved to the front",
 check("a name that just repeats the filename is not worth learning",
       mc.learn_name(["TD_Making_Tracks"], [], ["TD Making Tracks"]) is None)
 
-print("\nthe bike class is not invented")
-check(
-    "no class is claimed until it has been proven",
-    mc.selected_class(root) == "",
-    "returning a guess here would put a wrong class on every published time",
-)
+print("\nthe bike class, read from the rider profile")
+
+
+def with_class(size) -> Path:
+    """An install whose rider profile has a given engine size selected."""
+    home = SANDBOX / f"prof{size}"
+    d = home / "UI" / "PROFILE" / "xSHXDEx"
+    d.mkdir(parents=True, exist_ok=True)
+    blob = bytearray(b"\0" * 4760)
+    if size is not None:
+        struct.pack_into("<I", blob, mc.PROFILE_CLASS_AT, size)
+    (d / "xSHXDEx.prf").write_bytes(bytes(blob))
+    return home
+
+
+check("a 125 reads back as 125cc", mc.selected_class(with_class(125)) == "125cc")
+check("a 500 reads back as 500cc", mc.selected_class(with_class(500)) == "500cc")
+check("every class the game offers is accepted",
+      all(mc.selected_class(with_class(c)) == f"{c}cc" for c in mc.CLASSES))
+check("a value that is not a class is refused", mc.selected_class(with_class(3)) == "",
+      "a wrong class on a published time is worse than none")
+check("an empty profile gives nothing", mc.selected_class(with_class(0)) == "")
+check("no profile at all gives nothing", mc.selected_class(SANDBOX / "nothing") == "")
+
+# Two riders on different bikes: nothing on disk says which of them rode.
+two = SANDBOX / "twoprofiles"
+for who, size in (("a", 125), ("b", 500)):
+    d = two / "UI" / "PROFILE" / who
+    d.mkdir(parents=True, exist_ok=True)
+    blob = bytearray(b"\0" * 4760)
+    struct.pack_into("<I", blob, mc.PROFILE_CLASS_AT, size)
+    (d / f"{who}.prf").write_bytes(bytes(blob))
+check("two profiles disagreeing gives nothing", mc.selected_class(two) == "")
+
+short = SANDBOX / "shortprof" / "UI" / "PROFILE" / "x"
+short.mkdir(parents=True, exist_ok=True)
+(short / "x.prf").write_bytes(b"\0" * 16)
+check("a truncated profile is not a crash",
+      mc.selected_class(SANDBOX / "shortprof") == "")
 
 print()
 if failures:
