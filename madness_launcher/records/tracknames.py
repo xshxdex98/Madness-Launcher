@@ -88,14 +88,22 @@ def adopt(names: dict[str, str]) -> int:
     A record published by somebody else names its own track, which is how a
     name learned on one machine reaches the rest without anybody having to
     ride anything.
+
+    A name that merely repeats the shipped default is not taken in. Only the
+    launcher that watched the game name a track knows it for a fact, and
+    everyone else publishes the default until then — storing that would
+    promote a guess to an observation and lock out the correction.
     """
     known = motocross.learned_names()
     added = 0
     for stem, name in (names or {}).items():
         stem, name = str(stem).strip().lower(), str(name).strip()[:MAX_LENGTH]
-        if stem and name and not known.get(stem):
-            known[stem] = name
-            added += 1
+        if not stem or not name or known.get(stem):
+            continue
+        if name.lower() == motocross.default_name(stem).lower():
+            continue
+        known[stem] = name
+        added += 1
     if added:
         motocross.set_learned(known)
         save(known)

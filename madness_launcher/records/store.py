@@ -18,7 +18,7 @@ from pathlib import Path
 
 from .. import paths
 from ..news.model import safe_url
-from . import reader
+from . import motocross, reader
 from .session import Submission
 
 # A guard against a file that has somehow grown unbounded, not a real limit:
@@ -85,6 +85,16 @@ def _from_dict(item: object) -> Submission | None:
     if race < 0 or not (0 < seconds < 86400):
         return None
     car = str(item.get("car", ""))
+    track = str(item.get("track", ""))[:64]
+    if track:
+        # Motocross names are learned rather than looked up, so a record
+        # stored or published before its track had a name still carries the
+        # filename. The name is re-derived on the way in instead of being
+        # taken as written, which is what makes a name learned today fix
+        # every row that was saved yesterday.
+        learned = motocross.pretty_track(track)
+        if learned:
+            name = learned
     return Submission(
         game=game,
         board=str(item.get("board", ""))[:16],
@@ -109,7 +119,7 @@ def _from_dict(item: object) -> Submission | None:
         mods=[str(m)[:64] for m in (item.get("mods") or [])][:64],
         source=str(item.get("source", "launcher"))[:24],
         url=safe_url(item.get("url")),
-        track=str(item.get("track", ""))[:64],
+        track=track,
     )
 
 

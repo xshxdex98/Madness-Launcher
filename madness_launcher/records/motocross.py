@@ -152,6 +152,63 @@ def classify(stem: str, folder: str = "", size: int = 0) -> str:
     return BOARD_VANILLA if is_stock(stem, folder, size) else BOARD_MODDED
 
 
+# Names for the shipped tracks, as the game displays them.
+#
+# These are DEFAULTS, and deliberately outrank nothing. A name read out of a
+# rider profile — the game's own answer — replaces one of these without
+# argument, so a wrong guess here costs one race to correct rather than
+# sticking. That is what makes it safe to write down a mapping that could not
+# be verified file by file: the .env files are encrypted, so short of riding
+# all fifty-one there is no way to check, and half of them are worth having
+# right away.
+#
+# Where each came from:
+#   SX01     ridden, and the profile named it. The rest of the Supercross
+#            season follows it in order, from the names the user supplied.
+#   SX17     the wiki listed only sixteen weeks; the seventeenth came from
+#            the user directly. LANG.DLL has an unlock message, which fits
+#            a bonus track the season list would not mention.
+#   TAG02    the profile named it "Arena Tag 02"; 01 and 03 follow.
+#   FARM     the profile named it "Munchberry Farms".
+#   the other four Enduros, matched to their LANG.DLL descriptions — the ski
+#            lodge one mentions a 120-metre ski jump, the open pit is a mine,
+#            the trailer park and the airfield name themselves.
+#   IFFENDIC, VV  the filename is the name.
+#
+# Not written down: NAT01-12, BAJA01-05, QUARRY01-05, CHANOS and HILLSIDE.
+# There are names for them but nothing that ties a name to a file, and the
+# counts do not even line up — fifteen National names against sixteen files.
+# Riding one names it for everybody.
+STOCK_NAMES: dict[str, str] = {
+    "sx01": "Week 01 - Seattle",
+    "sx02": "Week 02 - Detroit",
+    "sx03": "Week 03 - Jacksonville",
+    "sx04": "Week 04 - Kansas City",
+    "sx05": "Week 05 - San Francisco",
+    "sx06": "Week 06 - Baltimore",
+    "sx07": "Week 07 - Pittsburgh",
+    "sx08": "Week 08 - Albany",
+    "sx09": "Week 09 - San Diego",
+    "sx10": "Week 10 - Chicago",
+    "sx11": "Week 11 - Denver",
+    "sx12": "Week 12 - Houston",
+    "sx13": "Week 13 - Phoenix",
+    "sx14": "Week 14 - Orlando",
+    "sx15": "Week 15 - Milwaukee",
+    "sx16": "Week 16 - Bisbee",
+    "sx17": "Week 17 - Amityville",
+    "tag01": "Arena Tag 01",
+    "tag02": "Arena Tag 02",
+    "tag03": "Arena Tag 03",
+    "farm": "Munchberry Farms",
+    "skilodge": "Bear Mountain",
+    "openpit": "Morenci Mine",
+    "trailer": "Starlight Park",
+    "airfield": "Zihuatanejo",
+    "iffendic": "Iffendic",
+    "vv": "Valley View",
+}
+
 _WORD = re.compile(r"[_\s]+")
 
 # Real names, once anybody's launcher has learned one. Keyed by lowercased
@@ -170,19 +227,27 @@ def learned_names() -> dict[str, str]:
     return dict(_LEARNED)
 
 
-def pretty_track(stem: str) -> str:
-    """A readable name for a track.
+def default_name(stem: str) -> str:
+    """The shipped name for a track, if there is one. Not authoritative."""
+    return STOCK_NAMES.get(stem.strip().lower(), "")
 
-    The real names are locked inside the encrypted .env, so this falls back
-    to the filename until the rider profile has supplied a better one. The
-    fallback is often exactly right already — TD_Making_Tracks is displayed
-    by the game as "TD Making Tracks".
+
+def pretty_track(stem: str) -> str:
+    """A readable name for a track, best answer first.
+
+    In order: what the game itself was seen to call it, then the shipped
+    default, then the filename. The real names are locked inside the
+    encrypted .env, so the filename is the floor — and it is often exactly
+    right already, since TD_Making_Tracks is displayed by the game as
+    "TD Making Tracks".
     """
-    known = _LEARNED.get(stem.strip().lower())
-    if known:
-        return known
-    name = _WORD.sub(" ", stem.strip()).strip()
-    return name or stem
+    key = stem.strip().lower()
+    return (
+        _LEARNED.get(key)
+        or STOCK_NAMES.get(key)
+        or _WORD.sub(" ", stem.strip()).strip()
+        or stem
+    )
 
 
 def track_index(stem: str) -> int:

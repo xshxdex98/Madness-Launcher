@@ -310,23 +310,65 @@ check("a lap longer than its session is refused", not ok, why)
 print("\n  names learned here reach the board")
 tracknames.load()
 mc.set_learned({})
-check("unlearned, a track goes by its filename",
-      mc.pretty_track("SX01") == "SX01")
-tracknames.remember("SX01", "Week 01 - Seattle")
+# NAT05 on purpose: it has no shipped default, so this exercises the
+# filename floor rather than the default layer above it.
+check("with no default and nothing learned, the filename shows",
+      mc.pretty_track("NAT05") == "NAT05")
+tracknames.remember("NAT05", "Beaver County Race 01")
 check("learned, it goes by its name",
-      mc.pretty_track("SX01") == "Week 01 - Seattle")
+      mc.pretty_track("NAT05") == "Beaver County Race 01")
 check("and a record picks it up",
-      sub_for("SX01", "SX", "x", 72.9).race_name == "Week 01 - Seattle")
+      sub_for("NAT05", "NATIONAL", "x", 59.9).race_name == "Beaver County Race 01")
 check("learning the same track twice keeps the first",
-      not tracknames.remember("SX01", "Something Else")
-      and mc.pretty_track("SX01") == "Week 01 - Seattle")
+      not tracknames.remember("NAT05", "Something Else")
+      and mc.pretty_track("NAT05") == "Beaver County Race 01")
+print("\n  the shipped names, and the game overruling them")
+check("a shipped track has a name out of the box",
+      mc.default_name("SX04") == "Week 04 - Kansas City")
+check("the seventeenth week is there too",
+      mc.default_name("SX17") == "Week 17 - Amityville")
+check("the whole season is named",
+      sorted(k for k in mc.STOCK_NAMES if k.startswith("sx"))
+      == [f"sx{i:02}" for i in range(1, 18)])
+check("nothing is claimed for the tracks with no known order",
+      not any(mc.default_name(s) for s in
+              ("NAT01", "NAT12", "BAJA01", "BAJA05", "QUARRY01", "CHANOS", "HILLSIDE")),
+      "fifteen National names against sixteen files ties none of them to a file")
+check("a community track is unaffected",
+      mc.default_name("TD_Making_Tracks") == ""
+      and mc.pretty_track("TD_Making_Tracks") == "TD Making Tracks")
+check("every shipped name belongs to a track that exists",
+      set(mc.STOCK_NAMES) <= set(mc.STOCK_TRACKS),
+      str(set(mc.STOCK_NAMES) - set(mc.STOCK_TRACKS)))
+check("no two tracks are given the same name",
+      len(set(mc.STOCK_NAMES.values())) == len(mc.STOCK_NAMES))
+
+# Not cleared first: the map is saved whole, so wiping it here would drop
+# what the section above just learned and the persistence check below is the
+# one that would notice.
+check("a default is used when nothing better is known",
+      mc.pretty_track("SX04") == "Week 04 - Kansas City")
+tracknames.remember("SX04", "Something The Game Actually Said")
+check("but the game overrules it",
+      mc.pretty_track("SX04") == "Something The Game Actually Said",
+      "a default that turns out wrong must cost one race, not stick forever")
+check("a default is never promoted through the feed",
+      tracknames.adopt({"SX05": "Week 05 - San Francisco"}) == 0,
+      "everyone publishes the default until someone rides it; storing that "
+      "would lock out the correction")
+check("a real name from the feed still lands",
+      tracknames.adopt({"SX05": "What It Is Really Called"}) == 1
+      and mc.pretty_track("SX05") == "What It Is Really Called")
+tracknames.load()
+
 check("names carried by the feed are adopted",
-      tracknames.adopt({"NAT05": "Beaver County Race 01"}) == 1
-      and mc.pretty_track("NAT05") == "Beaver County Race 01")
+      tracknames.adopt({"NAT06": "Iron Mountain"}) == 1
+      and mc.pretty_track("NAT06") == "Iron Mountain")
 check("adopting one already known changes nothing",
-      tracknames.adopt({"NAT05": "Wrong"}) == 0
-      and mc.pretty_track("NAT05") == "Beaver County Race 01")
-check("they survive a restart", tracknames.load().get("sx01") == "Week 01 - Seattle")
+      tracknames.adopt({"NAT06": "Wrong"}) == 0
+      and mc.pretty_track("NAT06") == "Iron Mountain")
+check("they survive a restart",
+      tracknames.load().get("nat05") == "Beaver County Race 01")
 
 print("\nthe records page")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -406,6 +448,31 @@ watched = _from_moto(rec, "MyLauncherName", "250cc", SOURCE_LAUNCHER, "now")
 check("a watched run is yours regardless of the in-game name",
       watched.username == "MyLauncherName",
       "the launcher saw it set; the profile name is not a gate")
+
+print("\n  a name learned today fixes rows saved yesterday")
+mc.set_learned({})
+old_row = {
+    "game": "mcm2", "board": "vanilla", "city": "SX", "track": "SX01",
+    "race": mc.track_index("SX01"), "race_name": "SX01",
+    "race_kind": "Supercross", "car": "500cc", "seconds": 63.954,
+    "driver": "xSHXDEx", "username": "xSHXDEx",
+}
+check("a row stored as the filename now reads as the shipped name",
+      record_store._from_dict(old_row).race_name == "Week 01 - Seattle",
+      "race_name is frozen when a record is written; it has to be re-derived")
+unnamed = dict(old_row, track="QUARRY03", race_name="QUARRY03", city="QUARRIES",
+               race=mc.track_index("QUARRY03"))
+check("a track nobody has named yet still shows its filename",
+      record_store._from_dict(unnamed).race_name == "QUARRY03")
+tracknames.remember("QUARRY03", "Donner Pass")
+check("and the moment somebody rides it, the old row updates too",
+      record_store._from_dict(unnamed).race_name == "Donner Pass")
+check("a Midtown record is not touched by any of this",
+      record_store._from_dict(
+          {"game": "mm1", "board": "vanilla", "city": "chicago", "race": 3,
+           "race_name": "Dearborn Dash", "seconds": 60.0,
+           "car": "vpmustang99", "driver": "x"}).race_name == "Dearborn Dash")
+tracknames.load()
 
 print("\nthe round trip through Discord and back")
 sys.path.insert(0, str(ROOT / "tools" / "newsbot"))
