@@ -12,6 +12,14 @@ the track as `<track>.hs1`, 208 bytes:
 The discipline comes free: tracks live in TERAFORM/<discipline>/, which is
 also how the game groups them — SX, NATIONAL, ENDURO, BAJA, QUARRIES, TAG.
 
+A time is the FASTEST LAP, not the race. Confirmed on a three-lap Supercross
+at Week 01 - Seattle, which stored 1:12.909 — one lap of it. This is worth
+being sure of rather than assuming: Midtown Madness 2 turned out to store
+circuit times per lap while speedrun.com times the whole race, the two are
+not comparable, and a board was built on the mistake before anyone noticed.
+Every Motocross time on the board is one lap, so they all mean the same
+thing however many laps were ridden to set them.
+
 Two things this format does not give us.
 
 The bike class is not in a slot; there is room for a name and a time and
@@ -146,15 +154,33 @@ def classify(stem: str, folder: str = "", size: int = 0) -> str:
 
 _WORD = re.compile(r"[_\s]+")
 
+# Real names, once anybody's launcher has learned one. Keyed by lowercased
+# filename stem. Installed at startup from the saved map and topped up as
+# tracks are ridden; see learn_name.
+_LEARNED: dict[str, str] = {}
+
+
+def set_learned(names: dict[str, str]) -> None:
+    """Install the known track names. Replaces whatever was there."""
+    _LEARNED.clear()
+    _LEARNED.update({str(k).lower(): str(v) for k, v in (names or {}).items() if v})
+
+
+def learned_names() -> dict[str, str]:
+    return dict(_LEARNED)
+
 
 def pretty_track(stem: str) -> str:
-    """A readable name for a track, from its filename.
+    """A readable name for a track.
 
-    The real names are locked inside the encrypted .env, so this is the
-    fallback until the rider profile supplies a better one. It is often
-    exactly right already — TD_Making_Tracks is displayed by the game as
-    "TD Making Tracks".
+    The real names are locked inside the encrypted .env, so this falls back
+    to the filename until the rider profile has supplied a better one. The
+    fallback is often exactly right already — TD_Making_Tracks is displayed
+    by the game as "TD Making Tracks".
     """
+    known = _LEARNED.get(stem.strip().lower())
+    if known:
+        return known
     name = _WORD.sub(" ", stem.strip()).strip()
     return name or stem
 

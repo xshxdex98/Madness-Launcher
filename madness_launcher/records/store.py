@@ -109,6 +109,7 @@ def _from_dict(item: object) -> Submission | None:
         mods=[str(m)[:64] for m in (item.get("mods") or [])][:64],
         source=str(item.get("source", "launcher"))[:24],
         url=safe_url(item.get("url")),
+        track=str(item.get("track", ""))[:64],
     )
 
 

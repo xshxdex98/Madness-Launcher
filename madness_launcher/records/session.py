@@ -27,7 +27,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
-from . import reader
+from . import motocross, reader
 
 # How often to ask whether the game has exited.
 POLL_MS = 3000
@@ -50,9 +50,16 @@ MIN_PLAUSIBLE_SECONDS = 8.0
 # the session is measured generously.
 SESSION_SLACK_SECONDS = 30.0
 
-# Games whose record tables the launcher can read. Both keep them the
-# same way; profiles.py holds what differs.
-GAMES_WITH_RECORDS = ("mm1", "mm2")
+# Games that keep their records the AGE way — one save file of fixed-size
+# records. profiles.py holds what differs between them.
+AGE_GAMES = ("mm1", "mm2")
+
+# Motocross Madness keeps a separate table beside each track instead, so it
+# is read by its own module. See records/motocross.py.
+MOTOCROSS_GAMES = ("mcm2",)
+
+# Games whose record tables the launcher can read at all.
+GAMES_WITH_RECORDS = AGE_GAMES + MOTOCROSS_GAMES
 
 
 @dataclass
@@ -85,6 +92,11 @@ class Submission:
     source: str = "launcher"
     # Proof, when the source has any — a link to the verified run.
     url: str = ""
+    # The track's filename, for a game whose tracks are files rather than a
+    # fixed list. Carried separately from race_name because the name is
+    # learned and the filename is what it is learned against: a launcher
+    # that has never ridden the track needs the pair to show the real name.
+    track: str = ""
 
     @property
     def formatted(self) -> str:
@@ -109,6 +121,7 @@ class Submission:
             "mods": sorted(self.mods),
             "source": self.source,
             "url": self.url,
+            **({"track": self.track} if self.track else {}),
         }
 
 
@@ -140,6 +153,44 @@ SOURCE_LAUNCHER = "launcher"
 SOURCE_IMPORTED = "imported"
 
 
+def _from_moto(
+    record: "motocross.MotoRecord",
+    username: str,
+    bike_class: str,
+    source: str,
+    set_at: str = "",
+) -> Submission:
+    """One Motocross time as a Submission.
+
+    Everything the board already knows how to show, mapped onto the fields it
+    already has. The discipline goes in `city` because that is the field the
+    records page turns into tabs, and Supercross against Enduro is exactly
+    the split worth having tabs for. The class goes in `car` because it is
+    what the time was set on, which is what `car` means.
+    """
+    return Submission(
+        game=record.game,
+        board=record.board,
+        city=record.folder.upper(),
+        race=record.race,
+        race_name=record.race_name,
+        race_kind=record.kind,
+        difficulty="",
+        car=bike_class,
+        car_name=bike_class,
+        track=record.track,
+        seconds=record.seconds,
+        driver=record.driver,
+        username=username,
+        set_at=set_at,
+        # A modded board here means a track the game did not ship, and the
+        # track is named in the row already. Listing it again as a mod would
+        # say the same thing twice.
+        mods=[],
+        source=source,
+    )
+
+
 def existing_records(
     install: Path, game_id: str = "mm1", username: str = ""
 ) -> list[Submission]:
@@ -154,6 +205,15 @@ def existing_records(
     carry a different source and the board shows which is which. Publishing
     them is still governed by the opt-in.
     """
+    if game_id in MOTOCROSS_GAMES:
+        # No class is claimed for these. The profile only knows the bike
+        # selected now, which says nothing about a lap set months ago.
+        return [
+            _from_moto(record, username, "", SOURCE_IMPORTED)
+            for record in motocross.snapshot(Path(install), game=game_id).values()
+            if MIN_PLAUSIBLE_SECONDS <= record.seconds <= motocross.MAX_TIME
+        ]
+
     unapproved = reader.unapproved_archives(Path(install), game_id)
     out: list[Submission] = []
     for record in reader.snapshot(Path(install), game=game_id).values():
@@ -211,13 +271,26 @@ class RecordWatcher(QObject):
         self.install = Path(install)
         self.process = process
         self.username = username
-        # What the game will actually load, judged from the folder itself.
-        # Taken now rather than at the end, so archives added mid-session
-        # cannot retroactively qualify a run for the vanilla board.
-        self.unapproved = reader.unapproved_archives(self.install, game_id)
-        self.mods = self.unapproved or list(mods or [])
+        self.motocross = game_id in MOTOCROSS_GAMES
+        if self.motocross:
+            # No archives to judge: a Motocross mod is a track, and whether a
+            # track shipped with the game is decided per record.
+            self.unapproved = []
+            self.mods = list(mods or [])
+            self._before = motocross.snapshot(self.install, game=self.game_id)
+            # The names in the rider profile before the session, so the one
+            # that appears afterwards can be matched to the track that gained
+            # a time. See motocross.learn_name.
+            self._names_before = motocross.all_profile_names(self.install)
+        else:
+            # What the game will actually load, judged from the folder itself.
+            # Taken now rather than at the end, so archives added mid-session
+            # cannot retroactively qualify a run for the vanilla board.
+            self.unapproved = reader.unapproved_archives(self.install, game_id)
+            self.mods = self.unapproved or list(mods or [])
+            self._before = reader.snapshot(self.install, game=self.game_id)
+            self._names_before = []
         self._started = time.monotonic()
-        self._before = reader.snapshot(self.install, game=self.game_id)
         self._timer = QTimer(self)
         self._timer.setInterval(POLL_MS)
         self._timer.timeout.connect(self._check)
@@ -253,6 +326,10 @@ class RecordWatcher(QObject):
         QTimer.singleShot(SETTLE_MS, self._collect)
 
     def _collect(self) -> None:
+        if self.motocross:
+            self._collect_moto()
+            return
+
         session_seconds = time.monotonic() - self._started
         after = reader.snapshot(self.install, game=self.game_id)
         improved = reader.improvements(self._before, after)
@@ -277,6 +354,46 @@ class RecordWatcher(QObject):
                 set_at=stamp,
                 mods=self.mods,
                 source=SOURCE_LAUNCHER,
+            )
+            ok, why = plausible(entry, session_seconds)
+            if ok:
+                good.append(entry)
+            else:
+                self.rejected.emit(f"{entry.race_name} {entry.formatted}", why)
+
+        if good:
+            self.found.emit(good)
+        self.finished.emit(len(good))
+
+    def _collect_moto(self) -> None:
+        """The same, for a game that keeps a table beside each track."""
+        session_seconds = time.monotonic() - self._started
+        after = motocross.snapshot(self.install, game=self.game_id)
+        improved = motocross.improvements(self._before, after)
+
+        # Read once, at the end. The class is a selection in the rider
+        # profile rather than a property of the time, so this is the bike the
+        # session finished on — see motocross.selected_class.
+        bike_class = motocross.selected_class(self.install)
+
+        # A track that gained a time, paired with a name that appeared in the
+        # profile, is the only way the real names are obtainable. Learned
+        # before the records are built so the very run that teaches us the
+        # name is also published under it.
+        tracks = sorted({r.track for r in improved})
+        learned = motocross.learn_name(
+            tracks, self._names_before, motocross.all_profile_names(self.install)
+        )
+        if learned:
+            from . import tracknames
+
+            tracknames.remember(*learned)
+
+        stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        good: list[Submission] = []
+        for record in improved:
+            entry = _from_moto(
+                record, self.username, bike_class, SOURCE_LAUNCHER, stamp
             )
             ok, why = plausible(entry, session_seconds)
             if ok:

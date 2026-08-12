@@ -236,6 +236,136 @@ short.mkdir(parents=True, exist_ok=True)
 check("a truncated profile is not a crash",
       mc.selected_class(SANDBOX / "shortprof") == "")
 
+print("\nthrough the records pipeline")
+from madness_launcher.records import store as record_store  # noqa: E402
+from madness_launcher.records import tracknames  # noqa: E402
+from madness_launcher.records.session import (  # noqa: E402
+    GAMES_WITH_RECORDS,
+    MOTOCROSS_GAMES,
+    existing_records,
+    plausible,
+)
+
+check("mcm2 is a game with records", "mcm2" in GAMES_WITH_RECORDS)
+check("and is read the motocross way", "mcm2" in MOTOCROSS_GAMES)
+
+full = install(
+    {
+        "SX/SX01": [("xSHXDEx", 72.909)],
+        "NATIONAL/Nut_Buster": [("xSHXDEx", 95.195), ("Rival", 99.0)],
+    },
+    sizes={"Nut_Buster": 8243494},
+)
+subs = existing_records(full, "mcm2", "xSHXDEx")
+check("every table becomes a record", len(subs) == 3, str(len(subs)))
+sx = next(s for s in subs if s.track == "SX01")
+nb = next(s for s in subs if s.track == "Nut_Buster")
+check("a shipped track is on the vanilla board", sx.board == mc.BOARD_VANILLA)
+check("a community track is on the modded board", nb.board == mc.BOARD_MODDED)
+check("the discipline rides along", (sx.city, sx.race_kind) == ("SX", "Supercross"),
+      f"{sx.city}/{sx.race_kind}")
+check("an imported time claims no class", sx.car == "",
+      "the profile only knows the bike selected now, not months ago")
+check("the track filename is carried", sx.track == "SX01")
+
+print("\n  a record survives the trip through the feed")
+back = record_store._from_dict(sx.as_dict())
+check("it comes back at all", back is not None)
+if back is not None:
+    same = (back.game, back.board, back.city, back.race, back.race_name,
+            back.race_kind, back.track, back.seconds, back.driver)
+    want = (sx.game, sx.board, sx.city, sx.race, sx.race_name,
+            sx.race_kind, sx.track, sx.seconds, sx.driver)
+    check("unchanged in every field the board reads", same == want,
+          f"{same} != {want}")
+
+print("\n  who owns which row")
+def sub_for(track, folder, driver, secs, cls="250cc"):
+    rec = mc.MotoRecord(track=track, folder=folder, driver=driver,
+                        seconds=secs, stock=mc.is_stock(track, folder))
+    from madness_launcher.records.session import _from_moto, SOURCE_LAUNCHER
+    return _from_moto(rec, driver, cls, SOURCE_LAUNCHER, "2026-01-01T00:00:00")
+
+mine = sub_for("SX01", "SX", "xSHXDEx", 72.909)
+theirs = sub_for("SX01", "SX", "Rival", 71.0)
+faster = sub_for("SX01", "SX", "xSHXDEx", 70.5)
+merged = record_store.merge([], [mine, theirs])
+check("two riders on one track are two rows", len(merged) == 2, str(len(merged)))
+merged = record_store.merge(merged, [faster])
+check("beating your own time replaces it", len(merged) == 2, str(len(merged)))
+check("and the faster one is what is kept",
+      min(r.seconds for r in merged if r.driver == "xSHXDEx") == 70.5)
+other_class = sub_for("SX01", "SX", "xSHXDEx", 74.0, "125cc")
+merged = record_store.merge(merged, [other_class])
+check("a different class stands on its own", len(merged) == 3, str(len(merged)))
+
+print("\n  plausibility")
+ok, why = plausible(mine, 600.0)
+check("a real lap in a real session passes", ok, why)
+ok, why = plausible(sub_for("SX01", "SX", "x", 2.0), 600.0)
+check("an impossible lap is refused", not ok, why)
+ok, why = plausible(mine, 5.0)
+check("a lap longer than its session is refused", not ok, why)
+
+print("\n  names learned here reach the board")
+tracknames.load()
+mc.set_learned({})
+check("unlearned, a track goes by its filename",
+      mc.pretty_track("SX01") == "SX01")
+tracknames.remember("SX01", "Week 01 - Seattle")
+check("learned, it goes by its name",
+      mc.pretty_track("SX01") == "Week 01 - Seattle")
+check("and a record picks it up",
+      sub_for("SX01", "SX", "x", 72.9).race_name == "Week 01 - Seattle")
+check("learning the same track twice keeps the first",
+      not tracknames.remember("SX01", "Something Else")
+      and mc.pretty_track("SX01") == "Week 01 - Seattle")
+check("names carried by the feed are adopted",
+      tracknames.adopt({"NAT05": "Beaver County Race 01"}) == 1
+      and mc.pretty_track("NAT05") == "Beaver County Race 01")
+check("adopting one already known changes nothing",
+      tracknames.adopt({"NAT05": "Wrong"}) == 0
+      and mc.pretty_track("NAT05") == "Beaver County Race 01")
+check("they survive a restart", tracknames.load().get("sx01") == "Week 01 - Seattle")
+
+print("\nthe records page")
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+from PySide6.QtWidgets import QApplication  # noqa: E402
+
+app = QApplication.instance() or QApplication([])
+from madness_launcher.ui import records_page as rp  # noqa: E402
+
+check("mcm2 has a board", "mcm2" in rp.SUPPORTED)
+check("its boards are named for tracks",
+      [label for _, label, _ in rp.boards_for("mcm2")] == ["Vanilla tracks", "Modded tracks"])
+check("the Midtown boards are untouched",
+      [label for _, label, _ in rp.boards_for("mm1")] == ["Vanilla", "Modded"])
+check("its columns name tracks, classes and events",
+      rp.columns_for("mcm2") == ("#", "Track", "Time", "Class", "Rider", "Event", "Source"))
+check("the Midtown columns are untouched", rp.columns_for("mm1") == rp.COLUMNS)
+check("it gets a tab per discipline", len(rp.cities_for("mcm2")) == 6,
+      str(rp.cities_for("mcm2")))
+check("every discipline tab has a label",
+      all(c in rp.CITY_LABELS for c in rp.cities_for("mcm2")))
+check("mm2 still gets its two cities", rp.cities_for("mm2") == ("london", "sf"))
+
+view = rp.GameRecords("mcm2")
+view.show_records([mine, theirs, nb], {"xSHXDEx"}, 0, True)
+check("six discipline boards were built", len(view.cities) == 6, str(len(view.cities)))
+sx_board = view.cities["sx"].views[mc.BOARD_VANILLA]
+check("the Supercross vanilla board holds both riders",
+      sx_board.tree.topLevelItemCount() == 2,
+      str(sx_board.tree.topLevelItemCount()))
+nat_board = view.cities["national"].views[mc.BOARD_MODDED]
+check("the modded National board holds the community track",
+      nat_board.tree.topLevelItemCount() == 1)
+row = sx_board.tree.topLevelItem(0)
+check("the event shows in its own column",
+      row.text(rp.COL_DIFF) == "Supercross", row.text(rp.COL_DIFF))
+check("the class shows", row.text(rp.COL_CAR) == "250cc", row.text(rp.COL_CAR))
+check("the track name is not doubled up with the event",
+      "·" not in row.text(rp.COL_RACE), row.text(rp.COL_RACE))
+
 print()
 if failures:
     print(f"{len(failures)} FAILED: " + ", ".join(failures))

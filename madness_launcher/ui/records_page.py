@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
 
 from ..config import Config
 from ..games.registry import GAMES
-from ..records import profiles, reader
+from ..records import motocross, profiles, reader
 from ..news.model import age_of
 from . import theme
 from .widgets import Card
@@ -39,14 +39,31 @@ from .widgets import Card
 # Games that can produce records at all. The others get a tab explaining why
 # rather than being hidden, so the roadmap is visible the way the library's
 # greyed-out cards are.
-SUPPORTED = ("mm1", "mm2")
+SUPPORTED = ("mm1", "mm2", "mcm2")
+
+# Motocross Madness splits its boards by track rather than by car: the game
+# has no archives to load, and what makes a run stock is whether the track
+# shipped with it.
+MOTOCROSS = ("mcm2",)
 
 BOARDS = (
     (reader.BOARD_VANILLA, "Vanilla", "Stock cars, stock races, no archives loaded."),
     (reader.BOARD_MODDED, "Modded", "Racepacks allowed. Stock cars only."),
 )
 
+MOTO_BOARDS = (
+    (reader.BOARD_VANILLA, "Vanilla tracks",
+     "The fifty-one tracks the game shipped with."),
+    (reader.BOARD_MODDED, "Modded tracks",
+     "Everything else in TERAFORM — community courses, and any stock track "
+     "that has been replaced."),
+)
+
 COLUMNS = ("#", "Race", "Time", "Car", "Driver", "Difficulty", "Source")
+
+# Same seven slots, renamed for a game that has tracks, classes and events
+# where the Midtown games have races, cars and difficulties.
+MOTO_COLUMNS = ("#", "Track", "Time", "Class", "Rider", "Event", "Source")
 
 # Named once rather than counted at every use.
 COL_RANK, COL_RACE, COL_TIME, COL_CAR, COL_DRIVER, COL_DIFF, COL_SOURCE = range(7)
@@ -54,9 +71,29 @@ COL_RANK, COL_RACE, COL_TIME, COL_CAR, COL_DRIVER, COL_DIFF, COL_SOURCE = range(
 # Records that came from an external leaderboard rather than from a launcher.
 EXTERNAL = "speedrun.com"
 
-# What to call a city folder on screen.
+# What to call a city folder on screen. Motocross has no cities; what its
+# records carry in that field is the discipline, which is the split worth
+# putting tabs on — Supercross and Enduro are not the same sport.
 CITY_LABELS = {"chicago": "Chicago", "london": "London",
                "sf": "San Francisco"}
+CITY_LABELS.update(
+    {folder.lower(): label for folder, label in motocross.DISCIPLINES.items()}
+)
+
+
+def boards_for(game_id: str):
+    return MOTO_BOARDS if game_id in MOTOCROSS else BOARDS
+
+
+def columns_for(game_id: str):
+    return MOTO_COLUMNS if game_id in MOTOCROSS else COLUMNS
+
+
+def cities_for(game_id: str) -> tuple[str, ...]:
+    if game_id in MOTOCROSS:
+        return tuple(f.lower() for f in motocross.DISCIPLINES)
+    return profiles.profile(game_id).cities
+
 
 # label, column, order. Race order is the default because a board is normally
 # read race by race; the other two answer "what are the fastest times here".
@@ -110,7 +147,7 @@ class BoardView(QWidget):
         self.tree = QTreeWidget()
         self.tree.setObjectName("RecordTable")
         self.tree.setColumnCount(len(COLUMNS))
-        self.tree.setHeaderLabels(COLUMNS)
+        self.tree.setHeaderLabels(columns_for(game_id))
         self.tree.setRootIsDecorated(False)
         self.tree.setAlternatingRowColors(False)
         self.tree.setSelectionMode(QTreeWidget.NoSelection)
@@ -188,20 +225,23 @@ class BoardView(QWidget):
         # Sorting is switched off while rows are added and back on afterwards.
         # Leaving it on re-sorts the whole table on every insert.
         self.tree.setSortingEnabled(False)
+        moto = self.game_id in MOTOCROSS
         for record in ordered:
             who = record.username or record.driver
             rank = ranks[id(record)]
             item = RecordItem(
                 [
                     str(rank),
-                    f"{record.race_name}"
-                    + (f"  ·  {record.race_kind}" if record.race_kind else ""),
+                    record.race_name if moto else (
+                        f"{record.race_name}"
+                        + (f"  ·  {record.race_kind}" if record.race_kind else "")
+                    ),
                     record.formatted,
                     # speedrun.com does not report which car a run used, so
                     # the column is dashed rather than left ambiguously blank.
                     record.car_name or "—",
                     who,
-                    record.difficulty.title(),
+                    record.race_kind if moto else record.difficulty.title(),
                     "" if record.source == "launcher" else record.source,
                 ],
                 {
@@ -210,7 +250,8 @@ class BoardView(QWidget):
                     COL_TIME: record.seconds,
                     COL_CAR: record.car_name.lower(),
                     COL_DRIVER: who.lower(),
-                    COL_DIFF: record.difficulty.lower(),
+                    COL_DIFF: (record.race_kind if moto else
+                               record.difficulty).lower(),
                     COL_SOURCE: record.source.lower(),
                 },
             )
@@ -244,13 +285,18 @@ class BoardView(QWidget):
                 "No times yet. Finish a race with the launcher running and it "
                 "will appear here."
                 if self.board == reader.BOARD_VANILLA
-                else "No times yet. Race with a racepack enabled and a stock "
-                "car to fill this board."
+                else (
+                    "No times yet. Ride a community track with the launcher "
+                    "running to fill this board."
+                    if self.game_id in MOTOCROSS
+                    else "No times yet. Race with a racepack enabled and a "
+                    "stock car to fill this board."
+                )
             )
 
 
 class CityBoards(QWidget):
-    """Vanilla and Modded for one city of one game."""
+    """The two boards for one city — or, for Motocross, one discipline."""
 
     def __init__(self, game_id: str, city: str = ""):
         super().__init__()
@@ -262,7 +308,7 @@ class CityBoards(QWidget):
 
         self.tabs = QTabWidget()
         self.views: dict[str, BoardView] = {}
-        for board, label, blurb in BOARDS:
+        for board, label, blurb in boards_for(game_id):
             view = BoardView(game_id, city, board, blurb)
             self.views[board] = view
             self.tabs.addTab(view, label)
@@ -278,7 +324,7 @@ class CityBoards(QWidget):
             view.show_records(records, own_names, sort, show_external)
             count = sum(1 for r in records
                         if r.board == board and self.matches(r))
-            label = dict((b, l) for b, l, _ in BOARDS)[board]
+            label = dict((b, l) for b, l, _ in boards_for(self.game_id))[board]
             self.tabs.setTabText(index, f"{label}  {count}" if count else label)
 
 
@@ -297,19 +343,19 @@ class GameRecords(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        spec = profiles.profile(game_id)
+        cities = cities_for(game_id)
         self.cities: dict[str, CityBoards] = {}
         self.city_tabs: QTabWidget | None = None
 
-        if len(spec.cities) > 1:
+        if len(cities) > 1:
             self.city_tabs = QTabWidget()
-            for city in spec.cities:
+            for city in cities:
                 boards = CityBoards(game_id, city)
                 self.cities[city] = boards
                 self.city_tabs.addTab(boards, CITY_LABELS.get(city, city.title()))
             layout.addWidget(self.city_tabs)
         else:
-            only = spec.cities[0] if spec.cities else ""
+            only = cities[0] if cities else ""
             boards = CityBoards(game_id, only)
             self.cities[only] = boards
             layout.addWidget(boards)

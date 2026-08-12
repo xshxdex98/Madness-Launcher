@@ -35,6 +35,7 @@ from ..news import NewsService, ThumbnailCache, safe_url
 from ..records import reader
 from ..records import session as record_session
 from ..records import store as record_store
+from ..records import tracknames
 from ..records.submit import RecordSubmitter
 from . import gameart, palette, theme, wordmark
 from .chat_page import ChatPage
@@ -860,7 +861,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _load_race_tables(self) -> None:
-        """Adopt Midtown Madness's race names, from the install if configured.
+        """Adopt the race and track names the boards are written in.
 
         Without this every record that names its race rather than numbering
         it — which is all of them from speedrun.com — fails to place and the
@@ -870,6 +871,9 @@ class MainWindow(QMainWindow):
         reader.load_city(
             Path(install.path) if install and install.path else None
         )
+        # Motocross track names are not readable from the game at all, so
+        # they are learned a track at a time and kept here between runs.
+        tracknames.load()
 
     def _import_existing_records(self) -> None:
         """Take in whatever the games already have on disk.
@@ -935,10 +939,21 @@ class MainWindow(QMainWindow):
         fastest time on it whoever set it. A local record always wins a tie,
         because it is the one the launcher actually watched being set.
         """
-        merged = record_store.merge(
-            record_store.from_feed(self.news.feed.records), self.records
+        published = record_store.from_feed(self.news.feed.records)
+        # A published Motocross record names its own track, and those names
+        # cannot be read out of the game — one person riding a track is what
+        # names it for everybody. Taking them in here is what makes that true
+        # for people who have never ridden it.
+        tracknames.adopt(
+            {
+                r.track: r.race_name
+                for r in published
+                if r.game in record_session.MOTOCROSS_GAMES
+                and r.race_name
+                and r.track
+            }
         )
-        return merged
+        return record_store.merge(published, self.records)
 
     def _on_records_found(self, entries: list) -> None:
         self.records = record_store.merge(self.records, entries)
