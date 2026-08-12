@@ -510,6 +510,13 @@ _RECORD_REQUIRED = ("game", "board", "race", "time")
 MAX_BOARD_RECORDS = 600
 BOARDS = ("vanilla", "modded")
 
+# Midtown Madness numbers its races 0..31. Motocross Madness has no fixed
+# race list — a track is a file somebody downloaded — so its index is a
+# hash of the track name and runs to 28 bits. A flat ceiling of 999 threw
+# away every Motocross record on the way in, silently.
+MAX_RACE_INDEX = 2 ** 28
+MOTOCROSS_GAMES = ("mcm2",)
+
 # The same bounds the launcher applies before sending. Re-checked here because
 # the webhook URL is extractable from the executable, so a message in the
 # channel is not proof that the launcher wrote it.
@@ -552,7 +559,9 @@ def _parse_record_line(line: str, message: dict[str, Any]) -> dict[str, Any] | N
         return None
     if not (MIN_RECORD_SECONDS <= seconds <= MAX_RECORD_SECONDS):
         return None
-    if fields["board"] not in BOARDS or race < 0 or race > 999:
+    ceiling = (MAX_RACE_INDEX if fields["game"][:16] in MOTOCROSS_GAMES
+               else 999)
+    if fields["board"] not in BOARDS or race < 0 or race > ceiling:
         return None
     return {
         "game": fields["game"][:16],
@@ -563,6 +572,10 @@ def _parse_record_line(line: str, message: dict[str, Any]) -> dict[str, Any] | N
         "race_kind": fields.get("kind", "")[:16],
         "difficulty": fields.get("diff", "")[:16],
         "car": fields.get("car", "")[:40],
+        # The track filename, for a game whose tracks are files. It is
+        # what a learned display name is keyed against, so it has to make
+        # the trip or nobody else ever sees the real name.
+        "track": fields.get("track", "")[:64],
         "seconds": round(seconds, 3),
         "username": fields.get("by", "")[:40],
         "set_at": fields.get("at", "")[:32],

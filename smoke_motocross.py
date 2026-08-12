@@ -366,6 +366,68 @@ check("the class shows", row.text(rp.COL_CAR) == "250cc", row.text(rp.COL_CAR))
 check("the track name is not doubled up with the event",
       "·" not in row.text(rp.COL_RACE), row.text(rp.COL_RACE))
 
+print("\nthe round trip through Discord and back")
+sys.path.insert(0, str(ROOT / "tools" / "newsbot"))
+from madness_launcher.records import submit as record_submit  # noqa: E402
+import build_news  # noqa: E402
+
+posted = sub_for("SX01", "SX", "xSHXDEx", 63.954, "500cc")
+posted.race_name = "Week 01 - Seattle"
+
+for label, text in (
+    ("on its own", record_submit.describe(posted)),
+    ("in a batch", record_submit.describe_batch([posted])),
+):
+    parsed = build_news.parse_records({"content": text, "id": "1"})
+    check(f"a record posted {label} is read back", len(parsed) == 1,
+          f"{len(parsed)} from {text!r}")
+    if not parsed:
+        continue
+    got = parsed[0]
+    check(f"  {label}: the track index survives", got["race"] == posted.race,
+          f"{got['race']} != {posted.race} — the relay used to cap this at 999")
+    check(f"  {label}: the time survives", got["seconds"] == 63.954, str(got["seconds"]))
+    check(f"  {label}: the class survives", got["car"] == "500cc", got["car"])
+    check(f"  {label}: the event survives", got["race_kind"] == "Supercross",
+          f"{got['race_kind']!r} — without kind= the Event column is blank")
+    check(f"  {label}: the track filename survives", got.get("track") == "SX01",
+          f"{got.get('track')!r} — the learned name has nothing to key against")
+    check(f"  {label}: the discipline survives", got["city"] == "SX", got["city"])
+    check(f"  {label}: the board survives", got["board"] == mc.BOARD_VANILLA)
+
+check(
+    "a Midtown race index is still capped",
+    build_news.parse_records(
+        {"content": 'x\n`game="mm1" board="vanilla" race="5000" time="60.0"`', "id": "1"}
+    ) == [],
+    "the 999 ceiling still protects the games that have a fixed race list",
+)
+check(
+    "and a Motocross one above 28 bits is refused",
+    build_news.parse_records(
+        {"content": f'x\n`game="mcm2" board="vanilla" race="{2**29}" time="60.0"`',
+         "id": "1"}
+    ) == [],
+)
+
+headline = record_submit.describe(posted).splitlines()[0]
+check("the headline reads as a sentence", "(Supercross)" in headline
+      and "on a 500cc" in headline and ", )" not in headline, headline)
+print(f"  ({headline})")
+
+# A batch has to fit Discord's limit, which is what truncated a post into a
+# blank one before.
+many = [sub_for(f"track{i:03}", "SX", "xSHXDEx", 60.0 + i, "250cc") for i in range(40)]
+# pack() groups records; each group is rendered into one message.
+messages = [record_submit.describe_batch(group) for group in record_submit.pack(many)]
+check("a big batch is split into more than one message", len(messages) > 1,
+      str(len(messages)))
+check("and every message fits inside Discord's limit",
+      all(len(m) <= 2000 for m in messages), str(sorted(len(m) for m in messages)))
+total = sum(len(build_news.parse_records({"content": m, "id": "1"})) for m in messages)
+check("and every record in it survives the split", total == len(many),
+      f"{total}/{len(many)} — a message cut mid-record reads back as fewer")
+
 print()
 if failures:
     print(f"{len(failures)} FAILED: " + ", ".join(failures))

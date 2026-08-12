@@ -79,12 +79,10 @@ def describe(entry: Submission) -> str:
         "by": entry.username or entry.driver,
         "at": entry.set_at,
     }
+    if entry.track:
+        fields["track"] = entry.track
     encoded = " ".join(f"{k}={json.dumps(str(v))}" for k, v in fields.items())
-    headline = (
-        f"**{entry.formatted}** — {entry.race_name} "
-        f"({entry.race_kind}, {entry.difficulty}) in a {entry.car_name}, "
-        f"by {entry.username or entry.driver} [{entry.board}]"
-    )
+    headline = f"**{entry.formatted}** — {entry.race_name}{_where(entry)}"
     return f"{headline}\n`{encoded}`"[:MAX_CONTENT]
 
 
@@ -96,6 +94,27 @@ def describe(entry: Submission) -> str:
 SAFE_CONTENT = 1900
 
 
+def _where(entry: Submission) -> str:
+    """The part of a headline after the race name.
+
+    Assembled from whatever the game actually has rather than a fixed
+    sentence. Midtown Madness has a difficulty and a car; Motocross has an
+    event and an engine class and no difficulty at all, and the fixed
+    sentence rendered that as "(Supercross, ) in a 500cc".
+    """
+    inside = ", ".join(p for p in (entry.race_kind, entry.difficulty) if p)
+    parts = [f" ({inside})" if inside else ""]
+    if entry.car_name:
+        parts.append(f" on a {entry.car_name}" if entry.game.startswith("mcm")
+                     else f" in a {entry.car_name}")
+    who = entry.username or entry.driver
+    if who:
+        parts.append(f", by {who}")
+    if entry.board:
+        parts.append(f" [{entry.board}]")
+    return "".join(parts)
+
+
 def _record_line(entry: Submission) -> str:
     """One record: a line for people, and a line for the relay."""
     fields = {
@@ -104,8 +123,15 @@ def _record_line(entry: Submission) -> str:
         "city": entry.city,
         "race": entry.race,
         "name": entry.race_name,
+        # Carried explicitly. The Midtown games can recover the kind of a
+        # race from their own table given its index; Motocross cannot,
+        # because it has no table — so leaving this out blanked the Event
+        # column on every record that arrived in a batch.
+        "kind": entry.race_kind,
         "diff": entry.difficulty,
         "car": entry.car,
+        # The filename a learned display name is keyed against.
+        "track": entry.track,
         "time": f"{entry.seconds:.3f}",
         "by": entry.username or entry.driver,
         "at": entry.set_at,
@@ -117,10 +143,7 @@ def _record_line(entry: Submission) -> str:
     encoded = " ".join(
         f"{k}={json.dumps(str(v))}" for k, v in fields.items() if str(v)
     )
-    return (
-        f"{entry.formatted} — {entry.race_name} ({entry.difficulty})"
-        f"\n`{encoded}`"
-    )
+    return f"{entry.formatted} — {entry.race_name}{_where(entry)}\n`{encoded}`"
 
 
 def describe_batch(entries: list[Submission]) -> str:
