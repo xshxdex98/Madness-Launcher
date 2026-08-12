@@ -159,6 +159,7 @@ def _from_moto(
     bike_class: str,
     source: str,
     set_at: str = "",
+    mine: bool = True,
 ) -> Submission:
     """One Motocross time as a Submission.
 
@@ -167,6 +168,13 @@ def _from_moto(
     records page turns into tabs, and Supercross against Enduro is exactly
     the split worth having tabs for. The class goes in `car` because it is
     what the time was set on, which is what `car` means.
+
+    `mine` says whether the rider who set this is one of the profiles on this
+    install. A .hs1 is a table shared by everyone who has ridden the track on
+    this copy, so it holds other people's names — and claiming the launcher's
+    username for one of those publishes their lap under your name. The
+    board falls back to the in-game name when there is no username, which
+    for somebody else's time is exactly right.
     """
     return Submission(
         game=record.game,
@@ -181,7 +189,7 @@ def _from_moto(
         track=record.track,
         seconds=record.seconds,
         driver=record.driver,
-        username=username,
+        username=username if mine else "",
         set_at=set_at,
         # A modded board here means a track the game did not ship, and the
         # track is named in the row already. Listing it again as a mod would
@@ -208,8 +216,12 @@ def existing_records(
     if game_id in MOTOCROSS_GAMES:
         # No class is claimed for these. The profile only knows the bike
         # selected now, which says nothing about a lap set months ago.
+        riders = motocross.own_riders(Path(install))
         return [
-            _from_moto(record, username, "", SOURCE_IMPORTED)
+            _from_moto(
+                record, username, "", SOURCE_IMPORTED,
+                mine=record.driver.strip().lower() in riders,
+            )
             for record in motocross.snapshot(Path(install), game=game_id).values()
             if MIN_PLAUSIBLE_SECONDS <= record.seconds <= motocross.MAX_TIME
         ]
@@ -392,6 +404,10 @@ class RecordWatcher(QObject):
         stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
         good: list[Submission] = []
         for record in improved:
+            # Always yours. The launcher watched this being set, so whoever
+            # was at the keyboard is the person running the launcher, and
+            # the board is written in launcher usernames — the name on the
+            # in-game profile does not have to match and is not consulted.
             entry = _from_moto(
                 record, self.username, bike_class, SOURCE_LAUNCHER, stamp
             )

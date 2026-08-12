@@ -366,6 +366,47 @@ check("the class shows", row.text(rp.COL_CAR) == "250cc", row.text(rp.COL_CAR))
 check("the track name is not doubled up with the event",
       "·" not in row.text(rp.COL_RACE), row.text(rp.COL_RACE))
 
+print("\nwhose time is whose in a shared table")
+# A .hs1 is one table per track shared by everyone who rides it on this copy
+# of the game, unlike the Midtown games which keep a file per player.
+shared = install({"ENDURO/FARM3": [("TigerHawk", 109.78), ("xSHXDEx", 112.04)]},
+                 sizes={"FARM3": 4096})
+prof = shared / "UI" / "PROFILE" / "xSHXDEx"
+prof.mkdir(parents=True, exist_ok=True)
+(prof / "xSHXDEx.prf").write_bytes(b"\0" * 4760)
+check("the install knows its own riders",
+      mc.own_riders(shared) == {"xshxdex"}, str(mc.own_riders(shared)))
+
+imported = existing_records(shared, "mcm2", "MyLauncherName")
+theirs = next(s for s in imported if s.driver == "TigerHawk")
+ours = next(s for s in imported if s.driver == "xSHXDEx")
+check("your own imported lap takes your launcher name",
+      ours.username == "MyLauncherName",
+      "the board is written in launcher names, not in-game ones")
+check("and it does not matter that the two names differ",
+      ours.username != ours.driver)
+check("somebody else's lap is not claimed as yours",
+      theirs.username == "",
+      "stamping your name on it publishes their lap under yours")
+check("it keeps their name instead",
+      (theirs.username or theirs.driver) == "TigerHawk")
+check("so both riders get a row",
+      len(record_store.merge([], imported)) == 2,
+      "collapsed to one when both carried the same username")
+
+# A run the launcher watched is yours whoever the in-game profile says set
+# it: the launcher saw it happen, and the game name is never consulted.
+from madness_launcher.records.session import RecordWatcher  # noqa: E402
+watched = _from_moto_check = None
+from madness_launcher.records.session import _from_moto, SOURCE_LAUNCHER  # noqa: E402
+
+rec = mc.MotoRecord(track="FARM3", folder="ENDURO", driver="SomeOtherName",
+                    seconds=109.78, stock=False)
+watched = _from_moto(rec, "MyLauncherName", "250cc", SOURCE_LAUNCHER, "now")
+check("a watched run is yours regardless of the in-game name",
+      watched.username == "MyLauncherName",
+      "the launcher saw it set; the profile name is not a gate")
+
 print("\nthe round trip through Discord and back")
 sys.path.insert(0, str(ROOT / "tools" / "newsbot"))
 from madness_launcher.records import submit as record_submit  # noqa: E402

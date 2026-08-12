@@ -408,6 +408,19 @@ def profile_names(path: Path) -> list[str]:
     return out
 
 
+def own_riders(install: Path) -> set[str]:
+    """The rider names this install has profiles for, lowercased.
+
+    A .hs1 is one table per track shared by everyone who has ridden it on
+    this copy of the game, so it routinely holds names that are not yours —
+    a friend's, or whoever the game shipped to you having played on it. The
+    Midtown games keep a separate file per player and never have this
+    problem, which is why the launcher used to stamp its own username onto
+    everything it imported.
+    """
+    return {p.parent.name.strip().lower() for p in profile_files(install)}
+
+
 def all_profile_names(install: Path) -> list[str]:
     """Recent-track names across every rider profile in the install."""
     seen: list[str] = []

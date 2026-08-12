@@ -2,7 +2,7 @@
   "_comment": [
     "Live relay config for the Madness Crew Discord.",
     "Safe to commit: guild, channel and application IDs are not secrets.",
-    "The bot token is NOT here — it comes from the DISCORD_BOT_TOKEN",
+    "The bot token is NOT here \u2014 it comes from the DISCORD_BOT_TOKEN",
     "environment variable, set as a repository secret in GitHub Actions.",
     "",
     "Bot application ID 1536421123133022318, recorded here only so the",
@@ -37,6 +37,12 @@
       "channel_id": "994084644276416582",
       "limit": 100,
       "_for": "mm2"
+    },
+    {
+      "guild_id": "796156308545601558",
+      "channel_id": "1470035145733181656",
+      "limit": 100,
+      "_for": "mcm2"
     }
   ],
   "_prune_note": [
@@ -79,7 +85,7 @@
         "Circuit"
       ],
       "_skip_why": [
-        "Crash Course: not in the game's record tables at all — the other",
+        "Crash Course: not in the game's record tables at all \u2014 the other",
         "three types fill all 320 slots, so no launcher can place them.",
         "Circuit: the game records each LAP as its own entry, proven by",
         "driving two laps and getting two records. speedrun.com times the",
@@ -112,7 +118,7 @@
       "Only uploads whose TITLE matches one of these reaches the Videos tab.",
       "Word-boundary, case-insensitive: 'mm2' matches 'MM2: Revisited' but",
       "not 'mm2020'. Exclusions are checked first and reject outright.",
-      "Add a term here and the next run picks it up — no launcher rebuild.",
+      "Add a term here and the next run picks it up \u2014 no launcher rebuild.",
       "A channel that only ever posts about these games can skip the check",
       "entirely with \"filter\": false on its own entry above."
     ],
@@ -148,6 +154,7 @@
   },
   "records_webhooks": {
     "mm1": "https://discord.com/api/webhooks/1536446666033471611/p0KiQd14wrCS7GaSe3Dko1YwGepf7gFXqq9SKVnuk2DdnWXHKh3zhRPklp6kdwtB6ZhO",
-    "mm2": "https://discord.com/api/webhooks/1536515289162981467/olJ0sXngsRwcaFjqWKUuNnChuBDoM6gjz9bpXCuD_QCNqcSomEbS8JKunrW7Ra4P-8nI"
+    "mm2": "https://discord.com/api/webhooks/1536515289162981467/olJ0sXngsRwcaFjqWKUuNnChuBDoM6gjz9bpXCuD_QCNqcSomEbS8JKunrW7Ra4P-8nI",
+    "mcm2": "https://discord.com/api/webhooks/1536893021998678087/DRsQrMYGkUdrBycsNNCVfr9FP1f4FD1LEnjVMG7Oi8CIUxaHLcRzEUJQcCul9HMXPCgr"
   }
 }
