@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-12T00:58:43Z",
+  "generated": "2026-08-12T01:22:46Z",
   "announcements": [
     {
       "id": "1536558660262559764",
@@ -530,6 +530,7 @@
       "race_kind": "Checkpoint",
       "difficulty": "pro",
       "car": "vpmustang99",
+      "track": "",
       "seconds": 19.381,
       "username": "xSHXDEx",
       "set_at": "2026-08-11T23:18:25+00:00",
@@ -545,6 +546,7 @@
       "race_kind": "",
       "difficulty": "pro",
       "car": "vpmustang99",
+      "track": "",
       "seconds": 17.359,
       "username": "xSHXDEx",
       "set_at": "2026-08-11T23:06:41+00:00",
@@ -1946,6 +1948,7 @@
   "records_webhook": "https://discord.com/api/webhooks/1536446666033471611/p0KiQd14wrCS7GaSe3Dko1YwGepf7gFXqq9SKVnuk2DdnWXHKh3zhRPklp6kdwtB6ZhO",
   "records_webhooks": {
     "mm1": "https://discord.com/api/webhooks/1536446666033471611/p0KiQd14wrCS7GaSe3Dko1YwGepf7gFXqq9SKVnuk2DdnWXHKh3zhRPklp6kdwtB6ZhO",
-    "mm2": "https://discord.com/api/webhooks/1536515289162981467/olJ0sXngsRwcaFjqWKUuNnChuBDoM6gjz9bpXCuD_QCNqcSomEbS8JKunrW7Ra4P-8nI"
+    "mm2": "https://discord.com/api/webhooks/1536515289162981467/olJ0sXngsRwcaFjqWKUuNnChuBDoM6gjz9bpXCuD_QCNqcSomEbS8JKunrW7Ra4P-8nI",
+    "mcm2": "https://discord.com/api/webhooks/1536893021998678087/DRsQrMYGkUdrBycsNNCVfr9FP1f4FD1LEnjVMG7Oi8CIUxaHLcRzEUJQcCul9HMXPCgr"
   }
 }
