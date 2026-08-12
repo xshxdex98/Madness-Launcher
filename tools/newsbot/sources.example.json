@@ -7,7 +7,6 @@
     "YouTube channel IDs start with UC. To find one from a @handle, run:",
     "  python build_news.py --resolve https://www.youtube.com/@somechannel"
   ],
-
   "announcements": [
     {
       "guild_id": "000000000000000000",
@@ -15,7 +14,6 @@
       "limit": 15
     }
   ],
-
   "video_channels": [
     {
       "guild_id": "000000000000000000",
@@ -23,7 +21,6 @@
       "limit": 50
     }
   ],
-
   "youtube": [
     {
       "channel_id": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
@@ -32,7 +29,6 @@
       "filter": true
     }
   ],
-
   "video_filter": {
     "_comment": [
       "Only uploads whose TITLE matches reach the Videos tab. Matching is",
@@ -45,7 +41,14 @@
       "tuned by reading what it threw away."
     ],
     "enabled": true,
-    "match": ["midtown madness", "monster truck madness", "motocross madness"],
-    "exclude": ["madness combat", "march madness"]
+    "match": [
+      "midtown madness",
+      "monster truck madness",
+      "motocross madness"
+    ],
+    "exclude": [
+      "madness combat",
+      "march madness"
+    ]
   }
 }

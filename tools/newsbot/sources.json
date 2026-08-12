@@ -27,19 +27,16 @@
   ],
   "records": [
     {
-      "guild_id": "796156308545601558",
       "channel_id": "994084533857177741",
       "limit": 100,
       "_for": "mm1"
     },
     {
-      "guild_id": "796156308545601558",
       "channel_id": "994084644276416582",
       "limit": 100,
       "_for": "mm2"
     },
     {
-      "guild_id": "796156308545601558",
       "channel_id": "1470035145733181656",
       "limit": 100,
       "_for": "mcm2"
@@ -156,5 +153,6 @@
     "mm1": "https://discord.com/api/webhooks/1536446666033471611/p0KiQd14wrCS7GaSe3Dko1YwGepf7gFXqq9SKVnuk2DdnWXHKh3zhRPklp6kdwtB6ZhO",
     "mm2": "https://discord.com/api/webhooks/1536515289162981467/olJ0sXngsRwcaFjqWKUuNnChuBDoM6gjz9bpXCuD_QCNqcSomEbS8JKunrW7Ra4P-8nI",
     "mcm2": "https://discord.com/api/webhooks/1536893021998678087/DRsQrMYGkUdrBycsNNCVfr9FP1f4FD1LEnjVMG7Oi8CIUxaHLcRzEUJQcCul9HMXPCgr"
-  }
+  },
+  "_records_channel_note": "Each records channel is read by channel id alone. There is no guild_id here on purpose: it is only used for announcements, to look up role names and build jump links, and a records block that carried one implied the server mattered for reading the channel. It does not \u2014 what matters is that the bot has been invited to whichever server the channel is in."
 }
