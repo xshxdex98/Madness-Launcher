@@ -1,7 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-08-11T00:33:45Z",
+  "generated": "2026-08-12T00:58:43Z",
   "announcements": [
+    {
+      "id": "1536558660262559764",
+      "author": "xSHXDEx",
+      "avatar": "https://cdn.discordapp.com/avatars/554912407575592960/9f8067923eb40b492c121836960c33d7.png?size=64",
+      "posted": "2026-08-11T02:15:32.486000+00:00",
+      "body": "@Announcements Proud to announce the first beta of the launcher is released! See #channel to get all the feature information on what it can and cannot do. If you have any questions feel free to ask me, or ping me if there are any issues. I hope you guys love it, its a lot nicer than the first sneak peek i showed",
+      "url": "https://discord.com/channels/796156308545601558/796165218635743254/1536558660262559764",
+      "image": "",
+      "emojis": {}
+    },
     {
       "id": "1536066593161879572",
       "author": "xSHXDEx",
@@ -10,16 +20,6 @@
       "body": "@Announcements Some of you may know, but some behind the scenes stuff is going on to revamp the madness crew experience with the games, and midtown madness is also being reworked. I have started a launcher for all of the games, it manages your games, has command line options, AR file management and folder detection, a chat room, individual usernames, and will let you play the games directly from the launcher. This is to make quality of life easier for booting up your favorite madness game, and seeing who is online/using the launcher. Still WIP and there will be an announcement when it is finished and released. Here's a teaser #makemidtownmadnessgreatagain",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1536066593161879572",
       "image": "",
-      "emojis": {}
-    },
-    {
-      "id": "1535235125816729650",
-      "author": "xSHXDEx",
-      "avatar": "https://cdn.discordapp.com/avatars/554912407575592960/9f8067923eb40b492c121836960c33d7.png?size=64",
-      "posted": "2026-08-07T10:36:17.284000+00:00",
-      "body": "Free discount code for Skyrim on GOG.com I’m giving away! @Announcements Discount code: 5K4HYURHRXLHUAVMM9",
-      "url": "https://discord.com/channels/796156308545601558/796165218635743254/1535235125816729650",
-      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1535235125321670656/IMG_0530.png?ex=6a7ba3e1&is=6a7a5261&hm=414a58bb94b0bacb948c8c727201e10e6ad3037156ed29a488f0d91458424eae&",
       "emojis": {}
     },
     {
@@ -39,7 +39,7 @@
       "posted": "2026-07-20T14:12:29.524000+00:00",
       "body": "# A LEGENDARY MEET UP!\n\n@salsa flew over to meet the legend @KcRobin!:MADNESSCREW: :mm1:",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1528766553753915572",
-      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1528766552378310757/IMG_9108.jpg?ex=6a7b2dcd&is=6a79dc4d&hm=4d20cc691d296efccb95c680958aac2bd3a3bffa3b271c04e388bd9e4f940c30&",
+      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1528766552378310757/IMG_9108.jpg?ex=6a7c7f4d&is=6a7b2dcd&hm=663593b9f40eb51d581ff80b9d982742e7b23ce760d7bee2e8906e1478027a22&",
       "emojis": {
         "MADNESSCREW": "https://cdn.discordapp.com/emojis/949574838798929920.png",
         "mm1": "https://cdn.discordapp.com/emojis/796328497344806922.png"
@@ -74,7 +74,7 @@
       "posted": "2026-04-30T20:32:09.264000+00:00",
       "body": "Thanks HH!",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1499508681795047455",
-      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1499508681442857182/dogshit.png?ex=6a7b86c9&is=6a7a3549&hm=36879f13a74eb3344f5f43d4e58ab14af146544e9d115804d81905cbcf4fbdb3&",
+      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1499508681442857182/dogshit.png?ex=6a7cd849&is=6a7b86c9&hm=23c5f6c4c072fac7f0c05e9056def01b2d7d33648700516e9e7d0dbf8b20b5f7&",
       "emojis": {}
     },
     {
@@ -524,17 +524,32 @@
     {
       "game": "mm2",
       "board": "vanilla",
-      "race": 12,
+      "race": 0,
       "city": "sf",
-      "race_name": "Take It Easy",
-      "race_kind": "",
-      "difficulty": "amateur",
-      "car": "vpbullet",
-      "seconds": 37.055,
+      "race_name": "Racing 101",
+      "race_kind": "Checkpoint",
+      "difficulty": "pro",
+      "car": "vpmustang99",
+      "seconds": 19.381,
       "username": "xSHXDEx",
-      "set_at": "2026-08-11T00:22:30+00:00",
+      "set_at": "2026-08-11T23:18:25+00:00",
       "source": "launcher",
-      "message_id": "1536530178799444018"
+      "message_id": "1536876427306078309"
+    },
+    {
+      "game": "mm2",
+      "board": "vanilla",
+      "race": 22,
+      "city": "sf",
+      "race_name": "Ignorance Is Blitz",
+      "race_kind": "",
+      "difficulty": "pro",
+      "car": "vpmustang99",
+      "seconds": 17.359,
+      "username": "xSHXDEx",
+      "set_at": "2026-08-11T23:06:41+00:00",
+      "source": "launcher",
+      "message_id": "1536873477251014767"
     },
     {
       "game": "mm1",
