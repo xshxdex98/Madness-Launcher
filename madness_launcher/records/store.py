@@ -178,6 +178,50 @@ def load() -> list[Submission]:
     return [r for r in parsed if r is not None]
 
 
+def pending_file() -> Path:
+    return paths.app_root() / "records-pending.json"
+
+
+def load_pending() -> list[Submission]:
+    """Records set but not yet sent, from a previous run.
+
+    A record is held rather than dropped when no webhook is known for its
+    game — the feed carries the webhook and may not have arrived, or may not
+    have been rebuilt with that game in it yet. Held in memory alone, closing
+    the launcher in that window lost the run for good: it is already in the
+    store, so the next start does not see it as new and never offers it
+    again. The one time that window mattered was the day a game's channel was
+    added, which is exactly when somebody is testing it.
+    """
+    try:
+        raw = json.loads(pending_file().read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    parsed = (_from_dict(i) for i in (raw.get("pending") or [])[:MAX_RECORDS])
+    return [r for r in parsed if r is not None]
+
+
+def save_pending(entries: list[Submission]) -> None:
+    """Write the held queue, or remove the file once it is empty."""
+    target = pending_file()
+    if not entries:
+        target.unlink(missing_ok=True)
+        return
+    try:
+        paths.ensure_dirs(target.parent)
+        payload = json.dumps(
+            {"version": 1, "pending": [e.as_dict() for e in entries[:MAX_RECORDS]]},
+            indent=2,
+        )
+        fd, tmp = tempfile.mkstemp(dir=str(target.parent), suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(payload)
+        os.replace(tmp, target)
+    except OSError:
+        # A queue that cannot be written is the situation we were already in.
+        pass
+
+
 def from_feed(published: list) -> list[Submission]:
     """Records the relay collected from the board channel."""
     parsed = (_from_dict(i) for i in (published or [])[:MAX_RECORDS])

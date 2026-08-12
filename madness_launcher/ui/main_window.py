@@ -128,7 +128,10 @@ class MainWindow(QMainWindow):
         # during startup and the webhook arrives with the news feed a moment
         # later, so without this a first run imports a whole history and
         # posts none of it.
-        self._unsent: list = []
+        # Survives a restart: see store.load_pending. A run held because
+        # its game had no webhook yet used to be lost by closing the
+        # launcher, and that window is exactly when a channel is new.
+        self._unsent: list = record_store.load_pending()
         # Last, because it can submit, and everything submitting depends on
         # has to exist by the time it runs.
         self._load_race_tables()
@@ -1004,6 +1007,8 @@ class MainWindow(QMainWindow):
                      if getattr(e, "source", "") == record_session.SOURCE_LAUNCHER]
         pending = self._unsent + witnessed
         self._unsent = []
+        if not pending:
+            return
         by_game: dict[str, list] = {}
         for entry in pending:
             by_game.setdefault(entry.game, []).append(entry)
@@ -1016,9 +1021,18 @@ class MainWindow(QMainWindow):
                 self._unsent.extend(group)
                 continue
             sent += self.submitter.submit(webhook, group)
+        # Written every time it changes, in both directions: what is still
+        # waiting, and nothing once it has gone.
+        record_store.save_pending(self._unsent)
         if sent:
             self.flash_status(
                 f"Sent {sent} record{'s' if sent != 1 else ''} to the board"
+            )
+        elif self._unsent:
+            waiting = len(self._unsent)
+            self.flash_status(
+                f"{waiting} record{'s' if waiting != 1 else ''} waiting for "
+                "a channel — they will send once the feed carries one"
             )
         return
 

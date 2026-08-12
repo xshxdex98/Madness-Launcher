@@ -536,6 +536,25 @@ total = sum(len(build_news.parse_records({"content": m, "id": "1"})) for m in me
 check("and every record in it survives the split", total == len(many),
       f"{total}/{len(many)} — a message cut mid-record reads back as fewer")
 
+print("\na run held for want of a channel is not lost")
+held = sub_for("NAT10", "NATIONAL", "xSHXDEx", 69.896, "500cc")
+record_store.save_pending([held])
+check("the queue is written to disk", record_store.pending_file().is_file())
+again = record_store.load_pending()
+check("and read back after a restart", len(again) == 1, str(len(again)))
+if again:
+    check("with everything it needs to send",
+          (again[0].game, again[0].track, again[0].seconds, again[0].car)
+          == ("mcm2", "NAT10", 69.896, "500cc"),
+          f"{(again[0].game, again[0].track, again[0].seconds, again[0].car)}")
+    check("and still marked as watched, so it is allowed to send",
+          again[0].source == "launcher")
+record_store.save_pending([])
+check("an emptied queue leaves no file behind",
+      not record_store.pending_file().is_file(),
+      "a stale file would re-post a record that already went")
+check("a missing queue reads as empty", record_store.load_pending() == [])
+
 print()
 if failures:
     print(f"{len(failures)} FAILED: " + ", ".join(failures))
