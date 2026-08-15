@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-15T17:00:42Z",
+  "generated": "2026-08-15T17:51:08Z",
   "announcements": [
     {
       "id": "1536558660262559764",
@@ -159,6 +159,15 @@
     }
   ],
   "videos": [
+    {
+      "id": "kOH9M0sqK3o",
+      "title": "Midtown Madness: Cops & Robbers #54 | 20 Minutes of HELL!",
+      "channel": "Panoz",
+      "published": "2026-08-15T17:22:16+00:00",
+      "url": "https://www.youtube.com/watch?v=kOH9M0sqK3o",
+      "thumbnail": "https://i.ytimg.com/vi/kOH9M0sqK3o/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "66OlgxGKERQ",
       "title": "Midtown Madness: Crosstown Switchback - 1:38.74 (Speedrun)",
@@ -319,15 +328,6 @@
       "published": "2026-06-27T15:37:24+00:00",
       "url": "https://www.youtube.com/watch?v=P9qw2dkO-IE",
       "thumbnail": "https://i.ytimg.com/vi/P9qw2dkO-IE/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "Kiew-JfwhXU",
-      "title": "WHAT JUST HAPPENED?!😂 #discord #gaming #multiplayer #midtownmadness #funny #racing #fyp #shorts",
-      "channel": "Panoz",
-      "published": "2026-06-23T16:32:04+00:00",
-      "url": "https://www.youtube.com/watch?v=Kiew-JfwhXU",
-      "thumbnail": "https://i.ytimg.com/vi/Kiew-JfwhXU/mqdefault.jpg",
       "source": "youtube"
     },
     {
