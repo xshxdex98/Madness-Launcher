@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-16T12:03:09Z",
+  "generated": "2026-08-16T13:48:16Z",
   "announcements": [
     {
       "id": "1536558660262559764",
@@ -159,6 +159,15 @@
     }
   ],
   "videos": [
+    {
+      "id": "dW4r5cgCvwo",
+      "title": "Midtown Madness: Beat The Bridges - 58.51 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-08-16T12:28:39+00:00",
+      "url": "https://www.youtube.com/watch?v=dW4r5cgCvwo",
+      "thumbnail": "https://i.ytimg.com/vi/dW4r5cgCvwo/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "kOH9M0sqK3o",
       "title": "Midtown Madness: Cops & Robbers #54 | 20 Minutes of HELL!",
@@ -328,15 +337,6 @@
       "published": "2026-06-27T15:37:24+00:00",
       "url": "https://www.youtube.com/watch?v=P9qw2dkO-IE",
       "thumbnail": "https://i.ytimg.com/vi/P9qw2dkO-IE/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "MIQ-O2X0WfM",
-      "title": "Midtown Madness: Tough Turns & a Tunnel - 46.11 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-06-21T04:11:36+00:00",
-      "url": "https://www.youtube.com/watch?v=MIQ-O2X0WfM",
-      "thumbnail": "https://i.ytimg.com/vi/MIQ-O2X0WfM/mqdefault.jpg",
       "source": "youtube"
     },
     {
