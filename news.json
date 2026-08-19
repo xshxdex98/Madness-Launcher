@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-19T11:58:11Z",
+  "generated": "2026-08-19T14:08:41Z",
   "announcements": [
     {
       "id": "1536558660262559764",
@@ -159,6 +159,15 @@
     }
   ],
   "videos": [
+    {
+      "id": "XWG4UA1wuIk",
+      "title": "Midtown Madness 1: Battle Royale with the Madness Crew! | New Gamemode by RXKING!",
+      "channel": "Panoz",
+      "published": "2026-08-19T13:39:29+00:00",
+      "url": "https://www.youtube.com/watch?v=XWG4UA1wuIk",
+      "thumbnail": "https://i.ytimg.com/vi/XWG4UA1wuIk/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "t5u4AgRidLw",
       "title": "Monster Truck Madness 2: Water Tower with the Madness Crew! | Rumble!",
@@ -319,15 +328,6 @@
       "published": "2026-06-30T16:54:41+00:00",
       "url": "https://www.youtube.com/watch?v=4CrQ1C_OhzQ",
       "thumbnail": "https://i.ytimg.com/vi/4CrQ1C_OhzQ/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "2xcsBa23l1I",
-      "title": "Giggity!😉🤣 #multiplayer #discord #midtownmadness #retrogaming #racing #funny #fyp #freightliner",
-      "channel": "Panoz",
-      "published": "2026-06-29T12:28:43+00:00",
-      "url": "https://www.youtube.com/watch?v=2xcsBa23l1I",
-      "thumbnail": "https://i.ytimg.com/vi/2xcsBa23l1I/mqdefault.jpg",
       "source": "youtube"
     },
     {
