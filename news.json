@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-20T23:05:14Z",
+  "generated": "2026-08-20T23:59:41Z",
   "announcements": [
     {
       "id": "1536558660262559764",
@@ -159,6 +159,15 @@
     }
   ],
   "videos": [
+    {
+      "id": "eF_hvRteXAs",
+      "title": "Giga the menace!😂 #discord #multiplayer #midtownmadness #funny #retrogaming #racing #troll #laugh",
+      "channel": "Panoz",
+      "published": "2026-08-20T23:37:35+00:00",
+      "url": "https://www.youtube.com/watch?v=eF_hvRteXAs",
+      "thumbnail": "https://i.ytimg.com/vi/eF_hvRteXAs/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "XWG4UA1wuIk",
       "title": "Midtown Madness 1: Battle Royale with the Madness Crew! | New Gamemode by RXKING!",
@@ -319,15 +328,6 @@
       "published": "2026-07-03T19:13:39+00:00",
       "url": "https://www.youtube.com/watch?v=JKSHqULBC4s",
       "thumbnail": "https://i.ytimg.com/vi/JKSHqULBC4s/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "4CrQ1C_OhzQ",
-      "title": "Midtown Madness 1: Chinese Cruise with the Madness Crew! | OWNAGE CHOKES!",
-      "channel": "Panoz",
-      "published": "2026-06-30T16:54:41+00:00",
-      "url": "https://www.youtube.com/watch?v=4CrQ1C_OhzQ",
-      "thumbnail": "https://i.ytimg.com/vi/4CrQ1C_OhzQ/mqdefault.jpg",
       "source": "youtube"
     },
     {
