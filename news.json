@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-23T11:45:27Z",
+  "generated": "2026-08-23T13:24:02Z",
   "announcements": [
     {
       "id": "1540819205622866080",
@@ -153,6 +153,24 @@
   ],
   "videos": [
     {
+      "id": "xmMSRrnBV6I",
+      "title": "Midtown Madness: City Central - 1:23.01 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-08-23T12:15:02+00:00",
+      "url": "https://www.youtube.com/watch?v=xmMSRrnBV6I",
+      "thumbnail": "https://i.ytimg.com/vi/xmMSRrnBV6I/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "Buepou1SIbE",
+      "title": "Midtown Madness: Beginner's Luck - 33.26 (Speedrun) [Amateur]",
+      "channel": "VJ",
+      "published": "2026-08-23T12:14:13+00:00",
+      "url": "https://www.youtube.com/watch?v=Buepou1SIbE",
+      "thumbnail": "https://i.ytimg.com/vi/Buepou1SIbE/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
       "id": "eF_hvRteXAs",
       "title": "Giga the menace!😂 #discord #multiplayer #midtownmadness #funny #retrogaming #racing #troll #laugh",
       "channel": "Panoz",
@@ -297,15 +315,6 @@
       "source": "youtube"
     },
     {
-      "id": "y3J8sxEzZnY",
-      "title": "Midtown Madness: North River Run - 50.36 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-07-05T12:01:10+00:00",
-      "url": "https://www.youtube.com/watch?v=y3J8sxEzZnY",
-      "thumbnail": "https://i.ytimg.com/vi/y3J8sxEzZnY/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
       "id": "mErljUsgCC4",
       "title": "Midtown Madness 2: Cops & Robbers #25 | Happy 4th Of July!",
       "channel": "Panoz",
@@ -321,15 +330,6 @@
       "published": "2026-07-03T19:13:39+00:00",
       "url": "https://www.youtube.com/watch?v=JKSHqULBC4s",
       "thumbnail": "https://i.ytimg.com/vi/JKSHqULBC4s/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "0CE962eaHp4",
-      "title": "Midtown Madness: Tall Tower Blitz - 1:07.76 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-06-28T22:53:49+00:00",
-      "url": "https://www.youtube.com/watch?v=0CE962eaHp4",
-      "thumbnail": "https://i.ytimg.com/vi/0CE962eaHp4/mqdefault.jpg",
       "source": "youtube"
     },
     {
