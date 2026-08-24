@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-24T05:57:15Z",
+  "generated": "2026-08-24T08:28:13Z",
   "announcements": [
     {
       "id": "1540819205622866080",
@@ -153,6 +153,24 @@
   ],
   "videos": [
     {
+      "id": "xmMSRrnBV6I",
+      "title": "Midtown Madness: City Central - 1:23.01 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-08-23T12:15:02+00:00",
+      "url": "https://www.youtube.com/watch?v=xmMSRrnBV6I",
+      "thumbnail": "https://i.ytimg.com/vi/xmMSRrnBV6I/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "Buepou1SIbE",
+      "title": "Midtown Madness: Beginner's Luck - 33.26 (Speedrun) [Amateur]",
+      "channel": "VJ",
+      "published": "2026-08-23T12:14:13+00:00",
+      "url": "https://www.youtube.com/watch?v=Buepou1SIbE",
+      "thumbnail": "https://i.ytimg.com/vi/Buepou1SIbE/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
       "id": "eF_hvRteXAs",
       "title": "Giga the menace!😂 #discord #multiplayer #midtownmadness #funny #retrogaming #racing #troll #laugh",
       "channel": "Panoz",
@@ -180,12 +198,30 @@
       "source": "youtube"
     },
     {
+      "id": "dW4r5cgCvwo",
+      "title": "Midtown Madness: Beat The Bridges - 58.51 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-08-16T12:28:39+00:00",
+      "url": "https://www.youtube.com/watch?v=dW4r5cgCvwo",
+      "thumbnail": "https://i.ytimg.com/vi/dW4r5cgCvwo/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
       "id": "kOH9M0sqK3o",
       "title": "Midtown Madness: Cops & Robbers #54 | 20 Minutes of HELL!",
       "channel": "Panoz",
       "published": "2026-08-15T17:22:16+00:00",
       "url": "https://www.youtube.com/watch?v=kOH9M0sqK3o",
       "thumbnail": "https://i.ytimg.com/vi/kOH9M0sqK3o/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "66OlgxGKERQ",
+      "title": "Midtown Madness: Crosstown Switchback - 1:38.74 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-08-09T13:07:42+00:00",
+      "url": "https://www.youtube.com/watch?v=66OlgxGKERQ",
+      "thumbnail": "https://i.ytimg.com/vi/66OlgxGKERQ/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -207,6 +243,15 @@
       "source": "youtube"
     },
     {
+      "id": "EaU3dhj6HXc",
+      "title": "Midtown Madness: Nocturnal Navigator - 1:18.20 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-08-02T23:52:46+00:00",
+      "url": "https://www.youtube.com/watch?v=EaU3dhj6HXc",
+      "thumbnail": "https://i.ytimg.com/vi/EaU3dhj6HXc/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
       "id": "yHFXHWxmHts",
       "title": "Monster Truck Madness: Yucatan Adventure with the Madness Crew! | Multiplayer",
       "channel": "Panoz",
@@ -222,6 +267,51 @@
       "published": "2026-07-30T13:23:13+00:00",
       "url": "https://www.youtube.com/watch?v=40puVC4GhL0",
       "thumbnail": "https://i.ytimg.com/vi/40puVC4GhL0/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "OABqZVUtn9I",
+      "title": "Midtown Madness - Angry Traffic (New Feature)",
+      "channel": "VJ",
+      "published": "2026-07-27T10:44:33+00:00",
+      "url": "https://www.youtube.com/watch?v=OABqZVUtn9I",
+      "thumbnail": "https://i.ytimg.com/vi/OABqZVUtn9I/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "uH1kT1UiGqg",
+      "title": "Midtown Madness: Beat The Bridges - 59.85 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-07-26T13:10:11+00:00",
+      "url": "https://www.youtube.com/watch?v=uH1kT1UiGqg",
+      "thumbnail": "https://i.ytimg.com/vi/uH1kT1UiGqg/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "VbEAohVkCwY",
+      "title": "Midtown Madness: Freeway Flyer - 1:35.45 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-07-19T04:48:23+00:00",
+      "url": "https://www.youtube.com/watch?v=VbEAohVkCwY",
+      "thumbnail": "https://i.ytimg.com/vi/VbEAohVkCwY/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "0krW-Rz-ARc",
+      "title": "Midtown Madness: Soldier Sneaker - 1:04.56 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-07-12T13:00:59+00:00",
+      "url": "https://www.youtube.com/watch?v=0krW-Rz-ARc",
+      "thumbnail": "https://i.ytimg.com/vi/0krW-Rz-ARc/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "j-CkeavE9b4",
+      "title": "Midtown Madness: Beginner's Luck - 28.92 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-07-05T12:01:21+00:00",
+      "url": "https://www.youtube.com/watch?v=j-CkeavE9b4",
+      "thumbnail": "https://i.ytimg.com/vi/j-CkeavE9b4/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -243,48 +333,21 @@
       "source": "youtube"
     },
     {
-      "id": "4CrQ1C_OhzQ",
-      "title": "Midtown Madness 1: Chinese Cruise with the Madness Crew! | OWNAGE CHOKES!",
-      "channel": "Panoz",
-      "published": "2026-06-30T16:54:41+00:00",
-      "url": "https://www.youtube.com/watch?v=4CrQ1C_OhzQ",
-      "thumbnail": "https://i.ytimg.com/vi/4CrQ1C_OhzQ/mqdefault.jpg",
+      "id": "gFoNsKGW3BM",
+      "title": "Midtown Madness: Multiplayer Sessions - Freestyle Flight",
+      "channel": "MadManMammoth",
+      "published": "2025-12-26T01:59:06+00:00",
+      "url": "https://www.youtube.com/watch?v=gFoNsKGW3BM",
+      "thumbnail": "https://i.ytimg.com/vi/gFoNsKGW3BM/mqdefault.jpg",
       "source": "youtube"
     },
     {
-      "id": "2xcsBa23l1I",
-      "title": "Giggity!😉🤣 #multiplayer #discord #midtownmadness #retrogaming #racing #funny #fyp #freightliner",
-      "channel": "Panoz",
-      "published": "2026-06-29T12:28:43+00:00",
-      "url": "https://www.youtube.com/watch?v=2xcsBa23l1I",
-      "thumbnail": "https://i.ytimg.com/vi/2xcsBa23l1I/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "P9qw2dkO-IE",
-      "title": "SHRI PING!😂 #discord #multiplayer #gaming #racing #retrogaming #midtownmadness #ping #shri #fyp",
-      "channel": "Panoz",
-      "published": "2026-06-27T15:37:24+00:00",
-      "url": "https://www.youtube.com/watch?v=P9qw2dkO-IE",
-      "thumbnail": "https://i.ytimg.com/vi/P9qw2dkO-IE/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "Kiew-JfwhXU",
-      "title": "WHAT JUST HAPPENED?!😂 #discord #gaming #multiplayer #midtownmadness #funny #racing #fyp #shorts",
-      "channel": "Panoz",
-      "published": "2026-06-23T16:32:04+00:00",
-      "url": "https://www.youtube.com/watch?v=Kiew-JfwhXU",
-      "thumbnail": "https://i.ytimg.com/vi/Kiew-JfwhXU/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "mH6q00LG_z0",
-      "title": "Midtown Madness 1: Aptitude Test with the Madness Crew! #6 | Anthon's World Famous \"Shortcut\"",
-      "channel": "Panoz",
-      "published": "2026-06-22T14:47:52+00:00",
-      "url": "https://www.youtube.com/watch?v=mH6q00LG_z0",
-      "thumbnail": "https://i.ytimg.com/vi/mH6q00LG_z0/mqdefault.jpg",
+      "id": "x9zCulfGzjI",
+      "title": "Midtown Madness: Multiplayer Sessions - Tunnel Work",
+      "channel": "MadManMammoth",
+      "published": "2025-12-24T20:42:30+00:00",
+      "url": "https://www.youtube.com/watch?v=x9zCulfGzjI",
+      "thumbnail": "https://i.ytimg.com/vi/x9zCulfGzjI/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -294,6 +357,78 @@
       "published": "2025-08-21T21:21:28+00:00",
       "url": "https://www.youtube.com/watch?v=bL9BKnSer-w",
       "thumbnail": "https://i.ytimg.com/vi/bL9BKnSer-w/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "gLkgd-qlkH4",
+      "title": "Midtown Madness: Multiplayer Sessions - North End Navigator",
+      "channel": "MadManMammoth",
+      "published": "2025-02-24T14:26:51+00:00",
+      "url": "https://www.youtube.com/watch?v=gLkgd-qlkH4",
+      "thumbnail": "https://i.ytimg.com/vi/gLkgd-qlkH4/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "uR-mwifJptk",
+      "title": "Midtown Madness: Multiplayer Sessions - Cops and Robbers #1",
+      "channel": "MadManMammoth",
+      "published": "2025-01-23T18:41:31+00:00",
+      "url": "https://www.youtube.com/watch?v=uR-mwifJptk",
+      "thumbnail": "https://i.ytimg.com/vi/uR-mwifJptk/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "6AQK4dxJqQI",
+      "title": "Benny Hill Shit #gaming #discord #funny #midtownmadness #troll",
+      "channel": "MadManMammoth",
+      "published": "2025-01-18T19:59:56+00:00",
+      "url": "https://www.youtube.com/watch?v=6AQK4dxJqQI",
+      "thumbnail": "https://i.ytimg.com/vi/6AQK4dxJqQI/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "esIbveiiZDg",
+      "title": "Anthon's Escape #gaming #discord #funny #rage #midtownmadness #fail #shorts #madnesscrew #mm1",
+      "channel": "MadManMammoth",
+      "published": "2025-01-15T19:16:25+00:00",
+      "url": "https://www.youtube.com/watch?v=esIbveiiZDg",
+      "thumbnail": "https://i.ytimg.com/vi/esIbveiiZDg/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "e9X6--pIiIs",
+      "title": "Midtown Madness: Checkpoint #1 - Navy Pier Crunch (Mini Windy City Racepack)",
+      "channel": "MadManMammoth",
+      "published": "2024-12-26T19:55:52+00:00",
+      "url": "https://www.youtube.com/watch?v=e9X6--pIiIs",
+      "thumbnail": "https://i.ytimg.com/vi/e9X6--pIiIs/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "-Wg_tjfqBPY",
+      "title": "Saint Noctalus takes off #gaming #discord #christmas #midtownmadness #funny #santa #retrogaming",
+      "channel": "MadManMammoth",
+      "published": "2024-12-25T06:26:36+00:00",
+      "url": "https://www.youtube.com/watch?v=-Wg_tjfqBPY",
+      "thumbnail": "https://i.ytimg.com/vi/-Wg_tjfqBPY/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "l4nayjgn2bc",
+      "title": "Midtown Madness: Checkpoint #8 - Pier Panic (Robin's Ultimate Racepack)",
+      "channel": "MadManMammoth",
+      "published": "2024-12-21T20:05:19+00:00",
+      "url": "https://www.youtube.com/watch?v=l4nayjgn2bc",
+      "thumbnail": "https://i.ytimg.com/vi/l4nayjgn2bc/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "K5-VxHiaXPM",
+      "title": "Midtown Madness: Multiplayer Sessions - Trip Hazard",
+      "channel": "MadManMammoth",
+      "published": "2024-12-20T20:14:06+00:00",
+      "url": "https://www.youtube.com/watch?v=K5-VxHiaXPM",
+      "thumbnail": "https://i.ytimg.com/vi/K5-VxHiaXPM/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -375,24 +510,6 @@
       "published": "2024-02-24T16:55:00+00:00",
       "url": "https://www.youtube.com/watch?v=AEwSOGd5lqo",
       "thumbnail": "https://i.ytimg.com/vi/AEwSOGd5lqo/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "QN12za5RdWQ",
-      "title": "Midtown Madnes | World Record Museum Marathon (1:17.66)",
-      "channel": "MidtownMadness1",
-      "published": "2024-02-19T23:03:59+00:00",
-      "url": "https://www.youtube.com/watch?v=QN12za5RdWQ",
-      "thumbnail": "https://i.ytimg.com/vi/QN12za5RdWQ/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "Xjr1HmIeiog",
-      "title": "Midtown Madness Double-Back Blitz | WR 2nd Place",
-      "channel": "MidtownMadness1",
-      "published": "2024-02-13T21:23:58+00:00",
-      "url": "https://www.youtube.com/watch?v=Xjr1HmIeiog",
-      "thumbnail": "https://i.ytimg.com/vi/Xjr1HmIeiog/mqdefault.jpg",
       "source": "youtube"
     }
   ],
