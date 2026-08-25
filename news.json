@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-25T03:17:23Z",
+  "generated": "2026-08-25T05:18:56Z",
   "announcements": [
     {
       "id": "1540819205622866080",
@@ -151,7 +151,116 @@
       "emojis": {}
     }
   ],
-  "videos": [],
+  "videos": [
+    {
+      "id": "gFoNsKGW3BM",
+      "title": "Midtown Madness: Multiplayer Sessions - Freestyle Flight",
+      "channel": "MadManMammoth",
+      "published": "2025-12-26T01:59:06+00:00",
+      "url": "https://www.youtube.com/watch?v=gFoNsKGW3BM",
+      "thumbnail": "https://i.ytimg.com/vi/gFoNsKGW3BM/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "x9zCulfGzjI",
+      "title": "Midtown Madness: Multiplayer Sessions - Tunnel Work",
+      "channel": "MadManMammoth",
+      "published": "2025-12-24T20:42:30+00:00",
+      "url": "https://www.youtube.com/watch?v=x9zCulfGzjI",
+      "thumbnail": "https://i.ytimg.com/vi/x9zCulfGzjI/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "gLkgd-qlkH4",
+      "title": "Midtown Madness: Multiplayer Sessions - North End Navigator",
+      "channel": "MadManMammoth",
+      "published": "2025-02-24T14:26:51+00:00",
+      "url": "https://www.youtube.com/watch?v=gLkgd-qlkH4",
+      "thumbnail": "https://i.ytimg.com/vi/gLkgd-qlkH4/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "uR-mwifJptk",
+      "title": "Midtown Madness: Multiplayer Sessions - Cops and Robbers #1",
+      "channel": "MadManMammoth",
+      "published": "2025-01-23T18:41:31+00:00",
+      "url": "https://www.youtube.com/watch?v=uR-mwifJptk",
+      "thumbnail": "https://i.ytimg.com/vi/uR-mwifJptk/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "6AQK4dxJqQI",
+      "title": "Benny Hill Shit #gaming #discord #funny #midtownmadness #troll",
+      "channel": "MadManMammoth",
+      "published": "2025-01-18T19:59:56+00:00",
+      "url": "https://www.youtube.com/watch?v=6AQK4dxJqQI",
+      "thumbnail": "https://i.ytimg.com/vi/6AQK4dxJqQI/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "esIbveiiZDg",
+      "title": "Anthon's Escape #gaming #discord #funny #rage #midtownmadness #fail #shorts #madnesscrew #mm1",
+      "channel": "MadManMammoth",
+      "published": "2025-01-15T19:16:25+00:00",
+      "url": "https://www.youtube.com/watch?v=esIbveiiZDg",
+      "thumbnail": "https://i.ytimg.com/vi/esIbveiiZDg/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "e9X6--pIiIs",
+      "title": "Midtown Madness: Checkpoint #1 - Navy Pier Crunch (Mini Windy City Racepack)",
+      "channel": "MadManMammoth",
+      "published": "2024-12-26T19:55:52+00:00",
+      "url": "https://www.youtube.com/watch?v=e9X6--pIiIs",
+      "thumbnail": "https://i.ytimg.com/vi/e9X6--pIiIs/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "-Wg_tjfqBPY",
+      "title": "Saint Noctalus takes off #gaming #discord #christmas #midtownmadness #funny #santa #retrogaming",
+      "channel": "MadManMammoth",
+      "published": "2024-12-25T06:26:36+00:00",
+      "url": "https://www.youtube.com/watch?v=-Wg_tjfqBPY",
+      "thumbnail": "https://i.ytimg.com/vi/-Wg_tjfqBPY/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "l4nayjgn2bc",
+      "title": "Midtown Madness: Checkpoint #8 - Pier Panic (Robin's Ultimate Racepack)",
+      "channel": "MadManMammoth",
+      "published": "2024-12-21T20:05:19+00:00",
+      "url": "https://www.youtube.com/watch?v=l4nayjgn2bc",
+      "thumbnail": "https://i.ytimg.com/vi/l4nayjgn2bc/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "K5-VxHiaXPM",
+      "title": "Midtown Madness: Multiplayer Sessions - Trip Hazard",
+      "channel": "MadManMammoth",
+      "published": "2024-12-20T20:14:06+00:00",
+      "url": "https://www.youtube.com/watch?v=K5-VxHiaXPM",
+      "thumbnail": "https://i.ytimg.com/vi/K5-VxHiaXPM/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "x3bU5wJdf34",
+      "title": "Midtown Madness: Multiplayer Sessions - Beetle Blast-a-Thon",
+      "channel": "MadManMammoth",
+      "published": "2024-12-07T17:49:38+00:00",
+      "url": "https://www.youtube.com/watch?v=x3bU5wJdf34",
+      "thumbnail": "https://i.ytimg.com/vi/x3bU5wJdf34/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "TKqn0YGSy4U",
+      "title": "Midtown Madness: Checkpoint #7 - The Muscle Test (Robin's Ultimate Racepack)",
+      "channel": "MadManMammoth",
+      "published": "2024-11-27T20:43:16+00:00",
+      "url": "https://www.youtube.com/watch?v=TKqn0YGSy4U",
+      "thumbnail": "https://i.ytimg.com/vi/TKqn0YGSy4U/mqdefault.jpg",
+      "source": "youtube"
+    }
+  ],
   "records": [
     {
       "game": "mcm2",
