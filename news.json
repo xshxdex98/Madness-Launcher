@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-30T13:07:23Z",
+  "generated": "2026-08-30T17:29:36Z",
   "announcements": [
     {
       "id": "1540819205622866080",
@@ -64,7 +64,7 @@
       "posted": "2026-07-20T14:12:29.524000+00:00",
       "body": "# A LEGENDARY MEET UP!\n\n@salsa flew over to meet the legend @KcRobin!:MADNESSCREW: :mm1:",
       "url": "https://discord.com/channels/796156308545601558/796165218635743254/1528766553753915572",
-      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1528766552378310757/IMG_9108.jpg?ex=6a94e30d&is=6a93918d&hm=6ffc0e926f3c07ec2758bf1720617efa57021e50d9ebf84d808365f4ab916dd7&",
+      "image": "https://cdn.discordapp.com/attachments/796165218635743254/1528766552378310757/IMG_9108.jpg?ex=6a958bcd&is=6a943a4d&hm=e3ed34b7a1d31fc671e2e740da58a17f630416b6ad1b5ecffc60bf151b20a09b&",
       "emojis": {
         "MADNESSCREW": "https://cdn.discordapp.com/emojis/949574838798929920.png",
         "mm1": "https://cdn.discordapp.com/emojis/796328497344806922.png"
@@ -152,6 +152,15 @@
     }
   ],
   "videos": [
+    {
+      "id": "_xlj14iAnLg",
+      "title": "Midtown Madness: Aptitude Test - 1:31.51 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-08-30T13:08:48+00:00",
+      "url": "https://www.youtube.com/watch?v=_xlj14iAnLg",
+      "thumbnail": "https://i.ytimg.com/vi/_xlj14iAnLg/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "xmMSRrnBV6I",
       "title": "Midtown Madness: City Central - 1:23.01 (Speedrun)",
@@ -303,15 +312,6 @@
       "published": "2026-07-12T13:00:59+00:00",
       "url": "https://www.youtube.com/watch?v=0krW-Rz-ARc",
       "thumbnail": "https://i.ytimg.com/vi/0krW-Rz-ARc/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "j-CkeavE9b4",
-      "title": "Midtown Madness: Beginner's Luck - 28.92 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-07-05T12:01:21+00:00",
-      "url": "https://www.youtube.com/watch?v=j-CkeavE9b4",
-      "thumbnail": "https://i.ytimg.com/vi/j-CkeavE9b4/mqdefault.jpg",
       "source": "youtube"
     },
     {
