@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-09-06T15:48:52Z",
+  "generated": "2026-09-06T17:59:17Z",
   "announcements": [
     {
       "id": "1545131490541830265",
@@ -124,6 +124,15 @@
     }
   ],
   "videos": [
+    {
+      "id": "77K924B2TFo",
+      "title": "Midtown Madness: Freeway Flyer - 1:45.83 (Speedrun) [Amateur]",
+      "channel": "VJ",
+      "published": "2026-09-06T16:04:15+00:00",
+      "url": "https://www.youtube.com/watch?v=77K924B2TFo",
+      "thumbnail": "https://i.ytimg.com/vi/77K924B2TFo/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "_xlj14iAnLg",
       "title": "Midtown Madness: Aptitude Test - 1:31.51 (Speedrun)",
@@ -275,15 +284,6 @@
       "published": "2026-07-19T04:48:23+00:00",
       "url": "https://www.youtube.com/watch?v=VbEAohVkCwY",
       "thumbnail": "https://i.ytimg.com/vi/VbEAohVkCwY/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "0krW-Rz-ARc",
-      "title": "Midtown Madness: Soldier Sneaker - 1:04.56 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-07-12T13:00:59+00:00",
-      "url": "https://www.youtube.com/watch?v=0krW-Rz-ARc",
-      "thumbnail": "https://i.ytimg.com/vi/0krW-Rz-ARc/mqdefault.jpg",
       "source": "youtube"
     },
     {
