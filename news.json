@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-09-06T22:08:39Z",
+  "generated": "2026-09-06T23:54:13Z",
   "announcements": [
     {
       "id": "1545131490541830265",
@@ -124,6 +124,15 @@
     }
   ],
   "videos": [
+    {
+      "id": "hP3OapWZcJA",
+      "title": "Old Snow vs New Snow - Midtown Madness",
+      "channel": "VJ",
+      "published": "2026-09-06T22:21:27+00:00",
+      "url": "https://www.youtube.com/watch?v=hP3OapWZcJA",
+      "thumbnail": "https://i.ytimg.com/vi/hP3OapWZcJA/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "77K924B2TFo",
       "title": "Midtown Madness: Freeway Flyer - 1:45.83 (Speedrun) [Amateur]",
@@ -275,15 +284,6 @@
       "published": "2026-07-26T13:10:11+00:00",
       "url": "https://www.youtube.com/watch?v=uH1kT1UiGqg",
       "thumbnail": "https://i.ytimg.com/vi/uH1kT1UiGqg/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "VbEAohVkCwY",
-      "title": "Midtown Madness: Freeway Flyer - 1:35.45 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-07-19T04:48:23+00:00",
-      "url": "https://www.youtube.com/watch?v=VbEAohVkCwY",
-      "thumbnail": "https://i.ytimg.com/vi/VbEAohVkCwY/mqdefault.jpg",
       "source": "youtube"
     },
     {
