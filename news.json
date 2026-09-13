@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-09-13T10:17:05Z",
+  "generated": "2026-09-13T14:33:26Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "qIMV_WiM964",
+      "title": "Midtown Madness: Frosty Finale - 2:03.88 (Speedrun) [Amateur]",
+      "channel": "VJ",
+      "published": "2026-09-13T12:49:23+00:00",
+      "url": "https://www.youtube.com/watch?v=qIMV_WiM964",
+      "thumbnail": "https://i.ytimg.com/vi/qIMV_WiM964/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "3KxIGpyWIPc",
       "title": "Cops & Robbers in GTA!👀🔥 # #multiplayer #gta #fivem #midtownmadness #gta5 #gtamods #trending #game",
@@ -163,15 +172,6 @@
       "published": "2026-07-27T10:44:33+00:00",
       "url": "https://www.youtube.com/watch?v=OABqZVUtn9I",
       "thumbnail": "https://i.ytimg.com/vi/OABqZVUtn9I/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "uH1kT1UiGqg",
-      "title": "Midtown Madness: Beat The Bridges - 59.85 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-07-26T13:10:11+00:00",
-      "url": "https://www.youtube.com/watch?v=uH1kT1UiGqg",
-      "thumbnail": "https://i.ytimg.com/vi/uH1kT1UiGqg/mqdefault.jpg",
       "source": "youtube"
     },
     {
