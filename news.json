@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-09-14T20:24:45Z",
+  "generated": "2026-09-14T23:18:08Z",
   "announcements": [],
   "videos": [
     {
@@ -891,6 +891,19 @@
       "city": "chicago",
       "race": -1,
       "race_name": "Beetle Blast-a-Thon",
+      "difficulty": "pro",
+      "seconds": 71.71,
+      "username": "xVJx",
+      "set_at": "2025-09-27",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown1/runs/m32dd24y"
+    },
+    {
+      "game": "mm1",
+      "board": "vanilla",
+      "city": "chicago",
+      "race": -1,
+      "race_name": "Beetle Blast-a-Thon",
       "difficulty": "amateur",
       "seconds": 87.23,
       "username": "xVJx",
@@ -923,6 +936,19 @@
       "set_at": "2026-08-09",
       "source": "speedrun.com",
       "url": "https://www.speedrun.com/midtown1/runs/mkn5e03m"
+    },
+    {
+      "game": "mm1",
+      "board": "vanilla",
+      "city": "chicago",
+      "race": -1,
+      "race_name": "The Littler Loop",
+      "difficulty": "pro",
+      "seconds": 87.89,
+      "username": "PhFoxy",
+      "set_at": "2024-03-27",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown1/runs/zn21p7lz"
     },
     {
       "game": "mm1",
@@ -1085,6 +1111,19 @@
       "board": "vanilla",
       "city": "chicago",
       "race": -1,
+      "race_name": "City Central",
+      "difficulty": "amateur",
+      "seconds": 67.13,
+      "username": "xVJx",
+      "set_at": "2025-09-27",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown1/runs/yo544wdz"
+    },
+    {
+      "game": "mm1",
+      "board": "vanilla",
+      "city": "chicago",
+      "race": -1,
       "race_name": "North End Navigator",
       "difficulty": "pro",
       "seconds": 127.04,
@@ -1157,6 +1196,19 @@
       "set_at": "2024-11-30",
       "source": "speedrun.com",
       "url": "https://www.speedrun.com/midtown1/runs/z0832vjm"
+    },
+    {
+      "game": "mm2",
+      "board": "vanilla",
+      "city": "sf",
+      "race": -1,
+      "race_name": "Ignorance Is Blitz",
+      "difficulty": "default race set",
+      "seconds": 12.88,
+      "username": "Zesti",
+      "set_at": "2020-07-22",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown2/runs/y82o2x5y"
     },
     {
       "game": "mm2",
