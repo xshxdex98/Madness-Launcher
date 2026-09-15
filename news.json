@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-09-15T12:11:13Z",
+  "generated": "2026-09-15T16:58:56Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "ZIAOYpcSv2Q",
+      "title": "Midtown Madness: Cops & Robbers #55",
+      "channel": "Panoz",
+      "published": "2026-09-15T14:41:17+00:00",
+      "url": "https://www.youtube.com/watch?v=ZIAOYpcSv2Q",
+      "thumbnail": "https://i.ytimg.com/vi/ZIAOYpcSv2Q/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "qIMV_WiM964",
       "title": "Midtown Madness: Frosty Finale - 2:03.88 (Speedrun) [Amateur]",
@@ -172,15 +181,6 @@
       "published": "2026-07-27T10:44:33+00:00",
       "url": "https://www.youtube.com/watch?v=OABqZVUtn9I",
       "thumbnail": "https://i.ytimg.com/vi/OABqZVUtn9I/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "mErljUsgCC4",
-      "title": "Midtown Madness 2: Cops & Robbers #25 | Happy 4th Of July!",
-      "channel": "Panoz",
-      "published": "2026-07-04T19:50:19+00:00",
-      "url": "https://www.youtube.com/watch?v=mErljUsgCC4",
-      "thumbnail": "https://i.ytimg.com/vi/mErljUsgCC4/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -944,11 +944,11 @@
       "race": -1,
       "race_name": "The Littler Loop",
       "difficulty": "pro",
-      "seconds": 87.89,
-      "username": "PhFoxy",
-      "set_at": "2024-03-27",
+      "seconds": 87.67,
+      "username": "fatiyesman",
+      "set_at": "2026-09-14",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/zn21p7lz"
+      "url": "https://www.speedrun.com/midtown1/runs/y64vp9pm"
     },
     {
       "game": "mm1",
