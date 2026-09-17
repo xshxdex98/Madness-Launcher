@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-09-17T15:00:53Z",
+  "generated": "2026-09-17T18:56:05Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "jFamde1NYOY",
+      "title": "Midtown Madness 1: Stay Alive with the Madness Crew!",
+      "channel": "Panoz",
+      "published": "2026-09-17T17:18:39+00:00",
+      "url": "https://www.youtube.com/watch?v=jFamde1NYOY",
+      "thumbnail": "https://i.ytimg.com/vi/jFamde1NYOY/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "ZIAOYpcSv2Q",
       "title": "Midtown Madness: Cops & Robbers #55",
@@ -163,15 +172,6 @@
       "published": "2026-08-01T17:46:34+00:00",
       "url": "https://www.youtube.com/watch?v=yHFXHWxmHts",
       "thumbnail": "https://i.ytimg.com/vi/yHFXHWxmHts/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "40puVC4GhL0",
-      "title": "Motocross Madness 2: Munchberry Farms - Crispy Crunchies with the Madness Crew! | MULTIPLAYER WORKS!",
-      "channel": "Panoz",
-      "published": "2026-07-30T13:23:13+00:00",
-      "url": "https://www.youtube.com/watch?v=40puVC4GhL0",
-      "thumbnail": "https://i.ytimg.com/vi/40puVC4GhL0/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -591,6 +591,19 @@
       "board": "vanilla",
       "city": "chicago",
       "race": -1,
+      "race_name": "Race for a Space",
+      "difficulty": "amateur",
+      "seconds": 41.25,
+      "username": "xVJx",
+      "set_at": "2025-09-27",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown1/runs/yw51170y"
+    },
+    {
+      "game": "mm1",
+      "board": "vanilla",
+      "city": "chicago",
+      "race": -1,
       "race_name": "Tall Tower Blitz",
       "difficulty": "pro",
       "seconds": 67.76,
@@ -806,6 +819,19 @@
       "set_at": "2025-09-27",
       "source": "speedrun.com",
       "url": "https://www.speedrun.com/midtown1/runs/mkr44r1z"
+    },
+    {
+      "game": "mm1",
+      "board": "vanilla",
+      "city": "chicago",
+      "race": -1,
+      "race_name": "Crosstown Switchback",
+      "difficulty": "amateur",
+      "seconds": 117.94,
+      "username": "xVJx",
+      "set_at": "2025-09-27",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown1/runs/y40554dz"
     },
     {
       "game": "mm1",
@@ -1146,6 +1172,32 @@
       "url": "https://www.speedrun.com/midtown1/runs/y9w77rkz"
     },
     {
+      "game": "mm1",
+      "board": "vanilla",
+      "city": "chicago",
+      "race": -1,
+      "race_name": "Loop-De-Loop",
+      "difficulty": "pro",
+      "seconds": 255.04,
+      "username": "PhFoxy",
+      "set_at": "2024-12-17",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown1/runs/mko2l33z"
+    },
+    {
+      "game": "mm1",
+      "board": "vanilla",
+      "city": "chicago",
+      "race": -1,
+      "race_name": "Loop-De-Loop",
+      "difficulty": "amateur",
+      "seconds": 199.17,
+      "username": "xVJx",
+      "set_at": "2024-11-30",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown1/runs/z0832vjm"
+    },
+    {
       "game": "mm2",
       "board": "vanilla",
       "city": "sf",
@@ -1248,6 +1300,19 @@
       "set_at": "2020-11-03",
       "source": "speedrun.com",
       "url": "https://www.speedrun.com/midtown2/runs/zgvrj2vz"
+    },
+    {
+      "game": "mm2",
+      "board": "vanilla",
+      "city": "sf",
+      "race": -1,
+      "race_name": "Telegraph Turnaround",
+      "difficulty": "default race set",
+      "seconds": 42.95,
+      "username": "xatrixx",
+      "set_at": "2021-12-02",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown2/runs/m7w12d9z"
     },
     {
       "game": "mm2",
