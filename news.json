@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-09-20T16:50:52Z",
+  "generated": "2026-09-20T19:15:35Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "5aIghn6kbf0",
+      "title": "Midtown Madness: Beetle Blast-A-Thon - 1:11.71 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-09-20T16:50:39+00:00",
+      "url": "https://www.youtube.com/watch?v=5aIghn6kbf0",
+      "thumbnail": "https://i.ytimg.com/vi/5aIghn6kbf0/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "jFamde1NYOY",
       "title": "Midtown Madness 1: Stay Alive with the Madness Crew!",
@@ -172,15 +181,6 @@
       "published": "2026-07-30T13:23:13+00:00",
       "url": "https://www.youtube.com/watch?v=40puVC4GhL0",
       "thumbnail": "https://i.ytimg.com/vi/40puVC4GhL0/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "OABqZVUtn9I",
-      "title": "Midtown Madness - Angry Traffic (New Feature)",
-      "channel": "VJ",
-      "published": "2026-07-27T10:44:33+00:00",
-      "url": "https://www.youtube.com/watch?v=OABqZVUtn9I",
-      "thumbnail": "https://i.ytimg.com/vi/OABqZVUtn9I/mqdefault.jpg",
       "source": "youtube"
     },
     {
