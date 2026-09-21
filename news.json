@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-09-21T19:28:09Z",
+  "generated": "2026-09-21T22:44:46Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "nOk5idjmvR0",
+      "title": "Midtown Madness: Cops & Robbers #56 | HOW DID I CHOKE???",
+      "channel": "Panoz",
+      "published": "2026-09-21T19:33:18+00:00",
+      "url": "https://www.youtube.com/watch?v=nOk5idjmvR0",
+      "thumbnail": "https://i.ytimg.com/vi/nOk5idjmvR0/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "5aIghn6kbf0",
       "title": "Midtown Madness: Beetle Blast-A-Thon - 1:11.71 (Speedrun)",
@@ -172,15 +181,6 @@
       "published": "2026-08-01T17:46:34+00:00",
       "url": "https://www.youtube.com/watch?v=yHFXHWxmHts",
       "thumbnail": "https://i.ytimg.com/vi/yHFXHWxmHts/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "40puVC4GhL0",
-      "title": "Motocross Madness 2: Munchberry Farms - Crispy Crunchies with the Madness Crew! | MULTIPLAYER WORKS!",
-      "channel": "Panoz",
-      "published": "2026-07-30T13:23:13+00:00",
-      "url": "https://www.youtube.com/watch?v=40puVC4GhL0",
-      "thumbnail": "https://i.ytimg.com/vi/40puVC4GhL0/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -411,11 +411,11 @@
       "race": -1,
       "race_name": "River Wild & Wacker",
       "difficulty": "amateur",
-      "seconds": 46.3,
-      "username": "xVJx",
-      "set_at": "2025-09-27",
+      "seconds": 45.93,
+      "username": "fatiyesman",
+      "set_at": "2026-09-21",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/z173309z"
+      "url": "https://www.speedrun.com/midtown1/runs/zxrx248z"
     },
     {
       "game": "mm1",
