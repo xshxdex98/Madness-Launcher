@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-09-27T14:48:16Z",
+  "generated": "2026-09-27T18:53:14Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "HIi7ER4jimw",
+      "title": "Midtown Madness: Frosty Finale - 1:43.73 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-09-27T16:45:44+00:00",
+      "url": "https://www.youtube.com/watch?v=HIi7ER4jimw",
+      "thumbnail": "https://i.ytimg.com/vi/HIi7ER4jimw/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "SUU8j8BiaiY",
       "title": "Madness Crew Funny Clip #25 | The Gentlemen's Club Massacre!",
@@ -172,15 +181,6 @@
       "published": "2026-08-07T21:29:25+00:00",
       "url": "https://www.youtube.com/watch?v=bDrANb3Wb5g",
       "thumbnail": "https://i.ytimg.com/vi/bDrANb3Wb5g/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "EaU3dhj6HXc",
-      "title": "Midtown Madness: Nocturnal Navigator - 1:18.20 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-08-02T23:52:46+00:00",
-      "url": "https://www.youtube.com/watch?v=EaU3dhj6HXc",
-      "thumbnail": "https://i.ytimg.com/vi/EaU3dhj6HXc/mqdefault.jpg",
       "source": "youtube"
     },
     {
