@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-10-04T10:35:14Z",
+  "generated": "2026-10-04T15:31:43Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "7aPJLIjH5mo",
+      "title": "Midtown Madness: Perimeter Perils - 2:50.01 (Speedrun) [Amateur]",
+      "channel": "VJ",
+      "published": "2026-10-04T11:34:40+00:00",
+      "url": "https://www.youtube.com/watch?v=7aPJLIjH5mo",
+      "thumbnail": "https://i.ytimg.com/vi/7aPJLIjH5mo/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "UDxcgpRKo6I",
       "title": "Midtown Madness Chicago Map is in BeamNG! (Cruise)",
@@ -172,15 +181,6 @@
       "published": "2026-08-15T17:22:16+00:00",
       "url": "https://www.youtube.com/watch?v=kOH9M0sqK3o",
       "thumbnail": "https://i.ytimg.com/vi/kOH9M0sqK3o/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "66OlgxGKERQ",
-      "title": "Midtown Madness: Crosstown Switchback - 1:38.74 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-08-09T13:07:42+00:00",
-      "url": "https://www.youtube.com/watch?v=66OlgxGKERQ",
-      "thumbnail": "https://i.ytimg.com/vi/66OlgxGKERQ/mqdefault.jpg",
       "source": "youtube"
     },
     {
