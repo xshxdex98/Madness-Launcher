@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-10T00:04:17Z",
+  "generated": "2026-10-10T11:49:56Z",
   "announcements": [],
   "videos": [
     {
@@ -1178,11 +1178,11 @@
       "race": -1,
       "race_name": "Loop-De-Loop",
       "difficulty": "pro",
-      "seconds": 255.04,
-      "username": "PhFoxy",
-      "set_at": "2024-12-17",
+      "seconds": 254.01,
+      "username": "fatiyesman",
+      "set_at": "2026-10-09",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/mko2l33z"
+      "url": "https://www.speedrun.com/midtown1/runs/y248rq5z"
     },
     {
       "game": "mm1",
