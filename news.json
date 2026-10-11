@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-10-10T20:28:05Z",
+  "generated": "2026-10-11T08:57:24Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "aUPoYTaGLDc",
+      "title": "Midtown Madness: Perimeter Perils - 2:28.10 (Speedrun)",
+      "channel": "VJ",
+      "published": "2026-10-11T04:16:57+00:00",
+      "url": "https://www.youtube.com/watch?v=aUPoYTaGLDc",
+      "thumbnail": "https://i.ytimg.com/vi/aUPoYTaGLDc/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "7aPJLIjH5mo",
       "title": "Midtown Madness: Perimeter Perils - 2:50.01 (Speedrun) [Amateur]",
@@ -163,15 +172,6 @@
       "published": "2026-08-16T17:14:14+00:00",
       "url": "https://www.youtube.com/watch?v=t5u4AgRidLw",
       "thumbnail": "https://i.ytimg.com/vi/t5u4AgRidLw/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "dW4r5cgCvwo",
-      "title": "Midtown Madness: Beat The Bridges - 58.51 (Speedrun)",
-      "channel": "VJ",
-      "published": "2026-08-16T12:28:39+00:00",
-      "url": "https://www.youtube.com/watch?v=dW4r5cgCvwo",
-      "thumbnail": "https://i.ytimg.com/vi/dW4r5cgCvwo/mqdefault.jpg",
       "source": "youtube"
     },
     {
