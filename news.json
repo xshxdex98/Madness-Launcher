@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-10-14T19:24:07Z",
+  "generated": "2026-10-15T10:11:30Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "gY1o3KbesM4",
+      "title": "Midtown Madness 1: Beginner's Luck City Bus Speedrun  (0:53:08)",
+      "channel": "Panoz",
+      "published": "2026-10-14T20:41:35+00:00",
+      "url": "https://www.youtube.com/watch?v=gY1o3KbesM4",
+      "thumbnail": "https://i.ytimg.com/vi/gY1o3KbesM4/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "aUPoYTaGLDc",
       "title": "Midtown Madness: Perimeter Perils - 2:28.10 (Speedrun)",
@@ -172,15 +181,6 @@
       "published": "2026-08-16T17:14:14+00:00",
       "url": "https://www.youtube.com/watch?v=t5u4AgRidLw",
       "thumbnail": "https://i.ytimg.com/vi/t5u4AgRidLw/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "kOH9M0sqK3o",
-      "title": "Midtown Madness: Cops & Robbers #54 | 20 Minutes of HELL!",
-      "channel": "Panoz",
-      "published": "2026-08-15T17:22:16+00:00",
-      "url": "https://www.youtube.com/watch?v=kOH9M0sqK3o",
-      "thumbnail": "https://i.ytimg.com/vi/kOH9M0sqK3o/mqdefault.jpg",
       "source": "youtube"
     },
     {
