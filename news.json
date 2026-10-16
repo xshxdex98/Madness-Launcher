@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-10-16T18:03:37Z",
+  "generated": "2026-10-16T21:06:58Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "GTw2FISMU5I",
+      "title": "Madness Crew is Coming to NASCAR! | Madness Crew Series NR2003 Mod Test!",
+      "channel": "Panoz",
+      "published": "2026-10-16T20:35:39+00:00",
+      "url": "https://www.youtube.com/watch?v=GTw2FISMU5I",
+      "thumbnail": "https://i.ytimg.com/vi/GTw2FISMU5I/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "gY1o3KbesM4",
       "title": "Midtown Madness 1: Beginner's Luck City Bus Speedrun  (0:53:08)",
@@ -172,15 +181,6 @@
       "published": "2026-08-19T13:39:29+00:00",
       "url": "https://www.youtube.com/watch?v=XWG4UA1wuIk",
       "thumbnail": "https://i.ytimg.com/vi/XWG4UA1wuIk/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "t5u4AgRidLw",
-      "title": "Monster Truck Madness 2: Water Tower with the Madness Crew! | Rumble!",
-      "channel": "Panoz",
-      "published": "2026-08-16T17:14:14+00:00",
-      "url": "https://www.youtube.com/watch?v=t5u4AgRidLw",
-      "thumbnail": "https://i.ytimg.com/vi/t5u4AgRidLw/mqdefault.jpg",
       "source": "youtube"
     },
     {
