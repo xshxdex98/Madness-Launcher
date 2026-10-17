@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-17T21:35:39Z",
+  "generated": "2026-10-17T23:26:37Z",
   "announcements": [],
   "videos": [
     {
@@ -645,11 +645,11 @@
       "race": -1,
       "race_name": "Beginner's Luck",
       "difficulty": "amateur",
-      "seconds": 33.26,
-      "username": "xVJx",
-      "set_at": "2026-01-23",
+      "seconds": 33.17,
+      "username": "jNoctal",
+      "set_at": "2026-10-17",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/yjv5xd7y"
+      "url": "https://www.speedrun.com/midtown1/runs/yw75lw9z"
     },
     {
       "game": "mm1",
