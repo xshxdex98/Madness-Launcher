@@ -1,17 +1,8 @@
 {
   "version": 1,
-  "generated": "2026-10-17T10:47:20Z",
+  "generated": "2026-10-17T14:03:00Z",
   "announcements": [],
   "videos": [
-    {
-      "id": "z3_f4KAPpJQ",
-      "title": "Midtown Madness 1: Beginner's Luck City Bus Speedrun #2 (0:51:02)",
-      "channel": "Panoz",
-      "published": "2026-10-17T04:53:25+00:00",
-      "url": "https://www.youtube.com/watch?v=z3_f4KAPpJQ",
-      "thumbnail": "https://i.ytimg.com/vi/z3_f4KAPpJQ/mqdefault.jpg",
-      "source": "youtube"
-    },
     {
       "id": "GTw2FISMU5I",
       "title": "Madness Crew is Coming to NASCAR! | Madness Crew Series NR2003 Mod Test!",
@@ -181,6 +172,15 @@
       "published": "2026-08-20T23:37:35+00:00",
       "url": "https://www.youtube.com/watch?v=eF_hvRteXAs",
       "thumbnail": "https://i.ytimg.com/vi/eF_hvRteXAs/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "XWG4UA1wuIk",
+      "title": "Midtown Madness 1: Battle Royale with the Madness Crew! | New Gamemode by RXKING!",
+      "channel": "Panoz",
+      "published": "2026-08-19T13:39:29+00:00",
+      "url": "https://www.youtube.com/watch?v=XWG4UA1wuIk",
+      "thumbnail": "https://i.ytimg.com/vi/XWG4UA1wuIk/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -424,11 +424,11 @@
       "race": -1,
       "race_name": "Under the El",
       "difficulty": "pro",
-      "seconds": 28.63,
+      "seconds": 28.56,
       "username": "fatiyesman",
-      "set_at": "2025-10-01",
+      "set_at": "2026-10-17",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/yl59dnnz"
+      "url": "https://www.speedrun.com/midtown1/runs/mknrnq3m"
     },
     {
       "game": "mm1",
