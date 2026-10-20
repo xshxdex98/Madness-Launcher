@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-10-20T19:21:07Z",
+  "generated": "2026-10-20T22:30:26Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "A4PqB4bq4n4",
+      "title": "Midtown Madness 1: City Central Cadillac Speedrun (1:20:74)",
+      "channel": "Panoz",
+      "published": "2026-10-20T22:25:08+00:00",
+      "url": "https://www.youtube.com/watch?v=A4PqB4bq4n4",
+      "thumbnail": "https://i.ytimg.com/vi/A4PqB4bq4n4/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "GTw2FISMU5I",
       "title": "Madness Crew is Coming to NASCAR! | Madness Crew Series NR2003 Mod Test!",
@@ -172,15 +181,6 @@
       "published": "2026-08-20T23:37:35+00:00",
       "url": "https://www.youtube.com/watch?v=eF_hvRteXAs",
       "thumbnail": "https://i.ytimg.com/vi/eF_hvRteXAs/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "XWG4UA1wuIk",
-      "title": "Midtown Madness 1: Battle Royale with the Madness Crew! | New Gamemode by RXKING!",
-      "channel": "Panoz",
-      "published": "2026-08-19T13:39:29+00:00",
-      "url": "https://www.youtube.com/watch?v=XWG4UA1wuIk",
-      "thumbnail": "https://i.ytimg.com/vi/XWG4UA1wuIk/mqdefault.jpg",
       "source": "youtube"
     },
     {
