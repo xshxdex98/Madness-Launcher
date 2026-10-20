@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-20T15:16:56Z",
+  "generated": "2026-10-20T19:21:07Z",
   "announcements": [],
   "videos": [
     {
@@ -515,11 +515,11 @@
       "race": -1,
       "race_name": "Wild Blue Blitz",
       "difficulty": "amateur",
-      "seconds": 39.28,
-      "username": "PhFoxy",
-      "set_at": "2026-10-19",
+      "seconds": 39.22,
+      "username": "jNoctal",
+      "set_at": "2026-10-20",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/mknx7j3m"
+      "url": "https://www.speedrun.com/midtown1/runs/m74jwxem"
     },
     {
       "game": "mm1",
@@ -671,11 +671,11 @@
       "race": -1,
       "race_name": "Tough Turns & a Tunnel",
       "difficulty": "amateur",
-      "seconds": 54.38,
-      "username": "xVJx",
-      "set_at": "2025-09-27",
+      "seconds": 54.31,
+      "username": "PhFoxy",
+      "set_at": "2026-10-20",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/y9w77qkz"
+      "url": "https://www.speedrun.com/midtown1/runs/y84ljgdz"
     },
     {
       "game": "mm1",
