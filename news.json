@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-21T15:38:35Z",
+  "generated": "2026-10-21T19:38:56Z",
   "announcements": [],
   "videos": [
     {
@@ -1196,19 +1196,6 @@
       "set_at": "2024-11-30",
       "source": "speedrun.com",
       "url": "https://www.speedrun.com/midtown1/runs/z0832vjm"
-    },
-    {
-      "game": "mm2",
-      "board": "vanilla",
-      "city": "sf",
-      "race": -1,
-      "race_name": "Ignorance Is Blitz",
-      "difficulty": "default race set",
-      "seconds": 12.88,
-      "username": "Zesti",
-      "set_at": "2020-07-22",
-      "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown2/runs/y82o2x5y"
     },
     {
       "game": "mm2",
