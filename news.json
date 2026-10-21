@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-10-21T19:38:56Z",
+  "generated": "2026-10-21T22:46:14Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "89ZpQt1hGYE",
+      "title": "Midtown Madness 1: Dearborn Dash Cadillac Speedrun (0:27:95)",
+      "channel": "Panoz",
+      "published": "2026-10-21T19:43:14+00:00",
+      "url": "https://www.youtube.com/watch?v=89ZpQt1hGYE",
+      "thumbnail": "https://i.ytimg.com/vi/89ZpQt1hGYE/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "rbwR5E-XfMU",
       "title": "Midtown Madness 1: Beginner's Luck Cadillac Speedrun  (0:40:82)",
@@ -118,15 +127,6 @@
       "published": "2026-09-20T16:50:39+00:00",
       "url": "https://www.youtube.com/watch?v=5aIghn6kbf0",
       "thumbnail": "https://i.ytimg.com/vi/5aIghn6kbf0/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "jFamde1NYOY",
-      "title": "Midtown Madness 1: Stay Alive with the Madness Crew!",
-      "channel": "Panoz",
-      "published": "2026-09-17T17:18:39+00:00",
-      "url": "https://www.youtube.com/watch?v=jFamde1NYOY",
-      "thumbnail": "https://i.ytimg.com/vi/jFamde1NYOY/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -1196,6 +1196,19 @@
       "set_at": "2024-11-30",
       "source": "speedrun.com",
       "url": "https://www.speedrun.com/midtown1/runs/z0832vjm"
+    },
+    {
+      "game": "mm2",
+      "board": "vanilla",
+      "city": "sf",
+      "race": -1,
+      "race_name": "Ignorance Is Blitz",
+      "difficulty": "default race set",
+      "seconds": 12.88,
+      "username": "Zesti",
+      "set_at": "2020-07-22",
+      "source": "speedrun.com",
+      "url": "https://www.speedrun.com/midtown2/runs/y82o2x5y"
     },
     {
       "game": "mm2",
