@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-10-22T15:54:02Z",
+  "generated": "2026-10-22T19:44:00Z",
   "announcements": [],
   "videos": [
     {
@@ -489,11 +489,11 @@
       "race": -1,
       "race_name": "Grant Park Parade",
       "difficulty": "amateur",
-      "seconds": 39.8,
-      "username": "PhFoxy",
-      "set_at": "2026-10-19",
+      "seconds": 39.73,
+      "username": "fatiyesman",
+      "set_at": "2026-10-22",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/zpev3vny"
+      "url": "https://www.speedrun.com/midtown1/runs/y246w0wz"
     },
     {
       "game": "mm1",
@@ -970,11 +970,11 @@
       "race": -1,
       "race_name": "Riverside Run",
       "difficulty": "pro",
-      "seconds": 73.37,
-      "username": "PhFoxy",
-      "set_at": "2024-12-16",
+      "seconds": 73.33,
+      "username": "fatiyesman",
+      "set_at": "2026-10-22",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/y8o9l1nm"
+      "url": "https://www.speedrun.com/midtown1/runs/mknx1v5m"
     },
     {
       "game": "mm1",
@@ -983,11 +983,11 @@
       "race": -1,
       "race_name": "Riverside Run",
       "difficulty": "amateur",
-      "seconds": 84.4,
-      "username": "xVJx",
-      "set_at": "2025-09-29",
+      "seconds": 84.06,
+      "username": "fatiyesman",
+      "set_at": "2026-10-22",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/zg9nx80m"
+      "url": "https://www.speedrun.com/midtown1/runs/yw7ox69z"
     },
     {
       "game": "mm1",
