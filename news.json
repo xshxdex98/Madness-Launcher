@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-10-24T14:02:12Z",
+  "generated": "2026-10-24T17:27:23Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "fuuryLUuB_g",
+      "title": "Midtown Madness 1: A CRAZY Multiplayer Session from October 17th, 2021!",
+      "channel": "Panoz",
+      "published": "2026-10-24T14:05:58+00:00",
+      "url": "https://www.youtube.com/watch?v=fuuryLUuB_g",
+      "thumbnail": "https://i.ytimg.com/vi/fuuryLUuB_g/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "89ZpQt1hGYE",
       "title": "Midtown Madness 1: Dearborn Dash Cadillac Speedrun (0:27:95)",
@@ -109,15 +118,6 @@
       "published": "2026-09-23T01:34:38+00:00",
       "url": "https://www.youtube.com/watch?v=ibvOuInTdY0",
       "thumbnail": "https://i.ytimg.com/vi/ibvOuInTdY0/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "nOk5idjmvR0",
-      "title": "Midtown Madness: Cops & Robbers #56 | HOW DID I CHOKE???",
-      "channel": "Panoz",
-      "published": "2026-09-21T19:33:18+00:00",
-      "url": "https://www.youtube.com/watch?v=nOk5idjmvR0",
-      "thumbnail": "https://i.ytimg.com/vi/nOk5idjmvR0/mqdefault.jpg",
       "source": "youtube"
     },
     {
