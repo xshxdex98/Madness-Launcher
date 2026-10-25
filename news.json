@@ -1,8 +1,26 @@
 {
   "version": 1,
-  "generated": "2026-10-24T23:58:57Z",
+  "generated": "2026-10-25T08:45:21Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "k-J6379ZQeQ",
+      "title": "Midtown Madness 1: Dearborn Dash City Bus Speedrun #3 (0:36:36)",
+      "channel": "Panoz",
+      "published": "2026-10-25T06:34:02+00:00",
+      "url": "https://www.youtube.com/watch?v=k-J6379ZQeQ",
+      "thumbnail": "https://i.ytimg.com/vi/k-J6379ZQeQ/mqdefault.jpg",
+      "source": "youtube"
+    },
+    {
+      "id": "laAGuguMAjQ",
+      "title": "Midtown Madness 1: Dearborn Dash Cadillac Speedrun #2 (0:27:88)",
+      "channel": "Panoz",
+      "published": "2026-10-25T00:10:00+00:00",
+      "url": "https://www.youtube.com/watch?v=laAGuguMAjQ",
+      "thumbnail": "https://i.ytimg.com/vi/laAGuguMAjQ/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "fuuryLUuB_g",
       "title": "Midtown Madness 1: A CRAZY Multiplayer Session from October 17th, 2021!",
@@ -100,24 +118,6 @@
       "published": "2026-09-27T16:45:44+00:00",
       "url": "https://www.youtube.com/watch?v=HIi7ER4jimw",
       "thumbnail": "https://i.ytimg.com/vi/HIi7ER4jimw/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "SUU8j8BiaiY",
-      "title": "Madness Crew Funny Clip #25 | The Gentlemen's Club Massacre!",
-      "channel": "Panoz",
-      "published": "2026-09-24T18:05:44+00:00",
-      "url": "https://www.youtube.com/watch?v=SUU8j8BiaiY",
-      "thumbnail": "https://i.ytimg.com/vi/SUU8j8BiaiY/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "ibvOuInTdY0",
-      "title": "Monster Truck Madness 2: Hypercube Rumble with the Madness Crew! #5",
-      "channel": "Panoz",
-      "published": "2026-09-23T01:34:38+00:00",
-      "url": "https://www.youtube.com/watch?v=ibvOuInTdY0",
-      "thumbnail": "https://i.ytimg.com/vi/ibvOuInTdY0/mqdefault.jpg",
       "source": "youtube"
     },
     {
@@ -398,11 +398,11 @@
       "race": -1,
       "race_name": "River Wild & Wacker",
       "difficulty": "pro",
-      "seconds": 38.57,
+      "seconds": 38.37,
       "username": "fatiyesman",
-      "set_at": "2026-03-29",
+      "set_at": "2026-10-24",
       "source": "speedrun.com",
-      "url": "https://www.speedrun.com/midtown1/runs/z10x35jm"
+      "url": "https://www.speedrun.com/midtown1/runs/y244qq9z"
     },
     {
       "game": "mm1",
