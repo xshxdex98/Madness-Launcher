@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-10-30T22:34:36Z",
+  "generated": "2026-10-31T07:57:43Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "TWmhPX4dhYA",
+      "title": "Midtown Madness: Cops & Robbers #57 | Happy Halloween!",
+      "channel": "Panoz",
+      "published": "2026-10-30T23:46:26+00:00",
+      "url": "https://www.youtube.com/watch?v=TWmhPX4dhYA",
+      "thumbnail": "https://i.ytimg.com/vi/TWmhPX4dhYA/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "k-J6379ZQeQ",
       "title": "Midtown Madness 1: Dearborn Dash City Bus Speedrun #3 (0:36:36)",
@@ -100,15 +109,6 @@
       "published": "2026-10-04T11:34:40+00:00",
       "url": "https://www.youtube.com/watch?v=7aPJLIjH5mo",
       "thumbnail": "https://i.ytimg.com/vi/7aPJLIjH5mo/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "UDxcgpRKo6I",
-      "title": "Midtown Madness Chicago Map is in BeamNG! (Cruise)",
-      "channel": "Panoz",
-      "published": "2026-09-29T19:46:56+00:00",
-      "url": "https://www.youtube.com/watch?v=UDxcgpRKo6I",
-      "thumbnail": "https://i.ytimg.com/vi/UDxcgpRKo6I/mqdefault.jpg",
       "source": "youtube"
     },
     {
