@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "generated": "2026-11-24T23:54:16Z",
+  "generated": "2026-11-25T06:46:16Z",
   "announcements": [],
   "videos": [
+    {
+      "id": "vbMtrxtO43U",
+      "title": "Midtown Madness: Cops & Robbers #58",
+      "channel": "Panoz",
+      "published": "2026-11-25T01:27:45+00:00",
+      "url": "https://www.youtube.com/watch?v=vbMtrxtO43U",
+      "thumbnail": "https://i.ytimg.com/vi/vbMtrxtO43U/mqdefault.jpg",
+      "source": "youtube"
+    },
     {
       "id": "EZ3d1T26Dd0",
       "title": "TV Broadcast Simulation and Replay is coming to Midtown Madness! | Madness HUD Beta Preview!",
@@ -82,15 +91,6 @@
       "published": "2026-10-20T22:25:08+00:00",
       "url": "https://www.youtube.com/watch?v=A4PqB4bq4n4",
       "thumbnail": "https://i.ytimg.com/vi/A4PqB4bq4n4/mqdefault.jpg",
-      "source": "youtube"
-    },
-    {
-      "id": "GTw2FISMU5I",
-      "title": "Madness Crew is Coming to NASCAR! | Madness Crew Series NR2003 Mod Test!",
-      "channel": "Panoz",
-      "published": "2026-10-16T20:35:39+00:00",
-      "url": "https://www.youtube.com/watch?v=GTw2FISMU5I",
-      "thumbnail": "https://i.ytimg.com/vi/GTw2FISMU5I/mqdefault.jpg",
       "source": "youtube"
     },
     {
